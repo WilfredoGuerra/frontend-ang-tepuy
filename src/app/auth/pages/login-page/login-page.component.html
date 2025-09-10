@@ -1,0 +1,50 @@
+<div class="hero p-30">
+  <div class="hero-content flex-col lg:flex-row-reverse">
+    <div class="text-center lg:text-left font-montserrat">
+      <h1 class="text-5xl font-bold text-fuchsia-700">Gestor de Incidencias de la Red</h1>
+      <h1 class="text-4xl font-bold text-blue-700">Gran Sabana</h1>
+      <p class="text-3xl py-6 text-gray-400">Módulo Tepuy</p>
+    </div>
+    <div class="card bg-gray-500 w-full max-w-sm shrink-0 shadow-2xl">
+      <div class="card-body">
+        <form class="fieldset" [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+          <label class="text-white font-bold">Correo</label>
+          <input type="email" class="w-full input" formControlName="email"
+            placeholder="Correo corporativo" autofocus/>
+
+          <label class="text-white font-bold">Contraseña</label>
+          <label class="input flex items-center gap-2 w-full" >
+          <input [type]="showPassword() ? 'text' : 'password'" class="w-full" placeholder="Contraseña" formControlName="password" />
+          <a (click)="toggleShowPassword()" class="cursor-pointer">
+            @if (!showPassword()) {
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+              <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                color="currentColor">
+                <path d="M2 8s4.477-5 10-5s10 5 10 5" />
+                <path
+                  d="M21.544 13.045c.304.426.456.64.456.955c0 .316-.152.529-.456.955C20.178 16.871 16.689 21 12 21c-4.69 0-8.178-4.13-9.544-6.045C2.152 14.529 2 14.315 2 14c0-.316.152-.529.456-.955C3.822 11.129 7.311 7 12 7c4.69 0 8.178 4.13 9.544 6.045" />
+                <path d="M15 14a3 3 0 1 0-6 0a3 3 0 0 0 6 0" />
+              </g>
+            </svg>
+            }
+            @else {
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+              <path fill="currentColor"
+                d="M2.54 4.71L3.25 4L20 20.75l-.71.71l-3.34-3.35c-1.37.57-2.87.89-4.45.89c-4.56 0-8.5-2.65-10.36-6.5c.97-2 2.49-3.67 4.36-4.82zM11.5 18c1.29 0 2.53-.23 3.67-.66l-1.12-1.13c-.73.5-1.6.79-2.55.79C9 17 7 15 7 12.5c0-.95.29-1.82.79-2.55L6.24 8.41a10.64 10.64 0 0 0-3.98 4.09C4.04 15.78 7.5 18 11.5 18m9.24-5.5C18.96 9.22 15.5 7 11.5 7c-1.15 0-2.27.19-3.31.53l-.78-.78C8.68 6.26 10.06 6 11.5 6c4.56 0 8.5 2.65 10.36 6.5a11.47 11.47 0 0 1-4.07 4.63l-.72-.73c1.53-.96 2.8-2.3 3.67-3.9M11.5 8C14 8 16 10 16 12.5c0 .82-.22 1.58-.6 2.24l-.74-.74c.22-.46.34-.96.34-1.5A3.5 3.5 0 0 0 11.5 9c-.54 0-1.04.12-1.5.34l-.74-.74c.66-.38 1.42-.6 2.24-.6M8 12.5a3.5 3.5 0 0 0 3.5 3.5c.67 0 1.29-.19 1.82-.5L8.5 10.68c-.31.53-.5 1.15-.5 1.82" />
+            </svg>
+            }
+          </a>
+          </label>
+
+          <button type="submit" class="btn btn-secondary mt-4">Ingresar</button>
+
+        </form>
+        <p class="text-xs text-center">Gerencia Centro Operaciones de la Red</p>
+        <p class="text-xs text-center">Coord. Procesos, Medición y Seguimiento © CANTV {{ currentYear }}</p>
+      </div>
+      <div class="flex justify-end mb-3">
+        <a routerLink="/" class="btn btn-neutral btn-xs mr-7">Ir a principal</a>
+      </div>
+    </div>
+  </div>
+</div>

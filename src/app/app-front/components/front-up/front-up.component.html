@@ -1,0 +1,37 @@
+<div class="navbar bg-base-300 text-base-content shadow-md">
+  <div class="flex-1">
+    <img class="mt-1" src="assets/layout/images/{{ currentTheme === 'dark' ? 'logo_cantv' : 'logo_cantv_color' }}.png"
+      alt="" width=30%>
+  </div>
+  <div class="flex-1">
+    <img class="mt-1"
+      src="assets/layout/images/{{ currentTheme === 'dark' ? 'logo_gran_sabana' : 'logo_gran_sabana_dark' }}.png" alt=""
+      width=20%>
+  </div>
+
+  <div class="flex justify-between gap-3 items-center">
+    @if (authService.authStatus() === 'authenticated') {
+      <div class="avatar avatar-online">
+        <div class="w-12 rounded-full">
+          <img src="assets/images/personal/{{ 'wilfredo_guerra' }}.png" />
+        </div>
+      </div>
+    }
+    <div>
+      <h5 class="text-primary font-montserrat capitalize">{{ authService.user()?.fullName }}</h5>
+    </div>
+    <div class="flex justify-between items-center gap-2">
+      <div>
+        <theme-toggle />
+      </div>
+      <div class="tooltip tooltip-bottom" data-tip="Salir">
+        <button (click)="exitSystem()" class="btn btn-circle btn-error btn-sm">
+                  <img class=""
+          src="assets/icons/{{ 'majesticons--door-exit-line' }}.svg"
+          alt="" width=70%>
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>

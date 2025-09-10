@@ -1,0 +1,179 @@
+<div class="max-w-6xl mx-auto p-6 bg-base-100 rounded-lg shadow-lg">
+  <h2 class="text-2xl font-bold text-center mb-6">Nuevo Elemento de Red</h2>
+
+  <form [formGroup]="networkElementForm" (ngSubmit)="onSubmit()" class="space-y-6">
+    <!-- Fila 1: Grupo y Plataforma -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- Grupo -->
+      <div class="form-control">
+        <label class="label" for="groupId">
+          <span class="label-text font-semibold">Grupo <span class="text-error">*</span></span>
+        </label>
+        <select formControlName="groupId" class="select select-bordered w-full" id="groupId" name="groupId">
+          <option disabled selected>Seleccione un grupo</option>
+          @for (group of groupsResource.value(); track group.id) {
+          <option>{{ group.group }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Plataforma -->
+      <div class="form-control">
+        <label class="label" for="platformId">
+          <span class="label-text font-semibold">Plataforma <span class="text-error">*</span></span>
+        </label>
+        <select formControlName="platformId" class="select select-bordered w-full" id="platform" name="platform">
+          <option disabled selected>Seleccione una plataforma</option>
+          @for (platform of platformsResource.value(); track platform.id) {
+          <option>{{ platform.platform }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <!-- Fila 2: IPs -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <!-- IP Gestión -->
+      <div class="form-control">
+        <label class="label" for="management_ip">
+          <span class="label-text font-semibold">IP Gestión</span>
+        </label>
+        <input formControlName="management_ip" type="text" placeholder="192.168.1.1" class="input input-bordered w-full"
+          id="management_ip" name="management_ip" required />
+      </div>
+
+      <!-- IP Servicio -->
+      <div class="form-control">
+        <label class="label" for="service_ip">
+          <span class="label-text font-semibold">IP Servicio</span>
+        </label>
+        <input formControlName="service_ip" type="text" placeholder="10.0.0.1" class="input input-bordered w-full"
+          id="service_ip" name="service_ip" required />
+      </div>
+
+      <!-- IP ADSL -->
+      <div class="form-control">
+        <label class="label" for="adsl_ip">
+          <span class="label-text font-semibold">IP ADSL</span>
+        </label>
+        <input formControlName="adsl_ip" id="adsl_ip" name="adsl_ip" required type="text" placeholder="172.16.0.1"
+          class="input input-bordered w-full" />
+      </div>
+    </div>
+
+    <!-- Fila 3: Descripción, IP Elemento y Acrónimo -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <!-- Descripción -->
+      <div class="form-control">
+        <label class="label" for="description">
+          <span class="label-text font-semibold">Descripción <span class="text-error">*</span></span>
+        </label>
+        <input formControlName="description" id="description" name="description" required type="text"
+          placeholder="Descripción del equipo" class="input input-bordered w-full" />
+      </div>
+
+      <!-- IP Elemento -->
+      <div class="form-control">
+        <label class="label" for="element_id">
+          <span class="label-text font-semibold">ID Elemento</span>
+        </label>
+        <input formControlName="element_id" id="element_id" name="element_id" required type="text"
+          placeholder="Element ID" class="input input-bordered w-full" />
+      </div>
+
+      <!-- Acrónimo -->
+      <div class="form-control">
+        <label class="label" for="acronym">
+          <span class="label-text font-semibold">Acrónimo <span class="text-error">*</span></span>
+        </label>
+        <input formControlName="acronym" id="acronym" name="acronym" required type="text"
+          placeholder="Siglas del equipo" class="input input-bordered w-full" />
+      </div>
+    </div>
+
+    <!-- Fila 4: Modelo, Proveedor y Localidad -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <!-- Modelo -->
+      <div class="form-control">
+        <label class="label" for="model">
+          <span class="label-text font-semibold">Modelo <span class="text-error">*</span></span>
+        </label>
+        <input formControlName="model" id="model" name="model" required type="text" placeholder="Modelo del equipo"
+          class="input input-bordered w-full" />
+      </div>
+
+      <!-- Proveedor -->
+      <div class="form-control">
+        <label class="label" for="providerId">
+          <span class="label-text font-semibold">Proveedor <span class="text-error">*</span></span>
+        </label>
+        <select formControlName="providerId" id="providerId" name="providerId" required
+          class="select select-bordered w-full">
+          <option disabled selected>Seleccione un proveedor</option>
+          @for (provider of providersResource.value(); track $index) {
+          <option>{{ provider.provider_name }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Localidad -->
+      <div class="form-control">
+        <label class="label" for="locality">
+          <span class="label-text font-semibold">Localidad <span class="text-error">*</span></span>
+        </label>
+        <input formControlName="locality" id="locality" name="locality" required type="text" placeholder="Ubicación"
+          class="input input-bordered w-full" />
+      </div>
+    </div>
+
+    <!-- Fila 5: Central, Piso y Sala -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <!-- Central -->
+      <div class="form-control">
+        <label class="label">
+          <span class="label-text font-semibold">Central <span class="text-error">*</span></span>
+        </label>
+        <div class="join w-full">
+          <input type="text" placeholder="Seleccione una central" class="input input-bordered join-item w-full"
+            readonly />
+          <button class="btn btn-primary join-item" type="button" onclick="my_modal_3.showModal()">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <dialog id="my_modal_3" class="modal">
+        <div class="modal-box w-11/12 max-w-5xl">
+          <div class="">
+            <centrals-page />
+          </div>
+        </div>
+      </dialog>
+
+      <!-- Piso -->
+      <div class="form-control">
+        <label class="label">
+          <span class="label-text font-semibold">Piso</span>
+        </label>
+        <input type="text" placeholder="Número de piso" class="input input-bordered w-full" />
+      </div>
+
+      <!-- Sala -->
+      <div class="form-control">
+        <label class="label">
+          <span class="label-text font-semibold">Sala</span>
+        </label>
+        <input type="text" placeholder="Número de sala" class="input input-bordered w-full" />
+      </div>
+    </div>
+
+    <!-- Botones de acción -->
+    <div class="flex justify-end gap-4 pt-6 border-t border-base-300">
+      <button type="button" class="btn btn-ghost" (click)="onCancel()">Cancelar</button>
+      <button type="submit" class="btn btn-primary">Guardar</button>
+    </div>
+  </form>
+</div>

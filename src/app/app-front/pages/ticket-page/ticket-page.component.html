@@ -1,0 +1,993 @@
+@if (ticketResource.error()) {
+<section class="flex flex-col items-center justify-center mt-10">
+  <h1>No se encontró el ticket</h1>
+  <a (click)="goBack()" class="link-primary cursor-pointer">
+    <img class="mt-1" src="assets/icons/{{ 'material-symbols--chat-error-rounded' }}.svg" alt="" width=100%>
+    Regresar
+  </a>
+</section>
+}
+
+@if (ticketResource.isLoading()) {
+<div class="flex justify-center items-center h-screen">
+  <span class="loading loading-ring loading-xl"></span>
+</div>
+}
+
+<!-- Ticket -->
+@if (ticketResource.hasValue()) {
+<div class="tabs tabs-lift mb-4">
+  <input type="radio" name="my_tabs_3" class="tab text-green-500 font-bold" aria-label="Inicio" checked="checked" />
+  <div class="tab-content bg-base-100 border-base-300 p-6">
+    <!-- Contenido del ticket (se mantiene igual) -->
+    <div class="bg-base-300 min-h-screen p-4 md:p-6">
+      <div class="max-w-6xl mx-auto">
+        <!-- Header -->
+
+        <div class="grid grid-cols-1 lg:grid-cols-1 gap-3 mb-2">
+          <div class="bg-base-100 rounded-xl shadow-sm p-6 card-hover">
+            <header class="mb-2">
+              <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+                <div class="flex justify-between items-center gap-2">
+                  <h1 class="text-xl font-bold text-primary">Nro. de Ticket:</h1>
+                  <p class="text-xl uppercase text-secondary">{{ ticketResource.value().nro_ticket }}</p>
+                </div>
+                <div class="flex space-x-2">
+                  <span class="uppercase font-bold">
+                    @if ( ticketResource.value().statusId === 1 ) {
+                    <span class="badge bg-warning/20 text-warning badge-md p-4">{{ ticketResource.value().status
+                      }}</span>
+                    }
+                    @else if (ticketResource.value().statusId === 2) {
+                    <span class="badge bg-error/20 text-error badge-md p-4">{{ ticketResource.value().status }}</span>
+                    }
+                    @else {
+                    <span class="badge bg-success/20 text-success badge-md p-4">{{ ticketResource.value().status
+                      }}</span>
+                    }
+                  </span>
+                </div>
+              </div>
+            </header>
+
+            <p class="text-secondary font-semibold">Definición del problema:</p>
+            <span class="">{{ ticketResource.value().definition_problem }}</span>
+
+            <!-- Section network element/fiber length -->
+            <div class="network-section">
+              <div class="text-primary font-mono uppercase ticket-content">
+                <!-- Información de elementos de red -->
+                @if (ticketResource.value().network_elements?.length) {
+                <div class="field">
+                  <span class="field-name">Modelo:</span>
+                  <span class="field-value">{{ ticketResource.value().network_elements?.[0]?.model }}</span>
+                  <span class="comma-separator">,</span>
+                </div>
+
+                <div class="field">
+                  <span class="field-name">Proveedor:</span>
+                  <span class="field-value">{{ ticketResource.value().network_elements?.[0]?.provider?.provider_name
+                    }}</span>
+                  <span class="comma-separator">,</span>
+                </div>
+
+                <div class="field">
+                  <span class="field-name">Descripción:</span>
+                  <span class="field-value">{{ ticketResource.value().network_elements?.[0]?.description }}</span>
+                  <span class="comma-separator">,</span>
+                </div>
+
+                <div class="field">
+                  <span class="field-name">Acrónimo:</span>
+                  <span class="field-value">{{ ticketResource.value().network_elements?.[0]?.acronym }}</span>
+                  <span class="comma-separator">,</span>
+                </div>
+
+                @if (ticketResource.value().network_elements?.[0]?.management_ip) {
+                <div class="field">
+                  <span class="field-name">IpG:</span>
+                  <span class="field-value">{{ ticketResource.value().network_elements?.[0]?.management_ip }}</span>
+                  <span class="comma-separator">,</span>
+                </div>
+                }
+
+                @if (ticketResource.value().network_elements?.[0]?.service_ip) {
+                <div class="field">
+                  <span class="field-name">IpS:</span>
+                  <span class="field-value">{{ ticketResource.value().network_elements?.[0]?.service_ip }}</span>
+                  <span class="comma-separator">,</span>
+                </div>
+                }
+
+                @if (ticketResource.value().network_elements?.[0]?.adsl_ip) {
+                <div class="field">
+                  <span class="field-name">IpAdsl:</span>
+                  <span class="field-value">{{ ticketResource.value().network_elements?.[0]?.adsl_ip }}</span>
+                  <span class="comma-separator">,</span>
+                </div>
+                }
+
+                <div class="field">
+                  <span class="field-name">Central:</span>
+                  <span class="field-value">{{ ticketResource.value().network_elements?.[0]?.central?.central_name
+                    }}</span>
+                  <span class="comma-separator">,</span>
+                </div>
+
+                <div class="field">
+                  <span class="field-name">Estado:</span>
+                  <span class="field-value">{{ ticketResource.value().network_elements?.[0]?.central?.state?.state
+                    }}</span>
+                  <span class="comma-separator">.</span>
+                </div>
+                } @else if (ticketResource.value().fiberLengthId && ticketResource.value().fiber_length) {
+                <div class="flex mt-2">
+                  <div class="flex flex-row ">
+                    <p>Tramo de fibra óptica:</p>
+                    <div>
+                      {{ ticketResource.value().fiber_length?.section_name }},
+                    </div>
+                  </div>
+                  <span class="font-mono uppercase">
+                    <p>Del estado: {{ ticketResource.value().fiber_length?.stateA?.state }}</p>
+                  </span>
+                </div>
+                }
+              </div>
+            </div>
+            <!-- End section network element/fiber length -->
+
+            <div class="divider my-1"></div>
+
+            <div class="flex flex-row justify-between">
+              <div>
+                <p class="text-secondary font-semibold">Hora creación del ticket</p>
+                <p class="">{{ ticketResource.value().form_open_date | date : "d/MM/yyyy, hh:mm a" }}</p>
+              </div>
+              <div>
+                <p class="text-secondary font-semibold">Hora de Inicio Falla</p>
+                <p class="">{{ ticketResource.value().date_hif | date : "d/MM/yyyy, hh:mm a" }}</p>
+              </div>
+              <div>
+                <p class="text-secondary font-semibold">Hora Diagnóstico COR</p>
+                <p class="">{{ ticketResource.value().date_hdc | date : "d/MM/yyyy, hh:mm a" }}</p>
+              </div>
+              <div>
+                <p class="text-secondary font-semibold">Hora Contacto Técnico</p>
+                <p class="">{{ ticketResource.value().date_hct | date : "d/MM/yyyy, hh:mm a" }}</p>
+              </div>
+            </div>
+
+            <div class="divider my-1"></div>
+
+            <div class="flex flex-row justify-between">
+              <div>
+                <p class="text-secondary font-semibold">Grupo</p>
+                <p class="first-letter:capitalize">{{ ticketResource.value().group }}</p>
+              </div>
+              <div>
+                <p class="text-secondary font-semibold">Plataforma</p>
+                <p class="first-letter:capitalize">{{ ticketResource.value().platform }}</p>
+              </div>
+              <div>
+                <p class="text-secondary font-semibold">Severidad</p>
+                <p class="first-letter:capitalize">{{ ticketResource.value().severity }}</p>
+              </div>
+              <div>
+                <p class="text-secondary font-semibold">Estatus</p>
+                <p class="first-letter:capitalize">
+                  <span class="uppercase">
+                    @if ( ticketResource.value().statusId === 1 ) {
+                    <span class="badge bg-warning/20 text-warning badge-md pb-1">{{ ticketResource.value().status
+                      }}</span>
+                    }
+                    @else if (ticketResource.value().statusId === 2) {
+                    <span class="badge bg-red-600 badge-sm font-bold">{{ ticketResource.value().status }}</span>
+                    }
+                    @else {
+                    <span class="badge bg-green-700 badge-sm font-bold">{{ ticketResource.value().status }}</span>
+                    }
+                  </span>
+                </p>
+              </div>
+              <div>
+                <p class="text-secondary font-semibold">Origen</p>
+                <p class="first-letter:capitalize">{{ ticketResource.value().origin }}</p>
+              </div>
+            </div>
+
+            <div class="divider my-1"></div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <p class="text-secondary font-semibold">Falla Reportada:</p>
+                <p class="first-letter:capitalize">{{ ticketResource.value().failure }}</p>
+              </div>
+              <div>
+                <p class="text-secondary font-semibold">Impacto</p>
+                <p class="">Afecta a {{ ticketResource.value().impact }} usuario(s).</p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-2">
+          <div class="bg-base-100 rounded-xl shadow-sm p-6 card-hover">
+            <p class="text-secondary font-semibold">Evidencias del problema</p>
+            <p class="">{{ ticketResource.value().evidences_problem }}</p>
+          </div>
+
+          <div class="bg-base-100 rounded-xl shadow-sm p-6 card-hover">
+            <p class="text-secondary font-semibold">Hipótesis</p>
+            <p class="">{{ ticketResource.value().hypothesis }}</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-1 gap-3">
+          <div class="space-y-6">
+            <div class="bg-base-100 rounded-xl shadow-sm p-6 card-hover">
+              <!-- Personal área resolutoria -->
+              @if (ticketResource.value().personalRegionId) {
+              <div>
+                <p class="text-secondary font-semibold">Personal de área resolutoria</p>
+                <div class="space-y-4 mb-3">
+                  <div class="flex gap-2">
+                    <p class="capitalize">
+                      {{ ticketResource.value().personal_region?.names }}, {{
+                      ticketResource.value().personal_region?.surnames }}
+                    </p>
+                    <p class="first-letter:capitalize">
+                      @for( position of ticketResource.value().personal_region?.position; track $index) {
+                    <p>({{ position.position }}) /</p>
+                    }
+                    </p>
+                    <p class="italic">
+                      {{ ticketResource.value().personal_region?.email }} /
+                    </p>
+                    <p class="">
+                      {{ ticketResource.value().personal_region?.mobile_phone }} / {{
+                      ticketResource.value().personal_region?.office_phone || 'Sin número de oficina' }}
+                    </p>
+                  </div>
+                </div>
+                <div class="">
+                  <div class="flex items-center gap-2">
+                    <p class="text-secondary font-semibold">Área:</p>
+                    <p class="first-letter:capitalize">
+                      @for (area of ticketResource.value().personal_region?.groups_escalatory; track $index) {
+                      {{ area.group_escalatory }}
+                      }
+                    </p>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <p class="text-secondary font-semibold">Estado - Región:</p>
+                    <span class="first-letter:capitalize">
+                      @for (state of ticketResource.value().personal_region?.states; track $index) {
+                      {{ state.state }}
+                      }-
+                    </span>
+                    <div class="first-letter:capitalize">
+                      @for (state of ticketResource.value().personal_region?.states; track $index) {
+                      {{ state.region.region }}
+                      }
+                    </div>
+                  </div>
+                </div>
+              </div>
+              } @else {
+              <h5 class="text-secondary font-semibold">Personal área resolutoria:</h5>
+              <p>Este ticket, en su creación, no fue asociado a personal de área resolutoria.</p>
+              }
+
+              <!-- SECCIÓN DE IMÁGENES - NUEVA -->
+              @let ticket = ticketResource.value();
+              <!-- @if (ticketResource.value().images && ticketResource.value().images!.length > 0) { -->
+              @if (ticket?.images && ticket.images!.length > 0) {
+              <div class="space-y-4 mt-6">
+                <div class="divider my-1"></div>
+
+                <div>
+                  <p class="text-sm font-medium text-secondary mb-3">Evidencias visuales del ticket</p>
+                  <p class="text-xs text-gray-500 mb-4">
+                    {{ ticket.images!.length }} imagen(es) adjunta(s) - Haga clic para ampliar
+                  </p>
+
+                  <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                    @for (item of ticket.images; track $index) {
+                    @let imageUrl = getImageUrl(item);
+                    <div class="relative group">
+                      <!-- Imagen con enlace para abrir en nueva pestaña -->
+                      <a [href]="imageUrl" target="_blank" rel="noopener noreferrer" class="block cursor-pointer">
+                        <img [src]="imageUrl" [alt]="'Evidencia ' + ($index + 1)"
+                          class="w-full h-24 object-cover rounded-lg border border-base-300 shadow-sm transition-all duration-300 group-hover:scale-105 group-hover:shadow-md"
+                          loading="lazy" (error)="handleImageError($event)" />
+                      </a>
+                      <div
+                        class="absolute top-1 right-1 bg-primary text-white text-xs rounded-full w-5 h-5 flex items-center justify-center opacity-70 group-hover:opacity-100">
+                        {{ $index + 1 }}
+                      </div>
+                    </div>
+                    }
+                  </div>
+                </div>
+              </div>
+              }
+              <!-- FIN SECCIÓN DE IMÁGENES -->
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pestaña de Seguimiento -->
+  <input type="radio" name="my_tabs_3" class="tab text-yellow-500 font-bold" aria-label="Documentaciones" />
+  <div class="tab-content bg-base-100 border-base-300 p-6">
+    <!-- Header con botón de nuevo seguimiento -->
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="text-xl font-bold text-primary">Historial de Documentación</h2>
+      <div>
+        <div>
+          <h3 class="text-lg font-bold text-accent uppercase">
+            Ticket #{{ ticketResource.value().nro_ticket }}
+          </h3>
+        </div>
+      </div>
+      <button class="btn btn-primary" (click)="openModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        Nueva Documentación
+      </button>
+    </div>
+
+    @if (progressTicketsResource.isLoading()) {
+    <div class="flex justify-center items-center py-8">
+      <span class="loading loading-ring loading-lg"></span>
+      <span class="ml-2">Cargando historial de documentaciones...</span>
+    </div>
+    }
+
+    @if (progressTicketsResource.error()) {
+    <div class="alert alert-error my-4">
+      <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <span>Error al cargar el historial de documentaciones: {{ progressTicketsResource.error()?.message }}</span>
+    </div>
+    }
+
+    @if (hasProgressTickets) {
+    <div class="space-y-6">
+      <p class="text-sm text-gray-500 mb-4">
+        Mostrando {{ progressTicketsCount }} registro(s) de documentaciones
+      </p>
+
+      @for (progress of progressTickets; track progress.id; let i = $index) {
+      <div class="bg-base-200 rounded-xl p-6 shadow-sm border-l-4 border-primary">
+        <!-- Header con información del registro -->
+        <div class="flex flex-col md:flex-row justify-between items-start mb-4 gap-4">
+          <div class="flex-1">
+            <h3 class="text-md font-semibold text-primary mb-2">Descripción:</h3>
+            <div class="flex items-center gap-4 mb-4">
+              <span class="badge badge-primary badge-lg">#{{ progressTicketsCount - i }}</span>
+              <div class="flex flex-col justify-between text-sm font-mono">
+                <div class="text-primary">
+                  @if (progress.network_elements?.length) {
+                  <div class="">
+                    <span class="font-mono uppercase">
+                      {{ progress.network_elements?.[0]?.acronym }} -
+                      @if (progress.network_elements?.[0]?.management_ip) {
+                      ({{ progress.network_elements?.[0]?.management_ip }} ) -
+                      }
+                      {{ progress.network_elements?.[0]?.description }} -
+                      {{ progress.network_elements?.[0]?.model }} -
+                      {{ progress.network_elements?.[0]?.provider?.provider_name }} -
+                      {{ progress.network_elements?.[0]?.central?.central_name }} -
+                      {{ progress.network_elements?.[0]?.locality }}
+                    </span>
+                  </div>
+                  } @else if (progress.fiberLengthId && progress.fiberLength) {
+                  <div class="mt-2">
+                    <span class="font-medium text-sm">Tramo de Fibra:</span>
+                    <span class="font-mono uppercase">
+                      {{ progress.fiberLength.section_name }}
+                    </span>
+                  </div>
+                  }
+                </div>
+                <div>
+                  {{ progress.progress }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Información de usuarios asignados -->
+            <div class="space-y-1 text-md">
+              <!-- Usuario que creó el registro -->
+              <p>
+                <span class="font-semibold text-primary mb-2">Propietario TT:</span>
+                {{ ticketResource.value().user?.fullName }} {{ ticketResource.value().user?.surnames || '' }}
+              </p>
+
+
+
+              <!-- Usuario asignado -->
+              <div class="flex justify-start gap-1">
+                <div>
+                  <span class="font-semibold text-primary mb-2">Asignado a:</span>
+                </div>
+                <div>
+                  @if (progress.assignedUser) {
+                  <p>
+                    {{ progress.assignedUser.fullName }} {{ progress.assignedUser.surnames }}
+                  </p>
+                  }
+                  @else {
+                  <p class="text-gray-500">
+                    {{ ticketResource.value().user?.fullName }} {{ ticketResource.value().user?.surnames || '' }}
+                  </p>
+                  }
+                </div>
+              </div>
+
+
+
+              <!-- Personal de región asignado -->
+              @if (progress.personal_region) {
+              <p>
+                <span class="font-semibold text-primary mb-2 first-letter:uppercase">Personal de área resolutoria:
+                </span>
+                <span class="capitalize">{{ progress.personal_region.names }} {{ progress.personal_region.surnames }}
+                </span>
+                <span class="capitalize">({{ progress.personal_region.states[0].state }})</span>
+              </p>
+              }
+            </div>
+          </div>
+
+          <div class="text-right">
+            <p class="text-sm text-gray-500">Creación avance</p>
+            <p class="font-medium">{{ progress.createdDate | date : "d/MM/yyyy" }}</p>
+            <p class="text-sm">{{ formatVenezuelaTime(progress.createdDate.toString(), 'h:mm a') }}</p>
+
+            <p class="text-sm text-gray-500">Por:</p>
+            <p class="font-medium">{{ progress.user?.fullName }}</p>
+
+          </div>
+        </div>
+
+        <!-- 2. Información del ticket asociado -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 p-4 bg-base-300 rounded-lg">
+          <div>
+            <p class="text-sm font-medium text-gray-600">Hora Inicio Falla</p>
+            <p class="font-mono text-sm">
+              {{ ticketResource.value().date_hif | date : "d/MM/yyyy, h:mm a" }}
+            </p>
+          </div>
+          <div>
+            <p class="text-sm font-medium text-gray-600">Hora Diagnóstico</p>
+            <p class="font-mono text-sm">
+              {{ ticketResource.value().date_hdc | date : "d/MM/yyyy, h:mm a" }}
+            </p>
+          </div>
+          <div>
+            <p class="text-sm font-medium text-gray-600">Hora Contacto Técnico</p>
+            <p class="font-mono text-sm">
+              {{ ticketResource.value().date_hct | date : "d/MM/yyyy, h:mm a" }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Observaciones -->
+        @if (progress.observations && progress.observations.trim() !== '') {
+        <div class="mb-4 p-4 bg-base-300 rounded-lg">
+          <p class="font-semibold text-primary mb-2">Avances:</p>
+          <p class="whitespace-pre-line">{{ progress.observations }}</p>
+        </div>
+        }
+
+        <!-- Imágenes -->
+        @if (progress.images && progress.images.length > 0) {
+        <div class="mt-6">
+          <p class="text-sm font-semibold text-gray-600 mb-3">
+            Evidencias visuales ({{ progress.images.length }})
+          </p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            @for (image of progress.images; track $index) {
+            <div class="relative group cursor-pointer" (click)="openImage(image)">
+              <img [src]="image" alt="Evidencia de seguimiento"
+                class="rounded-lg object-cover h-48 w-full transition-transform duration-300 group-hover:scale-105">
+              <div
+                class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity duration-300 rounded-lg flex items-center justify-center">
+                <svg class="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" fill="none"
+                  stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3-3H7"></path>
+                </svg>
+              </div>
+            </div>
+            }
+          </div>
+        </div>
+        }
+      </div>
+      }
+    </div>
+    } @else if (progressTicketsResource.hasValue()) {
+    <div class="flex flex-col items-center justify-center py-12 text-center bg-base-200 rounded-xl">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24"
+        stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      </svg>
+      <h3 class="text-lg font-semibold text-gray-600 mb-2">No hay seguimiento registrado</h3>
+      <p class="text-gray-500 max-w-md">Aún no se han agregado registros de seguimiento para este ticket. El equipo
+        técnico actualizará esta sección conforme avance el proceso.</p>
+    </div>
+    }
+  </div>
+
+  <input type="radio" name="my_tabs_3" class="tab text-red-500 font-bold" aria-label="Cierre" />
+  <div class="tab-content bg-base-100 border-base-300 p-6">Cierre de ticket</div>
+</div>
+}
+
+<div class="flex justify-end">
+  <button class="btn btn-secondary my-3" (click)="goBack()">
+    <img class="" src="assets/icons/{{ 'material-symbols--keyboard-return' }}.svg">
+    Regresar
+  </button>
+</div>
+
+<!-- Modal para nuevo seguimiento -->
+@if (showModal()) {
+<div class="modal modal-open">
+  <div class="modal-box max-w-5xl max-h-[95vh] overflow-y-auto">
+    <h3 class="font-bold text-2xl text-primary mb-6 text-center">Seguimiento</h3>
+    <form [formGroup]="progressForm" (ngSubmit)="onSubmit()" class="space-y-6">
+
+      <!-- SECCIÓN 1: INFORMACIÓN BÁSICA -->
+      <div class="collapse collapse-arrow bg-base-200 border-base-300 border rounded-box">
+        <input type="checkbox" class="peer" />
+        <div class="collapse-title font-medium">
+          <span class="flex items-center">
+            Agregar nueva descripción al avance
+          </span>
+        </div>
+        <div class="collapse-content">
+          <div class="grid grid-cols-1 md:grid-cols-1 gap-4">
+            <!-- Progress -->
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-medium mb-2">Descripción *</span>
+              </label>
+              <textarea placeholder="Describa en detalle la descripción de la nueva documentación."
+                class="textarea textarea-bordered textarea-primary w-full" formControlName="progress"
+                [class.textarea-error]="progressForm.get('progress')?.invalid && progressForm.get('progress')?.touched">
+          </textarea>
+              @if (progressForm.get('progress')?.invalid && progressForm.get('progress')?.touched) {
+              <label class="label">
+                <span class="label-text-alt text-error">
+                  @if (progressForm.get('progress')?.errors?.['required']) { La descripcion es requerida }
+                  @if (progressForm.get('progress')?.errors?.['minlength']) { Mínimo 5 caracteres }
+                </span>
+              </label>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECCIÓN 2: OBSERVACIONES -->
+      <div class="bg-base-200 p-5 rounded-xl">
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text font-medium mb-2">Avances *</span>
+          </label>
+          <textarea placeholder="Describa en detalle los avances realizados."
+            class="textarea textarea-bordered textarea-primary w-full" formControlName="observations"
+            [class.textarea-error]="progressForm.get('observations')?.invalid && progressForm.get('observations')?.touched">
+          </textarea>
+          @if (progressForm.get('observations')?.invalid && progressForm.get('observations')?.touched) {
+          <label class="label">
+            <span class="label-text-alt text-error">
+              @if (progressForm.get('observations')?.errors?.['required']) { Los avances son requeridos }
+              @if (progressForm.get('observations')?.errors?.['minlength']) { Mínimo 10 caracteres }
+            </span>
+          </label>
+          }
+        </div>
+      </div>
+
+      <!-- SECCIÓN 3: ELEMENTOS DE RED/TRAMO FIBRA - AHORA EN COLLAPSE -->
+      <div class="collapse collapse-arrow bg-base-200 border-base-300 border rounded-box">
+        <input type="checkbox" class="peer" />
+        <div class="collapse-title font-medium">
+          <span class="flex items-center">
+            Agregar nuevo Elemento de Red / Tramo de Fibra al avance
+          </span>
+        </div>
+        <div class="collapse-content">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <!-- Tipo de Selección -->
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-medium mr-2">Tipo de Elemento</span>
+              </label>
+              <div class="join">
+                <input type="radio" name="elementType" class="join-item btn" aria-label="Elementos de Red"
+                  [checked]="selectedElementType() === 'network'" (change)="selectedElementType.set('network')">
+                <input type="radio" name="elementType" class="join-item btn" aria-label="Tramos de Fibra"
+                  [checked]="selectedElementType() === 'fiber'" (change)="selectedElementType.set('fiber')">
+              </div>
+            </div>
+
+            <!-- Elemento Seleccionado -->
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-medium mb-1">Elemento Seleccionado</span>
+              </label>
+              <input type="text" class="input input-bordered input-primary"
+                [value]="selectedElement()?.acronym || selectedElement()?.section_name || 'Ninguno'"
+                placeholder="Seleccione un elemento" readonly>
+            </div>
+          </div>
+
+          <!-- Tabla de Elementos de Red con búsqueda y paginación -->
+          @if (selectedElementType() === 'network') {
+          <div class="space-y-3">
+            <!-- Campo de búsqueda mejorado -->
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text mr-2">Buscar elemento de red</span>
+              </label>
+              <input type="text" placeholder="Buscar por acrónimo o IP..." class="input input-bordered input-sm"
+                [value]="searchNetworkQuery()" (input)="onNetworkSearchChange($event)">
+              <div class="text-xs text-gray-500 mt-1">
+                {{ networkSearchResults.length }} resultado(s) encontrado(s)
+              </div>
+            </div>
+
+            <!-- Tabla con resultados de búsqueda -->
+            <div class="overflow-x-auto max-h-60 overflow-y-auto">
+              <table class="table table-zebra table-sm">
+                <thead class="sticky top-0 bg-base-200">
+                  <tr>
+                    <th>Seleccionar</th>
+                    <th>Acrónimo</th>
+                    <th>IP Gestión</th>
+                    <th>IP Servicio</th>
+                    <th>Central</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (element of networkSearchResults; track element.id) {
+                  <tr class="hover:bg-base-300 cursor-pointer">
+                    <td>
+                      <button type="button" class="btn btn-xs btn-primary" (click)="selectNetworkElement(element)">
+                        Seleccionar
+                      </button>
+                    </td>
+                    <td class="font-mono uppercase">{{ element.acronym }}</td>
+                    <td class="font-mono">{{ element.management_ip }}</td>
+                    <td class="font-mono">{{ element.service_ip }}</td>
+                    <td class="font-mono uppercase">{{ element.central?.central_name }}</td>
+                  </tr>
+                  }
+                  @if (networkSearchResults.length === 0 && searchNetworkQuery()) {
+                  <tr>
+                    <td colspan="5" class="text-center text-gray-500 py-4">
+                      No se encontraron elementos de red
+                    </td>
+                  </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+          }
+
+          <!-- Tabla de Tramos de Fibra con búsqueda y paginación -->
+          @if (selectedElementType() === 'fiber') {
+          <div class="space-y-3">
+            <!-- Campo de búsqueda mejorado -->
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text mr-2">Buscar tramo de fibra</span>
+              </label>
+              <input type="text" placeholder="Buscar por nombre de tramo..." class="input input-bordered input-sm"
+                [value]="searchFiberQuery()" (input)="onFiberSearchChange($event)">
+              <div class="text-xs text-gray-500 mt-1">
+                {{ fiberSearchResults.length }} resultado(s) encontrado(s)
+              </div>
+            </div>
+
+            <!-- Tabla con resultados de búsqueda -->
+            <div class="overflow-x-auto max-h-60 overflow-y-auto">
+              <table class="table table-zebra table-sm">
+                <thead class="sticky top-0 bg-base-200">
+                  <tr>
+                    <th>Seleccionar</th>
+                    <th>Tramo</th>
+                    <th>Del Estado</th>
+                    <th>Al Estado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (fiber of fiberSearchResults; track fiber.id) {
+                  <tr class="hover:bg-base-300 cursor-pointer">
+                    <td>
+                      <button type="button" class="btn btn-xs btn-primary" (click)="selectFiberLength(fiber)">
+                        Seleccionar
+                      </button>
+                    </td>
+                    <td class="font-mono uppercase">{{ fiber.section_name }}</td>
+                    <td class="uppercase">
+                      @if (fiber.stateA) {
+                      {{ fiber.stateA }}
+                      }
+                    </td>
+                    <td class="uppercase">
+                      @if (fiber.stateB) {
+                      {{ fiber.stateB }}
+                      }
+                    </td>
+                  </tr>
+                  }
+                  @if (fiberSearchResults.length === 0 && searchFiberQuery()) {
+                  <tr>
+                    <td colspan="5" class="text-center text-gray-500 py-4">
+                      No se encontraron tramos de fibra
+                    </td>
+                  </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+          }
+        </div>
+      </div>
+
+      <!-- SECCIÓN 4: CLASIFICACIÓN TÉCNICA -->
+      <div class="bg-base-200 p-5 rounded-xl">
+        <!-- <h4 class="text-lg font-semibold text-primary mb-4">🏷️ Clasificación Técnica</h4> -->
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <!-- Group -->
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-medium mb-2">Grupo *</span>
+            </label>
+            <select class="select select-bordered select-primary" formControlName="groupId">
+              <option [ngValue]="null" disabled selected>Seleccione grupo</option>
+              @for (group of groupsResource.value(); track group.id) {
+              <option [ngValue]="group.id">
+                {{ group.group }}
+              </option>
+              }
+            </select>
+          </div>
+
+          <!-- Severity -->
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-medium mb-2">Severidad *</span>
+            </label>
+            <select class="select select-bordered select-primary" formControlName="severityId">
+              <option [ngValue]="null" disabled selected>Nivel de severidad</option>
+              @for (severity of severitiesResource.value(); track severity.id) {
+              <option [ngValue]="severity.id">
+                {{ severity.severity }}
+              </option>
+              }
+            </select>
+          </div>
+
+          <!-- Platform -->
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-medium mb-2">Plataforma *</span>
+            </label>
+            <select class="select select-bordered select-primary" formControlName="platformId">
+              <option [ngValue]="null" disabled selected>Seleccione plataforma</option>
+              @for (platform of platformsResource.value(); track platform.id) {
+              <option [ngValue]="platform.id">
+                {{ platform.platform }}
+              </option>
+              }
+            </select>
+          </div>
+
+          <!-- Origin -->
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-medium mb-2">Origen *</span>
+            </label>
+            <select class="select select-bordered select-primary" formControlName="originId">
+              <option [ngValue]="null" disabled selected>Origen del problema</option>
+              @for (origin of originsResource.value(); track origin.id) {
+              <option [ngValue]="origin.id">
+                {{ origin.origin }}
+              </option>
+              }
+            </select>
+          </div>
+
+          <!-- Failure -->
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-medium mb-2">Tipo de Falla *</span>
+            </label>
+            <select class="select select-bordered select-primary" formControlName="failureId">
+              <option [ngValue]="null" disabled selected>Tipo de falla</option>
+              @for (failure of failuresResource.value(); track failure.id) {
+              <option [ngValue]="failure.id">
+                {{ failure.failure }}
+              </option>
+              }
+            </select>
+          </div>
+
+          <!-- Impact -->
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-medium mb-2">Impacto *</span>
+            </label>
+            <input type="number" placeholder="Número de usuarios afectados" class="input input-bordered input-primary"
+              formControlName="impact" min="0">
+          </div>
+        </div>
+      </div>
+
+      <!-- SECCIÓN 5: ASIGNACIÓN -->
+      <div class="bg-base-200 p-5 rounded-xl">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Personal Region -->
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-medium mr-2 mb-2">Región Personal</span>
+            </label>
+            <select class="select select-bordered select-primary" formControlName="personalRegionId">
+              <option [ngValue]="null" disabled selected>Seleccione región</option>
+              @for (region of personalsRegionResource.value()?.personalsRegions; track region.id) {
+              <option [ngValue]="region.id">
+                {{ region.names }} {{ region.surnames }} - {{ region.states[0].state }}
+              </option>
+              }
+            </select>
+          </div>
+
+          <!-- Usuario Asignado - CAMBIADO: eliminado el asterisco -->
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-medium mb-2">Usuario Asignado</span> <!-- ← Sin * -->
+            </label>
+
+            <!-- Input de búsqueda con debounce -->
+            <input type="text" placeholder="Buscar usuario por nombre o email..."
+              class="input input-bordered input-primary mb-2" [value]="searchUserQuery()"
+              (input)="onUserSearchChange($event)">
+
+            <!-- Lista de resultados de búsqueda -->
+            @if (searchUserQuery() && userSearchResults.length > 0) {
+            <div class="border rounded-lg bg-base-100 max-h-48 overflow-y-auto">
+              <ul class="menu menu-sm">
+                @for (user of userSearchResults; track user.id) {
+                <li>
+                  <a (click)="selectUser(user)" class="cursor-pointer hover:bg-base-200">
+                    <div class="flex flex-col">
+                      <span class="font-medium">{{ user.fullName }}</span>
+                      <span class="text-xs text-gray-500">{{ user.email }}</span>
+                    </div>
+                  </a>
+                </li>
+                }
+              </ul>
+            </div>
+            }
+          </div>
+
+          <div class="form-control">
+            <!-- Select tradicional como fallback -->
+            <select class="select select-bordered select-primary mt-8" formControlName="assignedUserId"
+              *ngIf="!searchUserQuery() || userSearchResults.length === 0">
+              <option [ngValue]="null" selected>Ninguno</option> <!-- ← Opción "Ninguno" por defecto -->
+              @for (user of userSearchResults; track user.id) {
+              <option [ngValue]="user.id">
+                {{ user.fullName }} - {{ user.email }}
+              </option>
+              }
+              @if (searchUserQuery() && userSearchResults.length === 0) {
+              <option disabled>No se encontraron usuarios</option>
+              }
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECCIÓN 6: EVIDENCIAS -->
+      <div class="collapse collapse-arrow bg-base-200 border-base-300 border rounded-box">
+        <input type="checkbox" class="peer" />
+        <div class="collapse-title font-medium">
+          <span class="flex items-center">
+            Agregar imagenes de evidencias
+          </span>
+        </div>
+        <div class="collapse-content">
+          <div class="bg-base-200 p-5 rounded-xl">
+            <!-- <h4 class="text-lg font-semibold text-primary mb-4">📸 Evidencias Visuales</h4> -->
+
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-medium mb-2">Imágenes de evidencia</span>
+                <!-- <span class="label-text-alt">Máx. 5 archivos</span> -->
+              </label>
+
+              <input type="file" class="file-input file-input-bordered file-input-primary w-full"
+                (change)="onFileSelected($event)" multiple accept="image/*" max="5">
+
+              <div class="mt-3 text-sm text-gray-500">
+                Formatos: JPG, PNG, GIF. Tamaño máximo: 5MB por archivo.
+              </div>
+
+              <!-- Archivos seleccionados -->
+              @if (selectedFiles().length > 0) {
+              <div class="mt-4 p-3 bg-base-100 rounded-lg border">
+                <p class="text-sm font-medium text-gray-700 mb-2">Archivos seleccionados:</p>
+                <div class="space-y-2">
+                  @for (file of selectedFiles(); track file.name; let i = $index) {
+                  <div class="flex items-center justify-between bg-base-200 p-2 rounded">
+                    <div class="flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary mr-2" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <span class="text-sm truncate max-w-xs">{{ file.name }}</span>
+                      <span class="text-xs text-gray-500 ml-2">({{ (file.size / 1024 / 1024).toFixed(2) }} MB)</span>
+                    </div>
+                    <button type="button" class="btn btn-ghost btn-xs text-error" (click)="removeFile(i)">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                  }
+                </div>
+              </div>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ACCIONES -->
+      <div class="flex justify-end space-x-3 pt-4 border-t">
+        <button type="button" class="btn btn-ghost" (click)="closeModal()" [disabled]="isSubmitting()">
+          Cancelar
+        </button>
+        <button type="submit" class="btn btn-primary" [disabled]="isSubmitting() || progressForm.invalid">
+          @if (isSubmitting()) {
+          <span class="loading loading-spinner loading-sm"></span>
+          Creando Seguimiento...
+          } @else {
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+          Crear Seguimiento
+          }
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+}

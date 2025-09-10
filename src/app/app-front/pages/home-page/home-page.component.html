@@ -1,0 +1,71 @@
+<div class="flex justify-between gap-4 mb-4">
+  <div class="tooltip tooltip-right" data-tip="Crear reporte">
+    <button routerLink="/tickets/new-ticket" class="btn btn-soft btn-success">Nuevo ticket</button>
+  </div>
+
+  <div class="flex justify-start items-center gap-4">
+    <!-- Botón de búsqueda avanzada -->
+    <button class="btn btn-primary" (click)="advancedSearchModal.open()">
+      <!-- <img src="assets/icons/filter.svg" class="w-5 h-5 mr-2"> -->
+      Búsqueda Avanzada
+    </button>
+
+    <!-- Input de búsqueda simple -->
+    <ticket-search-input placeholder="Buscar #Ticket. Ej: INC-000000" (value)="onSearchInput($event)"
+      [debounceTime]="1000" />
+
+    <!-- Botón para limpiar búsqueda avanzada -->
+    @if (isAdvancedSearch()) {
+    <button class="btn btn-soft btn-secondary btn-sm" (click)="clearAdvancedSearch()">
+      Limpiar Filtros
+    </button>
+    }
+
+    <!-- Indicador de búsqueda avanzada activa -->
+    @if (isAdvancedSearch()) {
+    <div class="badge badge-info gap-2">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+        class="inline-block w-4 h-4 stroke-current">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+      </svg>
+      Hay filtros activos
+    </div>
+    }
+  </div>
+
+</div>
+
+<!-- Modal de búsqueda avanzada -->
+<advanced-search-modal #advancedSearchModal (searchComplete)="onAdvancedSearch($event)" />
+
+@if (query()) {
+  <!-- Búsqueda simple por número de ticket -->
+  @if (ticketsResourceByNro.error()) {
+    <h3 class="mt-4 text-error font-bold text-lg">{{ ticketsResourceByNro.error() }}</h3>
+  } @else {
+    <ticket-table
+      [ticketBy]="ticketsResourceByNro.value() ?? []"
+      [errorMessage]="ticketsResourceByNro.error()"
+      [isEmpty]="ticketsResourceByNro.value()?.length === 0"
+      [isLoading]="ticketsResourceByNro.isLoading()"
+    />
+  }
+} @else {
+  <!-- Búsqueda normal o avanzada -->
+  <ticket-table
+    [ticket]="ticketsResource.value()?.tickets ?? []"
+    [errorMessage]="ticketsResource.error()"
+    [isEmpty]="ticketsResource.value()?.tickets?.length === 0"
+    [isLoading]="ticketsResource.isLoading()"
+  />
+}
+
+<!-- Paginación solo para búsquedas normales/avanzadas, no para búsqueda simple -->
+@if (!query()) {
+  <div class="m-4 flex justify-center">
+    <app-pagination
+      [currentPage]="paginationService.currentPage()"
+      [pages]="ticketsResource.value()?.pages ?? 0"
+    />
+  </div>
+}

@@ -1,0 +1,70 @@
+<div class="join flex justify-center items-center flex-wrap gap-1 my-6">
+  <!-- Flecha Anterior -->
+  <button
+    class="join-item btn btn-sm md:btn-md"
+    [class.btn-disabled]="activePage() === 1"
+    [routerLink]="[]"
+    [queryParams]="{page: activePage() - 1}"
+    (click)="activePage.set(activePage() - 1)"
+    aria-label="Página anterior"
+  >
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+    </svg>
+  </button>
+
+  <!-- Primera página -->
+  <button
+    class="join-item btn btn-sm md:btn-md"
+    [class.btn-primary]="1 === activePage()"
+    [routerLink]="[]"
+    [queryParams]="{page: 1}"
+    (click)="activePage.set(1)"
+  >1</button>
+
+  <!-- Puntos suspensivos iniciales si es necesario -->
+  @if (showInitialEllipsis()) {
+    <button class="join-item btn btn-sm md:btn-md btn-disabled">...</button>
+  }
+
+  <!-- Páginas intermedias -->
+  @for (page of getVisiblePages(); track page) {
+    <button
+      class="join-item btn btn-sm md:btn-md"
+      [class.btn-primary]="page === activePage()"
+      [routerLink]="[]"
+      [queryParams]="{page: page}"
+      (click)="activePage.set(page)"
+    >{{ page }}</button>
+  }
+
+  <!-- Puntos suspensivos finales si es necesario -->
+  @if (showFinalEllipsis()) {
+    <button class="join-item btn btn-sm md:btn-md btn-disabled">...</button>
+  }
+
+  <!-- Última página (si hay más de 1 página) -->
+  @if (pages() > 1) {
+    <button
+      class="join-item btn btn-sm md:btn-md"
+      [class.btn-primary]="pages() === activePage()"
+      [routerLink]="[]"
+      [queryParams]="{page: pages()}"
+      (click)="activePage.set(pages())"
+    >{{ pages() }}</button>
+  }
+
+  <!-- Flecha Siguiente -->
+  <button
+    class="join-item btn btn-sm md:btn-md"
+    [class.btn-disabled]="activePage() === pages()"
+    [routerLink]="[]"
+    [queryParams]="{page: activePage() + 1}"
+    (click)="activePage.set(activePage() + 1)"
+    aria-label="Página siguiente"
+  >
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+    </svg>
+  </button>
+</div>

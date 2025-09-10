@@ -1,0 +1,23 @@
+<div class="overflow-x-auto rounded-box border border-base-content/5 bg-base-100">
+  <table class="table table-fixed table-zebra">
+    <!-- head -->
+    <thead>
+      <tr>
+        <th>Codigo</th>
+        <th>Nombre</th>
+        <th>Estado</th>
+        <th>Observaciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (central of central(); track $index) {
+      <tr>
+        <td>{{ central.central_code }}</td>
+        <td class="capitalize">{{ central.central_name }}</td>
+        <td class="capitalize">{{ central.state }}</td>
+        <td class="uppercase text-xs">{{ central.observations }}</td>
+      </tr>
+      }
+    </tbody>
+  </table>
+</div>

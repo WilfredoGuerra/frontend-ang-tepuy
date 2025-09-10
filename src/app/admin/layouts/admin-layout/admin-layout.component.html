@@ -1,0 +1,90 @@
+<div class="fixed overflow-y-scroll w-screen h-screen antialiased selection:bg-blue-600 selection:text-white">
+
+  <div class="sticky top-0 z-50">
+    <front-up />
+  </div>
+
+  <div class="flex flex-col relative w-screen">
+    <div id="menu" class="min-h-screen z-10 w-64 fixed left-0 h-screen overflow-y-scroll">
+      <a routerLink="/admin/tickets"
+        class="btn btn-ghost w-full text-lg font-montserrat text-fuchsia-600 my-2 px-6 font-bold text-center">
+        Módulo
+        <span class="text-blue-600">| Tepuy</span>
+      </a>
+      <div id="nav" class="w-full px-6">
+
+        <ul class="menu bg-base-200 rounded-box w-49">
+          <li>
+            <a routerLink="/dashboard" routerLinkActive="text-accent" class="text-md font-bold text-primary">
+              <img class="mt-1"
+                src="assets/icons/{{ currentTheme === 'dark' ? 'ic--twotone-space-dashboard-dark' : 'ic--twotone-space-dashboard-light' }}.svg"
+                alt="" width=100%>
+              Dashboard</a>
+          </li>
+          <li>
+            <a routerLink="/admin/tickets" routerLinkActive="text-accent" class="text-md font-bold text-primary">
+              <img class="mt-1"
+                src="assets/icons/{{ currentTheme === 'dark' ? 'ic--baseline-tickets-dark' : 'ic--baseline-tickets-light' }}.svg"
+                alt="" width=100%>
+              Tickets</a>
+            <!-- <ul class="italic">
+              <li><a routerLink="/admin/group/conmutación" routerLinkActive="text-accent">
+                  <p class="first-letter:uppercase">conmutación</p>
+                </a></li>
+              <li><a routerLink="/admin/group/transmisión" routerLinkActive="text-accent">
+                  <p class="first-letter:uppercase">transmisión</p>
+                </a></li>
+              <li><a routerLink="/admin/group/red de datos" routerLinkActive="text-accent">
+                  <p class="first-letter:uppercase">red de datos</p>
+                </a></li>
+              <li><a routerLink="/admin/group/redes ip" routerLinkActive="text-accent">
+                  <p class="first-letter:uppercase">redes ip</p>
+                </a></li>
+              <li><a routerLink="/admin/group/servicios ti" routerLinkActive="text-accent">
+                  <p class="first-letter:uppercase">servicios ti</p>
+                </a></li>
+            </ul> -->
+          </li>
+          @if (authService.user()?.roles?.includes('super_user')) {
+          <li>
+            <a routerLink="/admin/auth/users" routerLinkActive="text-accent" class="text-md font-bold text-primary">
+              <img class="mt-1" src="assets/icons/{{ currentTheme === 'dark' ? 'user-dark' : 'user-light' }}.svg" alt=""
+                width=100%>
+              Usuarios</a>
+            <!-- <ul class="italic">
+              <li><a routerLink="/auth/register" routerLinkActive="text-accent">
+                  <p class="first-letter:uppercase">crear usuario</p>
+                </a></li>
+            </ul> -->
+          </li>
+          }
+          @if (authService.user()?.roles?.includes('super_user')) {
+          <li>
+            <a routerLink="/admin/network-elements" routerLinkActive="text-accent" class="text-md font-bold text-primary">
+              <img class="mt-1" src="assets/icons/{{ currentTheme === 'dark' ? 'network-element-dark' : 'network-element-light' }}.svg" alt=""
+                width=100%>
+              Elementos de red</a>
+            <!-- <ul class="italic">
+              <li><a routerLink="/network-elements" routerLinkActive="text-accent">
+                  <p class="first-letter:uppercase">crear E.R.</p>
+                </a></li>
+            </ul> -->
+          </li>
+          }
+        </ul>
+        <!-- Menu item end -->
+
+        <div class="divider my-2"></div>
+
+        <button (click)="exitSystem()" class="btn btn-ghost text-accent w-full">Cerrar sesión</button>
+
+
+      </div>
+    </div>
+
+    <div class="flex-1 ml-64 pt-5 px-5">
+      <router-outlet />
+    </div>
+
+  </div>
+</div>

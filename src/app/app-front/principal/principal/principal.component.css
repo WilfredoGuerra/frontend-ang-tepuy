@@ -1,0 +1,64 @@
+.module-card {
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.module-card:hover {
+  transform: translateY(-5px);
+  border-color: hsl(var(--p) / 0.3);
+}
+
+.module-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+/* Animación suave para los iconos */
+.module-icon svg {
+  transition: transform 0.3s ease;
+}
+
+.module-card:hover .module-icon svg {
+  transform: scale(1.2);
+}
+
+/* Efecto de iluminación al pasar el mouse */
+.module-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 16px;
+  background: radial-gradient(circle at center, transparent, hsl(var(--p) / 0.05) 50%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.module-card:hover::before {
+  opacity: 1;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .module-icon {
+    width: 70px;
+    height: 70px;
+  }
+
+  .module-icon svg {
+    width: 28px;
+    height: 28px;
+  }
+
+  .module-card {
+    padding: 1.5rem;
+  }
+}

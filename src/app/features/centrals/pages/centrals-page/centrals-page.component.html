@@ -1,0 +1,22 @@
+<div class="flex flex-row justify-between mb-2">
+  <div>
+    <h1 class="text-accent font-semibold text-lg font-montserrat">Listado de centrales</h1>
+  </div>
+
+  <!-- Boton para crear nueva central -->
+  <!-- este boton abre el modal con el formulario de creacion de centrales: onclick="my_modal_4.showModal()" -->
+  <div>
+    <button type="button" class="btn btn-soft btn-primary">Nuevo</button>
+  </div>
+
+</div>
+
+
+<!-- <network-element-table [network]="networkElementsResource.value()?.networksElements ?? []" /> -->
+<centrals-table [central]="centralsResource.value()?.centralLengths ?? []" />
+
+<!-- <dialog id="my_modal_4" class="modal">
+  <div class="modal-box w-11/12 max-w-5xl">
+    //Aqui crear el componente de crear nueva central <new-central />
+  </div>
+</dialog> -->

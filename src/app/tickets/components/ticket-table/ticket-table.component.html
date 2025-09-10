@@ -1,0 +1,164 @@
+<div class="overflow-x-auto my-4">
+  <table class="table table-zebra">
+    <!-- head -->
+    <thead>
+      <tr class="font-montserrat">
+        <!-- <th>
+          <label>
+            <input type="checkbox" class="checkbox" />
+          </label>
+        </th> -->
+        <th># Ticket / Fecha</th>
+        <th>Grupo / Plataforma</th>
+        <th>Severidad / Status</th>
+        <th>Origen / Falla</th>
+        <th>Detalles</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- row 1 -->
+      @for (tick of ticket() || ticketBy(); track tick.id_ticket) {
+      <tr class="hover:bg-base-300">
+        <!-- <th>
+             <label>
+               <input type="checkbox" class="checkbox" />
+             </label>
+           </th> -->
+        <td>
+          <div class="flex items-center gap-3">
+            <div>
+              <a class="font-bold uppercase">{{ tick.nro_ticket }}</a>
+              <div class="text-sm opacity-50">{{ tick.form_open_date | date : "d/M/yyyy, hh:mm a"}} </div>
+            </div>
+          </div>
+        </td>
+        <td class="capitalize">
+          @if(ticket()) {
+          {{ tick.group }}
+          } @else if (ticketBy()) {
+          {{ tick.group?.group }}
+          }
+          <br />
+          <span class="capitalize">
+            @if(ticket()) {
+            {{ tick.platform }}
+            } @else if (ticketBy()) {
+            {{ tick.platform?.platform }}
+            }
+          </span>
+        </td>
+        <td class="lowercase first-letter:uppercase">
+          @if(ticket()) {
+          {{ tick.severity }}
+          } @else if (ticketBy()) {
+          {{ tick.severity?.severity }}
+          }
+          <br />
+          <div class="uppercase italic">
+            @if(ticket()) {
+            @if (tick.statusId === 1) {
+            <span class="badge bg-yellow-600 badge-sm font-bold">{{ tick.status }}</span>
+            }
+            @else if (tick.statusId === 2) {
+            <span class="badge bg-red-600 badge-sm font-bold">{{ tick.status }}</span>
+            }
+            @else {
+            <span class="badge bg-green-700 badge-sm font-bold">{{ tick.status }}</span>
+            }
+            } @else if (ticketBy()) {
+            @if (tick.statusId === 1) {
+            <span class="badge bg-yellow-600 badge-sm font-bold">{{ tick.status?.status }}</span>
+            }
+            @else if (tick.statusId === 2) {
+            <span class="badge bg-red-600 badge-sm font-bold">{{ tick.status?.status }}</span>
+            }
+            @else {
+            <span class="badge bg-green-700 badge-sm font-bold">{{ tick.status?.status }}</span>
+            }
+            }
+          </div>
+        </td>
+        <td>
+          <div class="lowercase first-letter:uppercase">
+            <span>
+              @if(ticket()) {
+              {{ tick.origin }}
+              } @else if (ticketBy()) {
+              {{ tick.origin?.origin }}
+              }
+            </span>
+          </div>
+          <div class="lowercase first-letter:uppercase">
+            <span>
+              @if(ticket()) {
+              {{ tick.failure }}
+              } @else if (ticketBy()) {
+              {{ tick.failure?.failure }}
+              }
+            </span>
+          </div>
+        </td>
+        <!-- <th>
+          <div class="flex gap-2">
+            @if (authService.isAdmin()) {
+            <a class="btn btn-circle btn-info tooltip" data-tip="Editar ticket"
+              [routerLink]="['/admin/tickets/by/', tick.id_ticket]">
+              <img class="" src="assets/icons/{{ 'mynaui--edit-one-solid' }}.svg">
+            </a>
+            }
+            <a class="btn btn-circle btn-success tooltip" data-tip="Información ticket"
+              [routerLink]="['/tickets/by/', tick.id_ticket]">
+              <img class="" src="assets/icons/{{ 'hugeicons--information-circle' }}.svg">
+            </a>
+          </div>
+        </th> -->
+
+
+        <td>
+          <div class="flex gap-2">
+            @if (authService.isAdmin()) {
+            <div class="tooltip" data-tip="Editar">
+              <button class="btn btn-circle btn-soft btn-warning btn-sm"
+                [routerLink]="['/admin/tickets/tickets/by/', tick.id_ticket]">
+                <img class="" src="assets/icons/{{ 'mynaui--edit-one-solid' }}.svg">
+              </button>
+            </div>
+            }
+            <div class="tooltip" data-tip="Información" [routerLink]="['/tickets/tickets/by/', tick.id_ticket]">
+              <button class="btn btn-circle btn-soft btn-success btn-sm">
+                <img class="" src="assets/icons/{{ 'hugeicons--information-circle' }}.svg">
+              </button>
+            </div>
+          </div>
+        </td>
+
+      </tr>
+      }
+
+      @if (errorMessage()) {
+      <tr>
+        <td colspan="8" class="text-center">
+          {{ errorMessage() }}
+        </td>
+      </tr>
+      }
+
+      @if (ticket()?.length === 0 && !isLoading()) {
+      <tr>
+        <td colspan="8" class="text-center">
+          No se cargaron tickets
+        </td>
+      </tr>
+      }
+
+      @if (isLoading()) {
+      <tr>
+        <td>
+          <span class="loading loading-bars loading-xl"></span>
+        </td>
+      </tr>
+      }
+
+    </tbody>
+  </table>
+</div>

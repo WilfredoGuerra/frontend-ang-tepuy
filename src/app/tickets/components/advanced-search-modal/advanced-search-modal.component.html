@@ -1,0 +1,182 @@
+<div class="modal" [class.modal-open]="isOpen()">
+  <div class="modal-box w-11/12 max-w-5xl">
+    <h3 class="font-bold text-lg">Búsqueda Avanzada de Tickets</h3>
+
+    @if (isLoading()) {
+    <div class="flex justify-center items-center py-8">
+      <span class="loading loading-spinner loading-lg"></span>
+      <span class="ml-2">Cargando datos...</span>
+    </div>
+    } @else {
+    <form #searchForm="ngForm">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 my-4">
+        <!-- Grupo -->
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text">Grupo</span>
+            @if (searchCriteria.groupId) {
+            <button type="button" class="btn btn-xs btn-ghost" (click)="clearField('groupId')">×</button>
+            }
+          </label>
+          <select class="select select-bordered" [(ngModel)]="searchCriteria.groupId" name="groupId">
+            <option [ngValue]="null">Todos los grupos</option>
+            @for (group of groups(); track $index) {
+            <option [value]="group.id">{{ group.group }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Severidad -->
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text">Severidad</span>
+            @if (searchCriteria.severityId) {
+            <button type="button" class="btn btn-xs btn-ghost" (click)="clearField('severityId')">×</button>
+            }
+          </label>
+          <select class="select select-bordered" [(ngModel)]="searchCriteria.severityId" name="severityId">
+            <option [ngValue]="null">Todas las severidades</option>
+            @for (severity of severities(); track $index) {
+            <option [value]="severity.id">{{ severity.severity }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Status -->
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text">Status</span>
+            @if (searchCriteria.statusId) {
+            <button type="button" class="btn btn-xs btn-ghost" (click)="clearField('statusId')">×</button>
+            }
+          </label>
+          <select class="select select-bordered" [(ngModel)]="searchCriteria.statusId" name="statusId">
+            <option [ngValue]="null">Todos los status</option>
+            @for (status of statuses(); track $index) {
+            <option [value]="status.id">{{ status.status }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Plataforma -->
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text">Plataforma</span>
+            @if (searchCriteria.platformId) {
+            <button type="button" class="btn btn-xs btn-ghost" (click)="clearField('platformId')">×</button>
+            }
+          </label>
+          <select class="select select-bordered" [(ngModel)]="searchCriteria.platformId" name="platformId">
+            <option [ngValue]="null">Todas las plataformas</option>
+            @for (platform of platforms(); track $index) {
+            <option [value]="platform.id">{{ platform.platform }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Origen -->
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text">Origen</span>
+            @if (searchCriteria.originId) {
+            <button type="button" class="btn btn-xs btn-ghost" (click)="clearField('originId')">×</button>
+            }
+          </label>
+          <select class="select select-bordered" [(ngModel)]="searchCriteria.originId" name="originId">
+            <option [ngValue]="null">Todos los orígenes</option>
+            @for (origin of origins(); track $index) {
+            <option [value]="origin.id">{{ origin.origin }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Falla -->
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text">Falla</span>
+            @if (searchCriteria.failureId) {
+            <button type="button" class="btn btn-xs btn-ghost" (click)="clearField('failureId')">×</button>
+            }
+          </label>
+          <select class="select select-bordered" [(ngModel)]="searchCriteria.failureId" name="failureId">
+            <option [ngValue]="null">Todas las fallas</option>
+            @for (failure of failures(); track $index) {
+            <option [value]="failure.id">{{ failure.failure }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Definición del Problema -->
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text">Definición del Problema</span>
+            @if (searchCriteria.definition_problem) {
+            <button type="button" class="btn btn-xs btn-ghost" (click)="clearField('definition_problem')">×</button>
+            }
+          </label>
+          <input type="text" class="input input-bordered" [(ngModel)]="searchCriteria.definition_problem"
+            name="definition_problem" placeholder="Buscar en definición...">
+        </div>
+
+        <!-- Evidencias -->
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text">Evidencias</span>
+            @if (searchCriteria.evidences_problem) {
+            <button type="button" class="btn btn-xs btn-ghost" (click)="clearField('evidences_problem')">×</button>
+            }
+          </label>
+          <input type="text" class="input input-bordered" [(ngModel)]="searchCriteria.evidences_problem"
+            name="evidences_problem" placeholder="Buscar en evidencias...">
+        </div>
+
+        <!-- Hipótesis -->
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text">Hipótesis</span>
+            @if (searchCriteria.hypothesis) {
+            <button type="button" class="btn btn-xs btn-ghost" (click)="clearField('hypothesis')">×</button>
+            }
+          </label>
+          <input type="text" class="input input-bordered" [(ngModel)]="searchCriteria.hypothesis" name="hypothesis"
+            placeholder="Buscar en hipótesis...">
+        </div>
+
+        <!-- Fecha Inicio -->
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text">Fecha Inicio</span>
+            @if (searchCriteria.createdDateStart) {
+            <button type="button" class="btn btn-xs btn-ghost" (click)="clearField('createdDateStart')">×</button>
+            }
+          </label>
+          <input type="date" class="input input-bordered" [(ngModel)]="searchCriteria.createdDateStart"
+            name="createdDateStart">
+        </div>
+
+        <!-- Fecha Fin -->
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text">Fecha Fin</span>
+            @if (searchCriteria.createdDateEnd) {
+            <button type="button" class="btn btn-xs btn-ghost" (click)="clearField('createdDateEnd')">×</button>
+            }
+          </label>
+          <input type="date" class="input input-bordered" [(ngModel)]="searchCriteria.createdDateEnd"
+            name="createdDateEnd">
+        </div>
+      </div>
+
+      <div class="modal-action">
+        <button type="button" class="btn btn-ghost" (click)="close()">Cancelar</button>
+        <button type="button" class="btn btn-secondary" (click)="resetForm()">
+          Limpiar Todo
+        </button>
+        <button type="button" class="btn btn-primary" (click)="search()">
+          Buscar
+        </button>
+      </div>
+    </form>
+    }
+  </div>
+</div>

@@ -1,0 +1,38 @@
+<div class="flex flex-row justify-between">
+  <div>
+    <h1 class="text-lg font-bold font-montserrat">
+      Listado de tickets - Grupo:
+      <span class="text-info">{{ group() }}</span>
+    </h1>
+  </div>
+
+  <div class="mt-0">
+    <ticket-search-input placeholder="Buscar #Ticket. Ej: INC-000000" (value)="query.set($event)"
+      [debounceTime]="1000" />
+  </div>
+
+</div>
+
+@if (query()) {
+@if (ticketsResourceByNro.error()) {
+<h3 class="mt-4 text-error font-bold text-lg">{{ ticketsResourceByNro.error() }}</h3>
+} @else {
+<ticket-table [ticketBy]="ticketsResourceByNro.value() ?? []" [errorMessage]="ticketsResourceByNro.error()"
+  [isEmpty]="ticketsResourceByNro.value()?.length === 0" [isLoading]="ticketsResourceByNro.isLoading()" />
+}
+} @else {
+<ticket-table [ticket]="ticketsResource.value()?.tickets ?? []" [errorMessage]="ticketsResource.error()"
+  [isEmpty]="ticketsResource.value()?.tickets?.length === 0" [isLoading]="ticketsResource.isLoading()" />
+}
+
+<!-- <ticket-table
+  [ticket]="ticketsResource.value()?.tickets ?? []"
+  [errorMessage]="ticketsResource.error()"
+  [isEmpty]="ticketsResource.value()?.tickets?.length === 0"
+  [isLoading]="ticketsResource.isLoading()"
+/> -->
+
+<!-- <app-pagination
+  [currentPage]="paginationService.currentPage()"
+  [pages]="ticketsResource.value()?.pages ?? 0"
+/> -->

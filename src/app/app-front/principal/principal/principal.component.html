@@ -1,0 +1,145 @@
+<div class="min-h-screen bg-base-100 p-2 md:p-8">
+  <div class="flex justify-end">
+    <theme-toggle />
+  </div>
+  <div class="max-w-6xl mx-auto font-montserrat">
+    <!-- Título principal -->
+    <div class="flex items-center justify-between mb-4 animate__animated animate__fadeInUp">
+      <!-- Logo izquierdo -->
+      <div class="w-24 md:w-50 flex-shrink-0">
+        <img src="assets/layout/images/{{ currentTheme === 'dark' ? 'logo_cantv' : 'logo_cantv_color' }}.png"
+          alt="Logo CANTV" class="w-full h-auto">
+      </div>
+
+      <!-- Título principal centrado -->
+      <div class="text-center mx-4 flex-grow">
+        <h1 class="text-3xl md:text-4xl font-bold text-primary mb-2">GRAN SABANA</h1>
+        <h2 class="text-lg md:text-xl text-secondary">Gestor Integral de Incidencias</h2>
+        <h2 class="text-lg md:text-xl text-accent">Gerencia Centro de Operaciones de la Red</h2>
+      </div>
+
+      <!-- Logo derecho -->
+      <div class="w-24 md:w-32 flex-shrink-0">
+        <img src="assets/layout/images/{{ currentTheme === 'dark' ? 'logo_gran_sabana' : 'logo_gran_sabana_dark' }}.png"
+          alt="Logo Gran Sabana" class="w-full h-auto">
+      </div>
+
+    </div>
+
+    <!-- Contenedor de módulos -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- Primera fila con 3 módulos -->
+      <!-- Módulo TEPUY -->
+      <a [routerLink]="'/auth/login'"
+        class="module-card bg-base-200 rounded-2xl shadow-lg p-6 flex flex-col items-center transition-all duration-300 hover:shadow-xl border border-base-300">
+        <div class="module-icon bg-gradient-to-r from-blue-500 to-blue-700 text-white mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24">
+            <path fill="#fff"
+              d="M20 4H4c-1.1 0-2 .9-2 2v3h2V6h16v3h2V6c0-1.1-.9-2-2-2m0 14H4v-3H2v3c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2v-3h-2z" />
+            <path fill="#fff"
+              d="M14.89 7.55c-.34-.68-1.45-.68-1.79 0L10 13.76l-1.11-2.21A.99.99 0 0 0 8 11H2v2h5.38l1.72 3.45c.18.34.52.55.9.55s.72-.21.89-.55L14 10.24l1.11 2.21c.17.34.51.55.89.55h6v-2h-5.38z" />
+          </svg>
+        </div>
+        <h3 class="font-bold text-xl text-primary mb-2">TEPUY</h3>
+        <p class="text-center text-base-content/70">Monitoreo y Control</p>
+      </a>
+
+      <!-- Módulo RORAIMA -->
+      <a
+        class="module-card bg-base-200 rounded-2xl shadow-lg p-6 flex flex-col items-center transition-all duration-300 hover:shadow-xl border border-base-300">
+        <div class="module-icon bg-gradient-to-r from-purple-500 to-indigo-600 text-white mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24">
+            <path fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 12V8m6 4v-2m-3 2v-1M3 4h18M4 4v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4m-8 12v4m-3 0h6" />
+          </svg>
+        </div>
+        <h3 class="font-bold text-xl text-primary mb-2">RORAIMA</h3>
+        <p class="text-center text-base-content/70">Dashboard estadístico</p>
+      </a>
+
+      <!-- Módulo CAMARAQUA -->
+      <a
+        class="module-card bg-base-200 rounded-2xl shadow-lg p-6 flex flex-col items-center transition-all duration-300 hover:shadow-xl border border-base-300">
+        <div class="module-icon bg-gradient-to-r from-green-500 to-teal-600 text-white mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24">
+            <path fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M10 13a2 2 0 1 0 4 0a2 2 0 0 0-4 0m-2 8v-1a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v1M15 5a2 2 0 1 0 4 0a2 2 0 0 0-4 0m2 5h2a2 2 0 0 1 2 2v1M5 5a2 2 0 1 0 4 0a2 2 0 0 0-4 0m-2 8v-1a2 2 0 0 1 2-2h2" />
+          </svg>
+        </div>
+        <h3 class="font-bold text-xl text-primary mb-2">CANARAGUA</h3>
+        <p class="text-center text-base-content/70">Talento humano</p>
+      </a>
+    </div>
+
+    <!-- Segunda fila con 4 módulos centrados -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
+      <!-- Módulo OKINOSO -->
+      <a
+        class="module-card bg-base-200 rounded-2xl shadow-lg p-6 flex flex-col items-center transition-all duration-300 hover:shadow-xl border border-base-300">
+        <div class="module-icon bg-gradient-to-r from-yellow-500 to-orange-600 text-white mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24">
+            <path fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M5 4h4l2 5l-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2m10 3a2 2 0 0 1 2 2m-2-6a6 6 0 0 1 6 6" />
+          </svg>
+        </div>
+        <h3 class="font-bold text-xl text-primary mb-2">ORINOCO</h3>
+        <p class="text-center text-base-content/70">Escalatorio regional</p>
+      </a>
+      <!-- Módulo CANAIMA -->
+      <a
+        class="module-card bg-base-200 rounded-2xl shadow-lg p-6 flex flex-col items-center transition-all duration-300 hover:shadow-xl border border-base-300">
+        <div class="module-icon bg-gradient-to-r from-red-500 to-pink-600 text-white mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24">
+            <g fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+              <path d="M20 11a8.1 8.1 0 0 0-6.986-6.918A8.1 8.1 0 0 0 4.995 8M4 13a8.1 8.1 0 0 0 15 3" />
+              <path
+                d="M18 16a1 1 0 1 0 2 0a1 1 0 1 0-2 0M4 8a1 1 0 1 0 2 0a1 1 0 1 0-2 0m5 4a3 3 0 1 0 6 0a3 3 0 1 0-6 0" />
+            </g>
+          </svg>
+        </div>
+        <h3 class="font-bold text-xl text-primary mb-2">CANAIMA</h3>
+        <p class="text-center text-base-content/70">Control de cambios</p>
+      </a>
+
+      <!-- Módulo MAWARI -->
+      <a
+        class="module-card bg-base-200 rounded-2xl shadow-lg p-6 flex flex-col items-center transition-all duration-300 hover:shadow-xl border border-base-300">
+        <div class="module-icon bg-gradient-to-r from-blue-500 to-cyan-600 text-white mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24">
+            <g fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+              <path d="M19.5 7A9 9 0 0 0 12 3a8.99 8.99 0 0 0-7.484 4" />
+              <path
+                d="M11.5 3a17 17 0 0 0-1.826 4M12.5 3a17 17 0 0 1 1.828 4M19.5 17a9 9 0 0 1-7.5 4a8.99 8.99 0 0 1-7.484-4" />
+              <path
+                d="M11.5 21a17 17 0 0 1-1.826-4m2.826 4a17 17 0 0 0 1.828-4M2 10l1 4l1.5-4L6 14l1-4m10 0l1 4l1.5-4l1.5 4l1-4M9.5 10l1 4l1.5-4l1.5 4l1-4" />
+            </g>
+          </svg>
+        </div>
+        <h3 class="font-bold text-xl text-primary mb-2">MAWARI</h3>
+        <p class="text-center text-base-content/70">Portal Web</p>
+      </a>
+
+      <!-- Módulo AUTANA -->
+      <a
+        class="module-card bg-base-200 rounded-2xl shadow-lg p-6 flex flex-col items-center transition-all duration-300 hover:shadow-xl border border-base-300">
+        <div class="module-icon bg-gradient-to-r from-gray-700 to-gray-900 text-white mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24">
+            <g fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+              <path
+                d="M12.003 21c-.732.001-1.465-.438-1.678-1.317a1.724 1.724 0 0 0-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 0 0-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 0 0 1.066-2.573c-.94-1.543.826-3.31 2.37-2.37c1 .608 2.296.07 2.572-1.065c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c.886.215 1.325.957 1.318 1.694" />
+              <path
+                d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0-6 0m8.001 7a2 2 0 1 0 4 0a2 2 0 1 0-4 0m2-3.5V17m0 4v1.5m3.031-5.25l-1.299.75m-3.463 2l-1.3.75m0-3.5l1.3.75m3.463 2l1.3.75" />
+            </g>
+          </svg>
+        </div>
+        <h3 class="font-bold text-xl text-primary mb-2">AUTANA</h3>
+        <p class="text-center text-base-content/70">Pase a producción</p>
+      </a>
+    </div>
+
+    <!-- Footer -->
+    <div class="mt-12 text-center text-base-content/60 text-sm">
+      <p>Gestor Integral de Incidencias de la red - Versión 1.0</p>
+    </div>
+  </div>
+</div>

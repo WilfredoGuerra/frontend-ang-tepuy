@@ -1,0 +1,11 @@
+@if (ticketResource.isLoading()) {
+<div class="flex justify-center items-center h-screen">
+  <span class="loading loading-ring loading-xl"></span>
+</div>
+}
+
+@if (ticketResource.hasValue()) {
+  <div class="mb-5">
+    <ticket-details [ticket]="ticketResource.value()"/>
+  </div>
+}

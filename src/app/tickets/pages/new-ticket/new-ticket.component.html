@@ -1,0 +1,862 @@
+<!-- <div class="container mx-auto px-4 py-2"> -->
+<div class="flex items-center gap-2 ml-8 font-montserrat">
+  <h3 class="text-lg font-semibold">Crear nuevo reporte:</h3>
+  <!-- <p class="text-accent">{{ ticket().nro_ticket }}</p> -->
+</div>
+<form [formGroup]="ticketForm" (ngSubmit)="onSubmit()" class="shadow-md rounded-lg px-8 pt-3 pb-2 mb-4">
+
+  <!-- <div>
+      <label class="block text-sm font-bold mb-2 text-primary" for="group">
+        Nro Ticket
+      </label>
+      <input type="text" class="input input-bordered w-32 mb-3" formControlName="nro_ticket" id="nro_ticket" name="nro_ticket"
+      [class.border-red-500]="ticketForm.get('nro_ticket')?.errors ?? false" required>
+      <form-error-label [control]="ticketForm.get('nro_ticket')!" />
+    </div> -->
+
+  <!-- Primera fila - 2 columnas con selects -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-3">
+    <!-- Columna 1 -->
+    <div class="space-y-4">
+      <!-- Grupo -->
+      <div>
+        <label class="block text-sm font-bold mb-2 text-primary" for="group">
+          Grupo
+        </label>
+        <select formControlName="groupId" class="select mb-1 py-2 w-full capitalize" id="groupId" name="groupId"
+          [class.border-red-500]="ticketForm.get('groupId')?.errors ?? false" required>
+          <option class="" disabled selected>Seleccione un grupo</option>
+          @for (group of groupsResource.value(); track group.id) {
+          <option class="capitalize rounded-sm px-2 py-1 hover:font-bold hover:italic" [ngValue]="group.id">{{
+            group.group }}
+          </option>
+
+          }
+        </select>
+        <form-error-label [control]="ticketForm.get('groupId')!" />
+      </div>
+
+      <!-- Origen -->
+      <div>
+        <label class="block text-sm font-bold mb-2 text-primary" for="origin">
+          Origen
+        </label>
+        <select formControlName="originId" class="select mb-1 py-2 w-full capitalize" id="origin" name="origin"
+          [class.border-red-500]="ticketForm.get('originId')?.errors ?? false" required>
+          <option class="" disabled selected>Seleccione origen</option>
+          @for (origin of originsResource.value(); track origin.id) {
+          <option class="capitalize rounded-sm px-2 py-1 hover:font-bold hover:italic" [ngValue]="origin.id">{{
+            origin.origin }}
+          </option>
+          }
+        </select>
+        <form-error-label [control]="ticketForm.get('originId')!" />
+      </div>
+
+
+    </div>
+
+    <!-- Columna 2 -->
+    <div class="space-y-4">
+      <!-- Severidad -->
+      <div>
+        <label class="block text-sm font-bold mb-2 text-primary" for="severity">
+          Severidad
+        </label>
+        <select formControlName="severityId" class="select mb-1 py-2 w-full capitalize" id="severity" name="severity"
+          [class.border-red-500]="ticketForm.get('severityId')?.errors ?? false" required>
+          <option class="" disabled selected>Seleccione severidad</option>
+          @for (severity of severitiesResource.value(); track severity.id) {
+          <option class="capitalize rounded-sm px-2 py-1 hover:font-bold hover:italic" [ngValue]="severity.id">{{
+            severity.severity }}
+          </option>
+          }
+        </select>
+        <form-error-label [control]="ticketForm.get('severityId')!" />
+      </div>
+
+
+
+      <!-- Falla -->
+      <div>
+        <label class="block text-sm font-bold mb-2 text-primary" for="failure">
+          Falla
+        </label>
+        <select formControlName="failureId" class="select mb-1 py-2 w-full capitalize" id="failure" name="failure"
+          [class.border-red-500]="ticketForm.get('failureId')?.errors ?? false" required>
+          <option class="" disabled selected>Seleccione tipo de falla</option>
+          @for (failure of failuresResource.value(); track failure.id) {
+          <option class="capitalize rounded-sm px-2 py-1 hover:font-bold hover:italic" [ngValue]="failure.id">
+            {{ failure.failure }}
+          </option>
+          }
+        </select>
+        <form-error-label [control]="ticketForm.get('failureId')!" />
+      </div>
+    </div>
+
+    <!-- Columna 3 -->
+    <div class="space-y-4">
+      <!-- Plataforma -->
+      <div>
+        <label class="block text-sm font-bold mb-2 text-primary" for="platform">
+          Plataforma
+        </label>
+        <select formControlName="platformId" class="select mb-1 py-2 w-full capitalize" id="platform" name="platform"
+          [class.border-red-500]="ticketForm.get('platformId')?.errors ?? false" required>
+          <option class="" disabled selected>Seleccione una plataforma</option>
+          @for (platform of platformsResource.value(); track platform.id) {
+          <option class="capitalize rounded-sm px-2 py-1 hover:font-bold hover:italic" [ngValue]="platform.id">{{
+            platform.platform }}
+          </option>
+          }
+        </select>
+        <form-error-label [control]="ticketForm.get('platformId')!" />
+      </div>
+
+      <!-- Status -->
+      <div>
+        <label class="block text-sm font-bold mb-2 text-primary" for="status">
+          Estatus
+        </label>
+        <select formControlName="statusId" class="select mb-1 py-2 w-full capitalize" id="status" name="status"
+          [class.border-red-500]="ticketForm.get('statusId')?.errors ?? false" [class.bg-gray-100]="true"
+          [class.cursor-not-allowed]="true">
+          <option class="" disabled selected>Seleccione un estatus</option>
+          @for (status of statusesResource.value(); track status.id) {
+          <option class="capitalize rounded-sm px-2 py-1 hover:font-bold hover:italic" [ngValue]="status.id">{{
+            status.status }}
+          </option>
+          }
+        </select>
+        <form-error-label [control]="ticketForm.get('statusId')!" />
+      </div>
+    </div>
+  </div>
+
+  <!-- Segunda fila - Selector de tipo y elemento de red/tramo de fibra -->
+  <div class="mb-3">
+    <!-- Selector de tipo (radio buttons) -->
+    <div class="flex gap-4 mb-3">
+      <label class="cursor-pointer label justify-start gap-2" [class.opacity-50]="isSelectionLocked()"
+        [class.cursor-not-allowed]="isSelectionLocked()">
+        <input type="radio" name="selectionType" class="radio radio-primary" [checked]="selectionType() === 'network'"
+          [disabled]="isSelectionLocked()" (change)="onSelectionTypeChange('network')" />
+        <span class="label-text">Elemento de red</span>
+      </label>
+
+      <label class="cursor-pointer label justify-start gap-2" [class.opacity-50]="isSelectionLocked()"
+        [class.cursor-not-allowed]="isSelectionLocked()">
+        <input type="radio" name="selectionType" class="radio radio-primary" [checked]="selectionType() === 'fiber'"
+          [disabled]="isSelectionLocked()" (change)="onSelectionTypeChange('fiber')" />
+        <span class="label-text">Tramo de fibra</span>
+      </label>
+
+      <!-- Indicador visual de que la selección está bloqueada -->
+      @if (isSelectionLocked()) {
+      <div class="badge badge-info badge-lg ml-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        </svg>
+        Selección automática
+      </div>
+      }
+    </div>
+
+    <!-- Input para Elementos de red (visible solo cuando selectionType es 'network') -->
+    @if (selectionType() === 'network') {
+    <div>
+      <label class="block text-sm font-bold mb-2" for="networkElements">
+        Elementos red
+      </label>
+      <div class="relative">
+        <input type="text" class="input input-bordered w-full pr-10 cursor-pointer uppercase"
+          [value]="getSelectedNetworkElementsText()" readonly (click)="openNetworkElementsModal()"
+          [class.border-red-500]="ticketForm.get('elementNetworkId')?.errors ?? false" tabindex="1"
+          id="networkElements" />
+        <button type="button" class="absolute inset-y-0 right-0 flex items-center pr-3"
+          (click)="openNetworkElementsModal()">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+        </button>
+      </div>
+      @if (ticketForm.controls.elementNetworkId.invalid && ticketForm.controls.elementNetworkId.touched) {
+      <label class="label">
+        <span class="text-red-500 text-xs">Se requiere al menos un elemento de red</span>
+      </label>
+      }
+    </div>
+    }
+
+    <!-- Input para Tramo de fibra (visible solo cuando selectionType es 'fiber') -->
+    @if (selectionType() === 'fiber') {
+    <div>
+      <label class="block text-sm font-bold mb-2" for="fiberLength">
+        Tramo de fibra
+      </label>
+      <div class="relative">
+        <input type="text" class="input input-bordered w-full pr-10 cursor-pointer uppercase"
+          [value]="getSelectedFiberLengthText()" readonly (click)="openFiberLengthsModal()"
+          [class.border-red-500]="ticketForm.get('fiberLengthId')?.errors ?? false" tabindex="1" id="fiberLength" />
+        <button type="button" class="absolute inset-y-0 right-0 flex items-center pr-3"
+          (click)="openFiberLengthsModal()">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+        </button>
+      </div>
+      @if (ticketForm.controls.fiberLengthId.invalid && ticketForm.controls.fiberLengthId.touched) {
+      <label class="label">
+        <span class="text-red-500 text-xs">Se requiere un tramo de fibra</span>
+      </label>
+      }
+    </div>
+    }
+  </div>
+
+  <!-- Modal para selección de elementos de red -->
+  @if (showNetworkElementsModal()) {
+  <div class="modal modal-open">
+    <div class="modal-box max-w-5xl max-h-[90vh] overflow-y-auto">
+      <h3 class="font-bold text-lg mb-4">Seleccionar Elementos de Red</h3>
+
+      <!-- Búsqueda -->
+      <div class="flex justify-between items-center gap-4 mb-4">
+        <!-- Input de búsqueda que ocupa todo el espacio disponible -->
+        <div class="flex-1">
+          <div class="flex items-center gap-2">
+            <input type="text" placeholder="Escribe el término de búsqueda..."
+              class="input input-bordered w-full first-letter:uppercase" (input)="onSearchChange($event)" />
+            @if (searchMode() === 'filtered') {
+            <span class="badge badge-info whitespace-nowrap">Búsqueda activa</span>
+            }
+          </div>
+        </div>
+
+        <!-- Botones que ocupan solo el espacio necesario -->
+        <div class="flex items-center gap-2 shrink-0">
+          <button type="button" class="btn btn-ghost" (click)="closeNetworkElementsModal()">Cancelar</button>
+          <button type="button" class="btn btn-primary" (click)="saveNetworkElementsSelection()">
+            Guardar ({{ selectedNetworkElements().length }})
+          </button>
+        </div>
+      </div>
+
+      <!-- Mensaje cuando no hay resultados -->
+      @if (allNetworkElements().length === 0 && networkElementsSearch()) {
+      <div class="alert alert-warning mb-4">
+        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+        <span>No se encontraron elementos con "{{ networkElementsSearch() }}"</span>
+      </div>
+      }
+
+      <!-- Tabla de elementos -->
+      <div class="overflow-x-auto">
+        <table class="table table-zebra table-sm">
+          <thead>
+            <tr>
+              <th class="w-12">Sel.</th>
+              <th>Acrónimo</th>
+              <th>Modelo</th>
+              <th>IP Gestión</th>
+              <th>Descripción</th>
+              <th>Central</th>
+              <th>Localidad</th>
+              <th>Grupo</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (element of allNetworkElements(); track element.id) {
+            <tr>
+              <td>
+                <input type="checkbox" class="checkbox checkbox-sm" [checked]="isElementSelected(element)"
+                  (change)="toggleNetworkElementSelection(element)" />
+              </td>
+              <td class="font-mono uppercase">{{ element.acronym }}</td>
+              <td class="font-mono uppercase">{{ element.model }}</td>
+              <td class="font-mono">{{ element.management_ip }}</td>
+              <td class="capitalize">{{ element.description }}</td>
+              <td class="uppercase">{{ element.central?.central_name }}</td>
+              <td>{{ element.locality }}</td>
+              <td>{{ element.group?.group || 'N/A' }}</td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Paginación solo para modo "all" -->
+      @if (searchMode() === 'all' && totalPages() > 1) {
+      <div class="join flex justify-center mt-4">
+        <!-- Botón anterior -->
+        <button type="button" class="join-item btn btn-sm" [class.btn-disabled]="currentPage() === 1"
+          (click)="goToPage(currentPage() - 1)">
+          «
+        </button>
+
+        <!-- Botones de páginas -->
+        @for (page of getPaginationRange(); track $index) {
+        @if (page === '...') {
+        <button type="button" class="join-item btn btn-sm btn-disabled">
+          ...
+        </button>
+        } @else {
+        <button type="button" class="join-item btn btn-sm" [class.btn-primary]="currentPage() === page"
+          (click)="goToPage(page)">
+          {{ page }}
+        </button>
+        }
+        }
+
+        <!-- Botón siguiente -->
+        <button type="button" class="join-item btn btn-sm" [class.btn-disabled]="currentPage() === totalPages()"
+          (click)="goToPage(currentPage() + 1)">
+          »
+        </button>
+      </div>
+      }
+
+      <!-- Elementos seleccionados -->
+      @if (selectedNetworkElements().length > 0) {
+      <div class="mt-4 p-3 bg-base-200 rounded-lg">
+        <h4 class="font-semibold mb-2">Elementos seleccionados ({{ selectedNetworkElements().length }}):</h4>
+        <div class="flex flex-wrap gap-2">
+          @for (element of selectedNetworkElements(); track element.id) {
+          <span class="badge badge-primary badge-lg gap-2">
+            {{ element.acronym }}
+            <button type="button" class="btn btn-xs btn-circle btn-ghost"
+              (click)="toggleNetworkElementSelection(element)">
+              ✕
+            </button>
+          </span>
+          }
+        </div>
+      </div>
+      }
+
+      <!-- Botones del modal -->
+      <!-- <div class="modal-action mt-4">
+        <button type="button" class="btn btn-ghost" (click)="closeNetworkElementsModal()">Cancelar</button>
+        <button type="button" class="btn btn-primary" (click)="saveNetworkElementsSelection()">
+          Guardar ({{ selectedNetworkElements().length }})
+        </button>
+      </div> -->
+    </div>
+  </div>
+  }
+
+  <!-- Modal para selección de tramos de fibra -->
+  @if (showFiberLengthsModal()) {
+  <div class="modal modal-open">
+    <div class="modal-box max-w-5xl max-h-[90vh] overflow-y-auto">
+      <h3 class="font-bold text-lg mb-4">Seleccionar Tramo de Fibra</h3>
+
+      <!-- Búsqueda -->
+      <div class="form-control mb-4">
+        <div class="flex items-center gap-2">
+          <input type="text" placeholder="Escribe el término de búsqueda..." class="input input-bordered flex-grow"
+            (input)="onFiberSearchChange($event)" />
+          @if (fiberSearchMode() === 'filtered') {
+          <span class="badge badge-info">Búsqueda activa</span>
+          }
+        </div>
+        <label class="label">
+          <span class="label-text-alt text-secondary italic">Busqueda por nombre del tramo, localidad A ó localidad
+            B</span>
+        </label>
+      </div>
+
+      <!-- Mensaje cuando no hay resultados -->
+      @if (allFiberLengths().length === 0 && fiberLengthsSearch()) {
+      <div class="alert alert-warning mb-4">
+        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+        <span>No se encontraron tramos con "{{ fiberLengthsSearch() }}"</span>
+      </div>
+      }
+
+      <!-- Tabla de tramos de fibra -->
+      <div class="overflow-x-auto">
+        <table class="table table-zebra table-sm">
+          <thead>
+            <tr>
+              <th class="w-12">Sel.</th>
+              <th>Nombre del tramo</th>
+              <th>Localidad A</th>
+              <th>Localidad B</th>
+              <th>Estado A</th>
+              <th>Estado B</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (fiber of allFiberLengths(); track fiber.id) {
+            <tr class="cursor-pointer hover:bg-base-200" (click)="selectFiberLength(fiber)">
+              <td>
+                <input type="radio" name="fiberLength" class="radio radio-primary radio-sm"
+                  [checked]="isFiberLengthSelected(fiber)" (change)="selectFiberLength(fiber)" />
+              </td>
+              <td class="capitalize">{{ fiber.section_name }}</td>
+              <td class="capitalize">{{ fiber.locality_a }}</td>
+              <td class="capitalize">{{ fiber.locality_b }}</td>
+              <td class="capitalize">{{ fiber.stateA}}</td>
+              <td class="capitalize">{{ fiber.stateB }}</td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Paginación solo para modo "all" -->
+      @if (fiberSearchMode() === 'all' && fiberTotalPages() > 1) {
+      <div class="join flex justify-center mt-4">
+        <!-- Botón anterior -->
+        <button type="button" class="join-item btn btn-sm" [class.btn-disabled]="fiberCurrentPage() === 1"
+          (click)="goToFiberPage(fiberCurrentPage() - 1)">
+          «
+        </button>
+
+        <!-- Botones de páginas -->
+        @for (page of getFiberPaginationRange(); track $index) {
+        @if (page === '...') {
+        <button type="button" class="join-item btn btn-sm btn-disabled">
+          ...
+        </button>
+        } @else {
+        <button type="button" class="join-item btn btn-sm" [class.btn-primary]="fiberCurrentPage() === page"
+          (click)="goToFiberPage(page)">
+          {{ page }}
+        </button>
+        }
+        }
+
+        <!-- Botón siguiente -->
+        <button type="button" class="join-item btn btn-sm"
+          [class.btn-disabled]="fiberCurrentPage() === fiberTotalPages()"
+          (click)="goToFiberPage(fiberCurrentPage() + 1)">
+          »
+        </button>
+      </div>
+      }
+
+      <!-- Tramo seleccionado -->
+      @if (selectedFiberLength()) {
+      <div class="mt-4 p-3 bg-base-200 rounded-lg">
+        <h4 class="font-semibold mb-2">Tramo seleccionado:</h4>
+        <div class="flex flex-wrap gap-2">
+          <span class="badge badge-primary badge-lg gap-2">
+            {{ selectedFiberLength()?.section_name }} ({{ selectedFiberLength()?.locality_a }} - {{
+            selectedFiberLength()?.locality_b }})
+            <button type="button" class="btn btn-xs btn-circle btn-ghost" (click)="selectedFiberLength.set(null)">
+              ✕
+            </button>
+          </span>
+        </div>
+      </div>
+      }
+
+      <!-- Botones del modal -->
+      <div class="modal-action mt-4">
+        <button type="button" class="btn btn-ghost" (click)="closeFiberLengthsModal()">Cancelar</button>
+        <button type="button" class="btn btn-primary" (click)="saveFiberLengthSelection()"
+          [disabled]="!selectedFiberLength()">
+          Guardar
+        </button>
+      </div>
+    </div>
+  </div>
+  }
+
+  <!-- FIN ELEMENTOS DE RED -->
+
+  <!-- Tercera fila - 3 textareas -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-3">
+    <!-- Definición del problema -->
+    <div>
+      <label class="block text-sm font-bold mb-2 text-primary" for="definicionProblema">
+        Definición del Problema
+      </label>
+      <textarea class="textarea textarea-bordered w-full" formControlName="definition_problem" id="definicionProblema"
+        rows="5" placeholder="Describa el problema..." name="definition_problem" required
+        [class.border-red-500]="ticketForm.get('definition_problem')?.errors ?? false" minlength="10"
+        maxlength="500"></textarea>
+      <form-error-label [control]="ticketForm.get('definition_problem')!" />
+    </div>
+
+    <!-- Evidencias -->
+    <div>
+      <label class="block text-sm font-bold mb-2 text-primary" for="evidencias">
+        Evidencias
+      </label>
+      <textarea class="textarea textarea-bordered w-full" formControlName="evidences_problem" id="evidencias" rows="5"
+        placeholder="Adjunte evidencias del problema..." name="evidences_problem" required
+        [class.border-red-500]="ticketForm.get('evidences_problem')?.errors ?? false" minlength="10"
+        maxlength="500"></textarea>
+      <form-error-label [control]="ticketForm.get('evidences_problem')!" />
+    </div>
+
+    <!-- Hipótesis -->
+    <div>
+      <label class="block  text-sm font-bold mb-2 text-primary" for="hipotesis">
+        Hipótesis
+      </label>
+      <textarea class="textarea textarea-bordered w-full" formControlName="hypothesis" id="evidencias" rows="5"
+        placeholder="Adjunte evidencias del problema..." name="hypothesis" required
+        [class.border-red-500]="ticketForm.get('hypothesis')?.errors ?? false" minlength="8" maxlength="500"></textarea>
+      <form-error-label [control]="ticketForm.get('hypothesis')!" />
+    </div>
+  </div>
+
+
+  <!-- Cuarta fila - Responsable con modal -->
+  <div class="grid grid-cols-1 md:grid-cols-1 gap-6 mb-3">
+    <!-- Responsable -->
+    <div>
+      <label class="block text-sm font-bold mb-2 text-primary" for="responsable">
+        Responsable área resolutoria
+      </label>
+      <div class="relative">
+        <input type="text" class="input input-bordered w-full pr-10 cursor-pointer" [value]="getSelectedPersonalText()"
+          readonly (click)="openPersonalsModal()" />
+        <button type="button" class="absolute inset-y-0 right-0 flex items-center pr-3" (click)="openPersonalsModal()">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+        </button>
+      </div>
+      <!-- @if (ticketForm.controls.personalRegionId.invalid && ticketForm.controls.personalRegionId.touched) {
+      <label class="label">
+        <span class="text-red-500 text-xs">Se requiere un responsable</span>
+      </label>
+      } -->
+    </div>
+  </div>
+
+  <!-- Modal para selección de responsables -->
+  @if (showPersonalsModal()) {
+  <div class="modal modal-open">
+    <div class="modal-box max-w-5xl max-h-[90vh] overflow-y-auto">
+      <h3 class="font-bold text-lg mb-4">Seleccionar Responsable</h3>
+
+      <!-- Búsqueda -->
+      <div class="form-control mb-4">
+        <!-- Búsqueda general (mantener compatibilidad) -->
+        <div class="flex justify-between items-center gap-2 mb-3">
+          <!-- <input type="text" placeholder="Búsqueda general..." class="input input-bordered flex-grow"
+            [value]="personalsSearch()" (input)="onPersonalSearchChange($event)" /> -->
+          <div>
+            @if (personalSearchMode() === 'filtered') {
+            <span class="badge badge-info">Búsqueda activa</span>
+            }
+            <button type="button" class="btn btn-ghost btn-sm" (click)="clearFilters()">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              Limpiar
+            </button>
+          </div>
+          <div class="modal-action mt-4">
+            <button type="button" class="btn btn-ghost" (click)="closePersonalsModal()">Cancelar</button>
+            <button type="button" class="btn btn-primary" (click)="savePersonalSelection()"
+              [disabled]="!selectedPersonal()">
+              Guardar
+            </button>
+          </div>
+        </div>
+
+        <!-- Filtros avanzados -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <div>
+            <label class="label label-text py-1">Estado</label>
+            <select class="select select-bordered select-sm w-full"
+              [value]="selectedStateId() === null ? '' : selectedStateId()"
+              (change)="selectedStateId.set($any($event.target).value ? +$any($event.target).value : null); onFilterChange()">
+              <option value="">Todos los estados</option>
+              @for (state of statesList; track state.id) {
+              <option [value]="state.id">{{ state.state }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Filtro por grupo -->
+          <div>
+            <label class="label label-text py-1">Grupo</label>
+            <select class="select select-bordered select-sm w-full"
+              [value]="selectedGroupId() === null ? '' : selectedGroupId()"
+              (change)="selectedGroupId.set($any($event.target).value ? +$any($event.target).value : null); onFilterChange()">
+              <option value="">Todos los grupos</option>
+              @for (group of groupsList; track group.id) {
+              <option [value]="group.id">{{ group.group_escalatory }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Filtro por nombre -->
+          <div>
+            <label class="label label-text py-1">Nombre</label>
+            <input type="text" placeholder="Nombre..." class="input input-bordered input-sm w-full"
+              [value]="nameSearch()" (input)="nameSearch.set($any($event.target).value); onFilterChange()" />
+          </div>
+
+          <!-- Filtro por apellido -->
+          <div>
+            <label class="label label-text py-1">Apellido</label>
+            <input type="text" placeholder="Apellido..." class="input input-bordered input-sm w-full"
+              [value]="surnameSearch()" (input)="surnameSearch.set($any($event.target).value); onFilterChange()" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Mensaje cuando no hay resultados -->
+      @if (allPersonals().length === 0 && personalsSearch()) {
+      <div class="alert alert-warning mb-4">
+        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+        <span>No se encontraron responsables con "{{ personalsSearch() }}"</span>
+      </div>
+      }
+
+      <!-- Tabla de responsables -->
+      <div class="overflow-x-auto">
+        <table class="table table-zebra table-sm">
+          <thead>
+            <tr>
+              <th class="w-12">Sel.</th>
+              <th>Nombres</th>
+              <th>Apellidos</th>
+              <th>Grupo</th>
+              <th>Estado(s)</th>
+              <th>Cargo</th>
+              <th>Teléfono</th>
+              <th>Email</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (allPersonals() && allPersonals().length > 0) {
+            @for (personal of allPersonals(); track personal.id) {
+            <tr class="cursor-pointer hover:bg-base-200" (click)="selectPersonal(personal)">
+              <td>
+                <input type="radio" name="personal" class="radio radio-primary radio-sm"
+                  [checked]="isPersonalSelected(personal)" (change)="selectPersonal(personal)" />
+              </td>
+              <td>{{ personal.names }}</td>
+              <td>{{ personal.surnames }}</td>
+              <td>
+                @for (group of personal.groups_escalatory; track $index) {
+                <span class="badge badge-outline badge-sm mr-1">{{ group.group_escalatory }}</span>
+                }
+              </td>
+              <td>
+                @for (state of personal.states; track $index) {
+                <span class="badge badge-info badge-sm mr-1">{{ state.state }}</span>
+                }
+              </td>
+              <td>
+                @for (pos of personal.position; track $index) {
+                <span class="badge badge-secondary badge-sm">{{ pos.position }}</span>
+                }
+              </td>
+              <td>{{ personal.mobile_phone || personal.office_phone || 'N/A' }}</td>
+              <td>{{ personal.email || 'N/A' }}</td>
+            </tr>
+            }
+            } @else {
+            <tr>
+              <td colspan="8" class="text-center py-4">
+                No se encontraron responsables
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Paginación solo para modo "all" -->
+      @if (personalSearchMode() === 'all' && personalTotalPages() > 1) {
+      <div class="join flex justify-center mt-4">
+        <!-- Botón anterior -->
+        <button type="button" class="join-item btn btn-sm" [class.btn-disabled]="personalCurrentPage() === 1"
+          (click)="goToPersonalPage(personalCurrentPage() - 1)">
+          «
+        </button>
+
+        <!-- Botones de páginas -->
+        @for (page of getPersonalPaginationRange(); track $index) {
+        @if (page === '...') {
+        <button type="button" class="join-item btn btn-sm btn-disabled">
+          ...
+        </button>
+        } @else {
+        <button type="button" class="join-item btn btn-sm" [class.btn-primary]="personalCurrentPage() === page"
+          (click)="goToPersonalPage(page)">
+          {{ page }}
+        </button>
+        }
+        }
+
+        <!-- Botón siguiente -->
+        <button type="button" class="join-item btn btn-sm"
+          [class.btn-disabled]="personalCurrentPage() === personalTotalPages()"
+          (click)="goToPersonalPage(personalCurrentPage() + 1)">
+          »
+        </button>
+      </div>
+      }
+
+      <!-- Responsable seleccionado -->
+      @if (selectedPersonal()) {
+      <div class="mt-4 p-3 bg-base-200 rounded-lg">
+        <h4 class="font-semibold mb-2">Responsable seleccionado:</h4>
+        <div class="flex flex-wrap gap-2">
+          <span class="badge badge-primary badge-lg gap-2">
+            {{ selectedPersonal()?.names }} {{ selectedPersonal()?.surnames }}
+            <button type="button" class="btn btn-xs btn-circle btn-ghost" (click)="selectedPersonal.set(null)">
+              ✕
+            </button>
+          </span>
+        </div>
+      </div>
+      }
+
+      <!-- Botones del modal -->
+      <!-- <div class="modal-action mt-4">
+        <button type="button" class="btn btn-ghost" (click)="closePersonalsModal()">Cancelar</button>
+        <button type="button" class="btn btn-primary" (click)="savePersonalSelection()"
+          [disabled]="!selectedPersonal()">
+          Guardar
+        </button>
+      </div> -->
+    </div>
+  </div>
+  }
+
+  <!-- Quinta fila - 3 impactos -->
+  <div class="grid grid-cols-1 md:grid-cols-1 gap-6 mb-3">
+    <div>
+      <label class="block text-sm font-bold mb-2 text-primary" for="impacto1">
+        Impacto 1 (Opcional)
+      </label>
+      <input formControlName="impact" class="input input-bordered w-full" id="impacto1" type="number"
+        placeholder="Impacto primario" name="impacto1" min="0">
+    </div>
+  </div>
+
+  <!-- Campos de fecha (séptima fila) -->
+  <div class="grid grid-rows-1 md:grid-cols-4 gap-6 mb-3">
+    <!-- Fecha creación (nuevo campo) -->
+    <div>
+      <label class="block text-sm font-bold mb-2 text-primary" for="fechaApertura">
+        Hora creación del ticket
+      </label>
+      <input type="datetime-local" [value]="formOpenDate()" class="form-control input input-bordered w-full" readonly
+        id="fechaApertura" disabled />
+    </div>
+
+    <!-- Fecha inicio -->
+    <div>
+      <label class="block text-sm font-bold mb-2 text-primary" for="fechaInicio">
+        Hora de inicio falla
+      </label>
+      <input type="datetime-local" id="date_hif" formControlName="date_hif"
+        class="form-control input input-bordered w-full"
+        [class.border-red-500]="ticketForm.get('date_hif')?.errors ?? false" />
+      <form-error-label [control]="ticketForm.get('date_hif')!" />
+    </div>
+
+    <!-- Fecha diagnóstico (opcional) -->
+    <div>
+      <label class="block text-sm font-bold mb-2 text-primary" for="fechaDiagnostico">
+        Hora diagnóstico COR
+      </label>
+      <input id="date_hdc" type="datetime-local" formControlName="date_hdc"
+        class="form-control input input-bordered w-full" />
+    </div>
+
+    <!-- Fecha contacto (opcional) -->
+    <div>
+      <label class="block text-sm font-bold mb-2 text-primary" for="fechaContacto">
+        Hora contacto técnico
+      </label>
+      <input id="date_hct" type="datetime-local" formControlName="date_hct"
+        class="form-control input input-bordered w-full" />
+    </div>
+  </div>
+
+  <!-- @if (isUploading()) {
+<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="bg-white p-6 rounded-lg shadow-xl">
+    <div class="text-center">
+      <div class="loading loading-spinner loading-lg text-primary mb-4"></div>
+      <p class="text-lg font-semibold">Subiendo imágenes y creando ticket...</p>
+      <p class="text-sm text-gray-600">Por favor, espere.</p>
+      <progress class="progress progress-primary w-56 mt-4" [value]="uploadProgress()" max="100"></progress>
+    </div>
+  </div>
+</div>
+} -->
+
+<div class="collapse collapse-arrow border border-base-300 bg-base-100 rounded-box mt-4">
+  <input type="checkbox" class="peer" />
+  <div class="collapse-title text-md font-medium flex items-center">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+    </svg>
+    Agregar imágenes (Opcional)
+  </div>
+  <div class="collapse-content">
+    <!-- Input para seleccionar archivos -->
+    <div>
+      <input
+        type="file"
+        multiple
+        accept="image/*"
+        class="file-input file-input-bordered w-full mt-2"
+        (change)="onFilesChange($event)"
+      >
+    </div>
+
+    <!-- Vista previa de imágenes -->
+    @if (tempImages().length > 0) {
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4">
+      @for (image of tempImages(); track image.url) {
+      <div class="relative group">
+        <img [src]="image.url" [alt]="image.name" class="w-full h-32 object-cover rounded-xl">
+        <div class="absolute inset-0 bg-opacity-60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-xl">
+          <button
+            type="button"
+            class="btn btn-error btn-sm"
+            (click)="removeImage($index)">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div class="text-xs truncate mt-1">{{ image.name }}</div>
+      </div>
+      }
+    </div>
+    }
+  </div>
+</div>
+
+  <!-- Botones -->
+  <div class="flex items-center justify-end space-x-4 mt-4">
+    <button class="btn btn-neutral" type="button" (click)="onCancel()">
+      Cancelar
+    </button>
+    <button class="btn btn-primary" type="submit">
+      Guardar
+    </button>
+  </div>
+</form>
+<!-- </div> -->
