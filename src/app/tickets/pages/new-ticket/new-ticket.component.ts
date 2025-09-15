@@ -97,7 +97,7 @@ export class NewTicketComponent implements OnInit {
     evidences_problem: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(500)]],
     hypothesis: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(500)]],
     personalRegionId: this.fb.control<number | null>(null),
-    impact: [0, [Validators.min(0)]],
+    impact: ['', [Validators.min(0)]],
     date_hif: ['', Validators.required],
     date_hdc: [null],
     date_hct: [null],

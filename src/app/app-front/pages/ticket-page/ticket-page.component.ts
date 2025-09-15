@@ -23,6 +23,7 @@ import { SeveritiesService } from '@features/severities/services/severities.serv
 import { StatusesService } from '@features/statuses/services/statuses.service';
 import { Ticket, TicketsResponse } from '@tickets/interfaces/ticket.interface';
 import { TicketsService } from '@tickets/services/tickets.service';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-ticket-page',
@@ -125,7 +126,7 @@ progressForm = this.fb.group({
   platformId: [null as number | null, [Validators.required, Validators.min(1)]],
   originId: [null as number | null, [Validators.required, Validators.min(1)]],
   failureId: [null as number | null, [Validators.required, Validators.min(1)]],
-  impact: [null as number | null, [Validators.min(0)]],
+  impact: [''],
   assignedUserId: [null as number | null], // ← Eliminado Validators.required
   personalRegionId: [null as number | null],
   elementNetworkId: this.fb.control<number[]>([]),
@@ -449,7 +450,7 @@ progressForm = this.fb.group({
       platformId: null,
       originId: null,
       failureId: null,
-      impact: null,
+      impact: '',
       assignedUserId: null,
       personalRegionId: null,
       elementNetworkId: [],
@@ -470,7 +471,7 @@ progressForm = this.fb.group({
       platformId: ticket.platformId || null,
       originId: ticket.originId || null,
       failureId: ticket.failureId || null,
-      impact: ticket.impact || null,
+      impact: ticket.impact,
       personalRegionId: ticket.personalRegionId || null,
       fiberLengthId: ticket.fiberLengthId || null,
       assignedUserId: null, // ← Establecer como null por defecto
@@ -495,12 +496,57 @@ progressForm = this.fb.group({
   }
 
   // Manejo de archivos
-  onFileSelected(event: any) {
-    const files: FileList = event.target.files;
-    if (files.length > 0) {
-      this.selectedFiles.set(Array.from(files));
+onFileSelected(event: any) {
+  const files: FileList = event.target.files;
+  if (files.length > 0) {
+    const validFiles: File[] = [];
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+
+      // Validar tamaño (5MB máximo)
+      if (file.size > 5 * 1024 * 1024) {
+        Swal.fire({
+          title: 'Archivo demasiado grande',
+          text: `El archivo ${file.name} excede el límite de 5MB`,
+          icon: 'warning',
+          confirmButtonText: 'Aceptar'
+        });
+        continue;
+      }
+
+      // Validar tipo
+      const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
+      if (!validTypes.includes(file.type)) {
+        Swal.fire({
+          title: 'Formato no válido',
+          text: `El archivo ${file.name} no es una imagen válida (solo JPG, PNG, GIF)`,
+          icon: 'warning',
+          confirmButtonText: 'Aceptar'
+        });
+        continue;
+      }
+
+      validFiles.push(file);
+    }
+
+    // Limitar a 5 archivos máximo
+    const currentFiles = this.selectedFiles();
+    const totalFiles = [...currentFiles, ...validFiles].slice(0, 5);
+
+    this.selectedFiles.set(totalFiles);
+
+    if (totalFiles.length >= 5) {
+      Swal.fire({
+        title: 'Límite alcanzado',
+        text: 'Máximo 5 archivos permitidos',
+        icon: 'info',
+        showConfirmButton: false,
+        timer: 1500
+      });
     }
   }
+}
 
   removeFile(index: number) {
     const files = this.selectedFiles();
@@ -584,55 +630,78 @@ progressForm = this.fb.group({
         return value !== null && value !== undefined ? value : defaultValue;
       };
 
-    const progressData: any = {
-      ticketId: this.ticketId,
-      assignedUserId: formValue.assignedUserId || null, // ← Puede ser null
-      progress: getValue(formValue.progress, ''),
-      observations: getValue(formValue.observations, ''),
-      statusId: getValue(formValue.statusId, 0),
-      groupId: getValue(formValue.groupId, 0),
-      severityId: getValue(formValue.severityId, 0),
-      platformId: getValue(formValue.platformId, 0),
-      originId: getValue(formValue.originId, 0),
-      failureId: getValue(formValue.failureId, 0),
-      impact: getValue(formValue.impact, 0),
-      personalRegionId: getValue(formValue.personalRegionId, 0),
-      isActive: true,
-    };
+      const progressData: any = {
+        ticketId: this.ticketId,
+        assignedUserId: formValue.assignedUserId || null,
+        progress: getValue(formValue.progress, ''),
+        observations: getValue(formValue.observations, ''),
+        statusId: getValue(formValue.statusId, 0),
+        groupId: getValue(formValue.groupId, 0),
+        severityId: getValue(formValue.severityId, 0),
+        platformId: getValue(formValue.platformId, 0),
+        originId: getValue(formValue.originId, 0),
+        failureId: getValue(formValue.failureId, 0),
+        impact: getValue(formValue.impact, ''),
+        personalRegionId: getValue(formValue.personalRegionId, 0),
+        isActive: true,
+      };
 
       // Diferentes formatos según lo que espere el backend
-      if (
-        this.selectedElementType() === 'network' &&
-        formValue.elementNetworkId?.length
-      ) {
-        // Opción 1: Si el backend espera un array
+      if (this.selectedElementType() === 'network' && formValue.elementNetworkId?.length) {
         progressData.elementNetworkId = formValue.elementNetworkId;
-        // Opción 2: Si el backend espera un solo ID
-        // progressData.elementNetworkId = formValue.elementNetworkId[0];
-      } else if (
-        this.selectedElementType() === 'fiber' &&
-        formValue.fiberLengthId
-      ) {
+      } else if (this.selectedElementType() === 'fiber' && formValue.fiberLengthId) {
         progressData.fiberLengthId = formValue.fiberLengthId;
       }
 
+      const selectedFiles = this.selectedFiles();
+
       // console.log('Datos finales a enviar:', progressData);
 
-      this.progressTicketService.createProgressTicket(progressData).subscribe({
-        next: (ticket) => {
-          // console.log('Progress ticket creado:', ticket);
-          this.closeModal();
-          this.progressTicketsResource.reload();
-        },
-        error: (error) => {
-          console.error('Error al crear progress ticket:', error);
-        },
+// Modificar la suscripción del createProgressTicket
+this.progressTicketService.createProgressTicket(progressData, selectedFiles.length > 0 ? this.createFileList(selectedFiles) : undefined)
+  .subscribe({
+    next: (ticket) => {
+      this.closeModal();
+      // Recargar ambos recursos
+      this.progressTicketsResource.reload();
+      this.ticketResource.reload(); // Por si las imágenes del ticket principal cambiaron
+
+      Swal.fire({
+        title: 'Éxito',
+        text: 'El seguimiento se creó correctamente',
+        icon: 'success',
+        showConfirmButton: false,
+        timer: 1500,
       });
+    },
+    error: (error) => {
+      console.error('Error al crear progress ticket:', error);
+      let errorMessage = 'Ocurrió un error al crear el seguimiento';
+      if (error.error?.message) {
+        errorMessage = Array.isArray(error.error.message)
+          ? error.error.message.join(', ')
+          : error.error.message;
+      }
+
+      Swal.fire({
+        title: 'Error',
+        text: errorMessage,
+        icon: 'error',
+        confirmButtonText: 'Aceptar'
+      });
+    }
+  });
     } catch (error) {
       console.error('Error:', error);
     } finally {
       this.isSubmitting.set(false);
     }
+  }
+
+    private createFileList(files: File[]): FileList {
+    const dataTransfer = new DataTransfer();
+    files.forEach(file => dataTransfer.items.add(file));
+    return dataTransfer.files;
   }
 
   // Métodos para manejar cambios en la búsqueda

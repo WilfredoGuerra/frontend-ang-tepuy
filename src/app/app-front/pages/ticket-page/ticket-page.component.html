@@ -205,7 +205,7 @@
               </div>
               <div>
                 <p class="text-secondary font-semibold">Impacto</p>
-                <p class="">Afecta a {{ ticketResource.value().impact }} usuario(s).</p>
+                <p class="">{{ ticketResource.value().impact }}.</p>
               </div>
             </div>
 
@@ -447,7 +447,11 @@
                 <span class="capitalize">({{ progress.personal_region.states[0].state }})</span>
               </p>
               }
+
+
+
             </div>
+
           </div>
 
           <div class="text-right">
@@ -458,6 +462,12 @@
             <p class="text-sm text-gray-500">Por:</p>
             <p class="font-medium">{{ progress.user?.fullName }}</p>
 
+            @if (progress.impact) {
+              <div class="flex mt-8 gap-2">
+                <p class="font-semibold text-warning uppercase">Impacto:</p>
+                <p>{{ progress.impact }}</p>
+              </div>
+            }
           </div>
         </div>
 
@@ -501,14 +511,19 @@
             @for (image of progress.images; track $index) {
             <div class="relative group cursor-pointer" (click)="openImage(image)">
               <img [src]="image" alt="Evidencia de seguimiento"
-                class="rounded-lg object-cover h-48 w-full transition-transform duration-300 group-hover:scale-105">
+                class="rounded-lg object-cover h-48 w-full transition-transform duration-300 group-hover:scale-105"
+                (error)="handleImageError($event)">
               <div
-                class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity duration-300 rounded-lg flex items-center justify-center">
+                class="absolute inset-0 bg-opacity-0 group-hover:bg-opacity-20 transition-opacity duration-300 rounded-lg flex items-center justify-center">
                 <svg class="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" fill="none"
                   stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3-3H7"></path>
                 </svg>
+              </div>
+              <div
+                class="absolute top-2 right-2 bg-primary text-white text-xs rounded-full w-6 h-6 flex items-center justify-center">
+                {{ $index + 1 }}
               </div>
             </div>
             }
@@ -839,8 +854,8 @@
             <label class="label">
               <span class="label-text font-medium mb-2">Impacto *</span>
             </label>
-            <input type="number" placeholder="Número de usuarios afectados" class="input input-bordered input-primary"
-              formControlName="impact" min="0">
+            <input type="text" placeholder="Impacto" class="input input-bordered input-primary"
+              formControlName="impact">
           </div>
         </div>
       </div>
@@ -912,28 +927,29 @@
       </div>
 
       <!-- SECCIÓN 6: EVIDENCIAS -->
+      <!-- SECCIÓN 6: EVIDENCIAS -->
       <div class="collapse collapse-arrow bg-base-200 border-base-300 border rounded-box">
         <input type="checkbox" class="peer" />
         <div class="collapse-title font-medium">
           <span class="flex items-center">
-            Agregar imagenes de evidencias
+            📸 Agregar imágenes de evidencias
+            @if (selectedFiles().length > 0) {
+            <span class="badge badge-primary badge-sm ml-2">{{ selectedFiles().length }}</span>
+            }
           </span>
         </div>
         <div class="collapse-content">
           <div class="bg-base-200 p-5 rounded-xl">
-            <!-- <h4 class="text-lg font-semibold text-primary mb-4">📸 Evidencias Visuales</h4> -->
-
             <div class="form-control">
               <label class="label">
-                <span class="label-text font-medium mb-2">Imágenes de evidencia</span>
-                <!-- <span class="label-text-alt">Máx. 5 archivos</span> -->
+                <span class="label-text font-medium mb-2">Imágenes de evidencia (Opcional)</span>
               </label>
 
               <input type="file" class="file-input file-input-bordered file-input-primary w-full"
                 (change)="onFileSelected($event)" multiple accept="image/*" max="5">
 
               <div class="mt-3 text-sm text-gray-500">
-                Formatos: JPG, PNG, GIF. Tamaño máximo: 5MB por archivo.
+                Formatos: JPG, PNG, GIF. Tamaño máximo: 5MB por archivo. Máximo 5 archivos.
               </div>
 
               <!-- Archivos seleccionados -->

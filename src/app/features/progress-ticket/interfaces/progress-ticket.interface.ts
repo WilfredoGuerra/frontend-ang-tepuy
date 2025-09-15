@@ -28,7 +28,7 @@ export interface ProgressTicket {
   platformId: number;
   originId: number;
   failureId: number;
-  impact?: number;
+  impact?: string;
   personalRegionId: number;
   fiberLengthId?: number;
   isActive: boolean;

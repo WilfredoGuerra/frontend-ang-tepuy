@@ -37,7 +37,7 @@ export interface Ticket {
   definition_problem: string;
   evidences_problem?:  string;
   hypothesis:         string;
-  impact?:             number;
+  impact?:             string;
 
   isActive:           boolean;
   createdDate:        Date;
