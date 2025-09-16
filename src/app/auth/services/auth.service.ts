@@ -3,7 +3,7 @@ import { computed, inject, Injectable, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AuthResponse } from '@auth/interfaces/auth-response.interface';
 import { User, UserResponse } from '@auth/interfaces/user.interface';
-import { catchError, map, Observable, of, tap } from 'rxjs';
+import { catchError, forkJoin, map, Observable, of, switchMap } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
 type AuthStatus = 'checking' | 'authenticated' | 'not-authenticated';
@@ -99,9 +99,17 @@ export class AuthService {
     return of(false);
   }
 
-  createUser(personaLike: Partial<User>): Observable<User> {
-    return this.http.post<User>(`${baseUrl}/auth/register/`, personaLike);
-  }
+createUser(userLike: Partial<User>, imageFileList?: FileList): Observable<User> {
+  return this.uploadUserImages(imageFileList).pipe(
+    map(imageUrls => ({
+      ...userLike,
+      images: [...(userLike.images || []), ...imageUrls]
+    })),
+    switchMap(userData =>
+      this.http.post<User>(`${baseUrl}/auth/register/`, userData)
+    )
+  );
+}
 
   getUsers(options: Options): Observable<UserResponse> {
     const { limit = 9, offset = 0, group = '' } = options;
@@ -124,13 +132,45 @@ export class AuthService {
     });
   }
 
-  // getNetworkElementsSearch(query: string, options: Options = {}): Observable<NetworksElement> {
-  //   const { limit = 9, offset = 0 } = options;
-  //   return this.http.get<NetworksElement>(`${baseUrl}/network-elements/${query}`, {
-  //     params: {
-  //       limit,
-  //       offset,
-  //     },
-  //   });
-  // }
+  uploadUserImage(imageFile: File): Observable<string> {
+  const formData = new FormData();
+  formData.append('file', imageFile);
+
+  return this.http
+    .post<any>(`${baseUrl}/files/user`, formData)
+    .pipe(
+      map((resp) => {
+        if (resp && resp.secureUrl) {
+          return resp.secureUrl;
+        } else if (typeof resp === 'string') {
+          return resp;
+        } else if (resp && typeof resp === 'object') {
+          return resp.fileName || resp.filename || resp.name || resp.imageName ||
+                 resp.file || resp.image || `unknown_${Date.now()}`;
+        } else {
+          console.warn('Formato de respuesta inesperado, usando nombre temporal');
+          return `temp_${Date.now()}_${imageFile.name}`;
+        }
+      }),
+      catchError(error => {
+        console.error('Error en uploadImage:', error);
+        return of(`error_${Date.now()}_${imageFile.name}`);
+      })
+    );
+}
+
+uploadUserImages(images?: FileList): Observable<string[]> {
+  if (!images || images.length === 0) return of([]);
+
+  const uploadObservables = Array.from(images).map((imageFile) =>
+    this.uploadUserImage(imageFile)
+  );
+
+  return forkJoin(uploadObservables);
+}
+
+getUserImages(userId: number): Observable<User[]> {
+  return this.http.get<User[]>(`${baseUrl}/auth/users/${userId}/images`);
+}
+
 }

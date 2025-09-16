@@ -51,6 +51,9 @@ export class RegisterPageComponent {
   // 5. Signal para texto a mostrar en input
   displayText = signal('');
 
+  selectedFiles = signal<{file: File, url: string}[]>([]);
+  isUploading = signal(false);
+
   constructor() {
     // Cargar datos al inicializar el componente
     this.loadEducationLevels();
@@ -126,18 +129,27 @@ export class RegisterPageComponent {
   ]);
 
   registerForm = this.fb.group({
-    email: ['', [Validators.required, Validators.pattern(FormUtils.emailPattern)]],
+    email: [
+      '',
+      [Validators.required, Validators.pattern(FormUtils.emailPattern)],
+    ],
     fullName: ['', Validators.required],
     surnames: ['', Validators.required],
-    cedula: ['', [
+    cedula: [
+      '',
+      [
         Validators.required,
         Validators.pattern(/^[0-9]{7,8}$/),
         Validators.minLength(7),
-        Validators.maxLength(8)
-      ]],
+        Validators.maxLength(8),
+      ],
+    ],
     p00: ['', Validators.required],
     date_birthday: ['', Validators.required],
-    gender: ['masculino', [Validators.required, Validators.pattern(/^(masculino|femenino)$/)]],
+    gender: [
+      'masculino',
+      [Validators.required, Validators.pattern(/^(masculino|femenino)$/)],
+    ],
     company_entry_date: ['', Validators.required],
     management_entry_date: ['', Validators.required],
     full_address: ['', [Validators.required, Validators.maxLength(200)]],
@@ -148,43 +160,70 @@ export class RegisterPageComponent {
     coordinationId: [null as number | null, Validators.required],
     positionId: [null as number | null, Validators.required],
     levelEducationsIds: this.fb.control<number[]>([], Validators.required),
-    password: [ '', [ Validators.required, Validators.pattern(/^(?=(?:.*[A-Z]){2})(?=(?:.*[a-z]){2})(?=(?:.*\d){4})(?=(?:.*[!@#$%&*]){2})(?!.*[.\n]).{10}$/)]],
+    password: [
+      '',
+      [
+        Validators.required,
+        Validators.pattern(
+          /^(?=(?:.*[A-Z]){2})(?=(?:.*[a-z]){2})(?=(?:.*\d){4})(?=(?:.*[!@#$%&*]){2})(?!.*[.\n]).{10}$/
+        ),
+      ],
+    ],
   });
 
-  onSubmit() {
-    // this.prepareSubmit()
-    if (this.registerForm.valid) {
-      Swal.fire({
-        title: 'Éxito',
-        text: 'El formulario se ha guardado correctamente',
-        icon: 'success',
-        showConfirmButton: false,
-        timer: 2000,
-      });
-      // Aquí iría la lógica para guardar los datos
-      const formValue = this.registerForm.value;
+onSubmit() {
+  if (this.registerForm.valid) {
+    this.isUploading.set(true);
 
-      const userLike: Partial<User> = {
-        ...(formValue as any),
-      };
-      console.log(this.registerForm.value);
-      this.authServices
-        .createUser(userLike)
-        .pipe(
-          catchError((error: HttpErrorResponse) => {
-            // this.handleError(error);
-            return throwError(() => error);
-          })
-        )
-        .subscribe((isValid) => {
-          if (isValid) {
-            this.router.navigate(['/']);
+    const formValue = this.registerForm.value;
+    const userLike: Partial<User> = {
+      ...(formValue as any),
+    };
+
+    // Obtener archivos seleccionados (solo los objetos File)
+    const selectedFiles = this.selectedFiles();
+    const filesToUpload = selectedFiles.length > 0
+      ? this.createFileListFromObjects(selectedFiles)
+      : undefined;
+
+    this.authServices
+      .createUser(userLike, filesToUpload)
+      .pipe(
+        catchError((error: HttpErrorResponse) => {
+          this.isUploading.set(false);
+          return throwError(() => error);
+        })
+      )
+      .subscribe({
+        next: (user) => {
+          this.isUploading.set(false);
+          Swal.fire({
+            title: 'Éxito',
+            text: 'Usuario creado correctamente',
+            icon: 'success',
+            showConfirmButton: false,
+            timer: 2000,
+          }).then(() => {
+            this.router.navigate(['/admin/auth/users']);
+          });
+        },
+        error: (error) => {
+          this.isUploading.set(false);
+          let errorMessage = 'Ocurrió un error al crear el usuario';
+          if (error.error?.message) {
+            errorMessage = Array.isArray(error.error.message)
+              ? error.error.message.join(', ')
+              : error.error.message;
           }
-          this.hasError.set(true);
-          setTimeout(() => {
-            this.hasError.set(false);
-          }, 3000);
-        });
+
+          Swal.fire({
+            title: 'Error',
+            text: errorMessage,
+            icon: 'error',
+            confirmButtonText: 'Aceptar'
+          });
+        }
+      });
     } else {
       this.hasError.set(true);
       setTimeout(() => {
@@ -202,6 +241,14 @@ export class RegisterPageComponent {
     }
   }
 
+  private createFileListFromObjects(fileObjects: {file: File, url: string}[]): FileList {
+  const dataTransfer = new DataTransfer();
+  fileObjects.forEach(item => dataTransfer.items.add(item.file));
+  return dataTransfer.files;
+}
+
+
+
   onCancel() {
     Swal.fire({
       title: '¿Estás seguro?',
@@ -213,7 +260,7 @@ export class RegisterPageComponent {
     }).then((result) => {
       if (result.isConfirmed) {
         this.registerForm.reset();
-        this.router.navigateByUrl('/admin/tickets');
+        this.router.navigateByUrl('/admin/auth/users');
       }
     });
   }
@@ -252,4 +299,68 @@ export class RegisterPageComponent {
     formData.coordinationId = Number(formData.coordinationId);
     return formData;
   }
+
+  onFileSelected(event: any) {
+  const files: FileList = event.target.files;
+  if (files.length > 0) {
+    const validFiles: {file: File, url: string}[] = [];
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+
+      // Validar tamaño (5MB máximo)
+      if (file.size > 5 * 1024 * 1024) {
+        Swal.fire({
+          title: 'Archivo demasiado grande',
+          text: `El archivo ${file.name} excede el límite de 5MB`,
+          icon: 'warning',
+          confirmButtonText: 'Aceptar'
+        });
+        continue;
+      }
+
+      // Validar tipo
+      const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
+if (!validTypes.includes(file.type)) continue;
+
+      const url = URL.createObjectURL(file);
+      validFiles.push({file, url});
+    }
+this.cleanupObjectUrls();
+    // Solo permitir 1 archivo para foto de perfil
+    this.selectedFiles.set(validFiles.slice(0, 1));
+  }
+}
+
+// Método para eliminar archivo
+removeFile(index: number) {
+  const files = this.selectedFiles();
+  // Revocar la URL del objeto
+  URL.revokeObjectURL(files[index].url);
+  files.splice(index, 1);
+  this.selectedFiles.set([...files]);
+}
+
+private cleanupObjectUrls() {
+  this.selectedFiles().forEach(item => {
+    URL.revokeObjectURL(item.url);
+  });
+}
+
+// Método helper para convertir File[] a FileList
+private createFileList(files: File[]): FileList {
+  const dataTransfer = new DataTransfer();
+  files.forEach(file => dataTransfer.items.add(file));
+  return dataTransfer.files;
+}
+
+getObjectUrl(index: number): string {
+  const files = this.selectedFiles();
+  return index < files.length ? files[index].url : '';
+}
+
+ngOnDestroy() {
+this.cleanupObjectUrls();
+}
+
 }

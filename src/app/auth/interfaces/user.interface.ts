@@ -1,24 +1,10 @@
-import { Group } from "@features/groups/interfaces/group.interface";
 import { Position } from "@features/positions/interfaces/position.interface";
-import { Team } from "@features/teams/interfaces/team.interface";
 
 export interface UserResponse {
   count:            number;
   pages:            number;
   users: User[];
 }
-
-// export interface User {
-//   id:       number;
-//   email:    string;
-//   fullName: string;
-//   isActive: boolean;
-//   roles:    string[];
-//   group:    Group;
-//   position: Position;
-//   team:     Team;
-// }
-
 export interface User {
   id:                    number;
   cedula:                string;
@@ -38,8 +24,13 @@ export interface User {
   full_address:          string;
   coordinationId:        number;
   group?:               number;
-  position:            number;
+  position:            Position;
   team?:                number;
   parishId:              number;
   level_education:       number[];
+  images?: string[];
+
+  // positions?: Position;
 }
+
+
