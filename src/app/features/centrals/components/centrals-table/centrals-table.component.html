@@ -1,22 +1,91 @@
 <div class="overflow-x-auto rounded-box border border-base-content/5 bg-base-100">
   <table class="table table-fixed table-zebra">
-    <!-- head -->
     <thead>
       <tr>
-        <th>Codigo</th>
+        <th>Código</th>
         <th>Nombre</th>
         <th>Estado</th>
+        <th>Coordenadas</th>
+        <th>Estado Activo</th>
         <th>Observaciones</th>
+
+        <!-- Columna de acciones o selección -->
+        @if (shouldShowActions() || isSelectorMode()) {
+          <th [class.w-32]="shouldShowActions()" [class.w-40]="isSelectorMode()">
+            {{ isSelectorMode() ? 'Seleccionar' : 'Acciones' }}
+          </th>
+        }
       </tr>
     </thead>
     <tbody>
-      @for (central of central(); track $index) {
-      <tr>
-        <td>{{ central.central_code }}</td>
-        <td class="capitalize">{{ central.central_name }}</td>
-        <td class="capitalize">{{ central.state }}</td>
-        <td class="uppercase text-xs">{{ central.observations }}</td>
-      </tr>
+      @for (central of central(); track central.id) {
+        <tr>
+          <!-- Datos de la central -->
+          <td class="font-mono">{{ central.central_code }}</td>
+          <td class="capitalize">{{ central.central_name }}</td>
+          <td class="capitalize">{{ central.state || 'N/A' }}</td>
+          <td class="font-mono text-xs">
+            @if (central.coord_lat && central.coord_lng) {
+              {{ central.coord_lat }}, {{ central.coord_lng }}
+            } @else {
+              <span class="text-base-content/50">Sin coordenadas</span>
+            }
+          </td>
+          <td>
+            <div class="badge badge-ghost" [class.badge-success]="central.isActive" [class.badge-error]="!central.isActive">
+              {{ central.isActive ? 'Activo' : 'Inactivo' }}
+            </div>
+          </td>
+          <td class="uppercase text-xs max-w-32 truncate" [title]="central.observations">
+            {{ central.observations || 'Sin observaciones' }}
+          </td>
+
+          <!-- Columna de acciones -->
+          @if (shouldShowActions() || isSelectorMode()) {
+            <td>
+              <div class="flex gap-1">
+                <!-- Modo Selector -->
+                @if (isSelectorMode()) {
+                  <button type="button" class="btn btn-primary btn-sm" (click)="onSelect(central)" title="Seleccionar central">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    Seleccionar
+                  </button>
+                }
+
+                <!-- Modo CRUD (solo para super_user) -->
+                @if (shouldShowActions()) {
+                  <button class="btn btn-ghost btn-xs" (click)="onEdit(central)" title="Editar">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </button>
+                  <button class="btn btn-ghost btn-xs text-error" (click)="onDelete(central)" title="Eliminar">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                }
+              </div>
+            </td>
+          }
+        </tr>
+      }
+
+      <!-- Estado vacío -->
+      @empty {
+        <tr>
+          <td [attr.colspan]="getColumnCount()" class="text-center py-12">
+            <div class="flex flex-col items-center justify-center text-base-content/40">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
+              </svg>
+              <p class="text-lg font-medium">No se encontraron centrales</p>
+              <p class="text-sm">No hay datos disponibles para mostrar</p>
+            </div>
+          </td>
+        </tr>
       }
     </tbody>
   </table>

@@ -1,3 +1,4 @@
+import { Group } from "@features/groups/interfaces/group.interface";
 import { Position } from "@features/positions/interfaces/position.interface";
 
 export interface UserResponse {
@@ -23,14 +24,13 @@ export interface User {
   management_entry_date: Date;
   full_address:          string;
   coordinationId:        number;
-  group?:               number;
+  group:               Group;
   position:            Position;
   team?:                number;
   parishId:              number;
   level_education:       number[];
   images?: string[];
-
-  // positions?: Position;
 }
+
 
 

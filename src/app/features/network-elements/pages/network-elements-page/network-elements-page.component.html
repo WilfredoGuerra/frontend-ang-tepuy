@@ -1,28 +1,86 @@
-<div class="flex flex-row justify-between">
-  <div>
-    <h1 class="text-accent font-semibold text-lg font-montserrat">Elementos de red</h1>
+<div class="flex flex-col gap-6">
+  <!-- Header Section -->
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div>
+      <h1 class="text-accent font-semibold text-2xl font-montserrat">Elementos de Red</h1>
+      <p class="text-base-content/60 text-sm mt-1">
+        Gestión completa de elementos de red de la plataforma
+      </p>
+    </div>
+
+    @if (authService.user()?.roles?.includes('super_user')) {
+      <div>
+        <button routerLink="/admin/network-elements/new" class="btn btn-primary">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          Nuevo Elemento
+        </button>
+      </div>
+    }
   </div>
 
-  @if (authService.isAdmin()) {
-  <div>
-    <button class="btn btn-soft btn-primary">Nuevo</button>
+  <!-- Search Section -->
+  <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+    <div class="w-full sm:w-auto">
+      <ticket-search-input
+        placeholder="Buscar por acrónimo, IP, localidad..."
+        (value)="onSearch($event)"
+      />
+    </div>
+
+    @if (query()) {
+      <div class="flex items-center gap-2">
+        <div class="text-sm text-base-content/60">
+          Búsqueda: "{{ query() }}"
+        </div>
+        <button class="btn btn-ghost btn-sm" (click)="clearSearch()">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+          Limpiar
+        </button>
+      </div>
+    }
   </div>
+
+  <!-- Error Message -->
+  @if (searchError()) {
+    <div class="alert alert-warning">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z" />
+      </svg>
+      <span>{{ searchError() }}</span>
+    </div>
   }
 
+  <!-- Search Results Info -->
+  @if (query() && !searchError()) {
+    @let resourceValue = networkElementsResource.value();
+    @if (resourceValue && resourceValue.count > 0) {
+      <div class="alert alert-info">
+        <div>
+          <span>Encontrados {{ resourceValue.count }} elemento(s) para "{{ query() }}"</span>
+        </div>
+      </div>
+    }
+  }
+
+  <!-- Table Section -->
+  <network-element-table
+    [network]="networkElementsResource.value()?.networksElements ?? []"
+    (editElement)="onEditElement($event)"
+    (deleteElement)="onDeleteElement($event)"
+    (viewDetails)="onViewDetails($event)"
+  />
+
+  <!-- Pagination Section -->
+  @if (networkElementsResource.value() && networkElementsResource.value()!.pages > 1) {
+    <div class="mt-6 flex justify-center">
+      <app-pagination
+        [currentPage]="paginationService.currentPage()"
+        [pages]="networkElementsResource.value()?.pages ?? 0"
+      />
+    </div>
+  }
 </div>
-
-
-<network-element-table [network]="networkElementsResource.value()?.networksElements ?? []" />
-
-<div class="m-4 flex justify-center">
-  <app-pagination [currentPage]="paginationService.currentPage()" [pages]="networkElementsResource.value()?.pages ?? 0" />
-</div>
-
-<!-- <dialog id="my_modal_4" class="modal" [class.modal-open]="isModalOpen">
-  <div class="modal-box w-11/12 max-w-5xl">
-    <new-element-network />
-  </div>
-  <form method="dialog" class="modal-backdrop">
-    <button (click)="closeModal()">close</button>
-  </form>
-</dialog> -->

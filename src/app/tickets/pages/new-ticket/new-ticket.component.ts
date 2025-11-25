@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, effect } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -26,9 +26,16 @@ import { FormErrorLabelComponent } from '@shared/components/form-error-label/for
 // Interfaces
 import { Ticket } from '@tickets/interfaces/ticket.interface';
 import { NetworkElement } from '@features/network-elements/interfaces/network-element.interface';
-import { FiberLength, FiberLengthsResponse } from '@features/fiber-lengths/interfaces/fiber-length.interface';
-import { PersonalRegion, PersonalsRegion } from '@features/personal-region/interfaces/personal-region.interface';
+import {
+  FiberLength,
+  FiberLengthsResponse,
+} from '@features/fiber-lengths/interfaces/fiber-length.interface';
+import {
+  PersonalRegion,
+  PersonalsRegion,
+} from '@features/personal-region/interfaces/personal-region.interface';
 import { Status } from '@features/statuses/interfaces/status.interface';
+import { Platform } from '@features/platforms/interfaces/platform.interface';
 
 @Component({
   selector: 'app-new-ticket',
@@ -36,17 +43,32 @@ import { Status } from '@features/statuses/interfaces/status.interface';
   templateUrl: './new-ticket.component.html',
   styles: `
   .collapse-arrow .collapse-title:after {
-  transition: transform 0.2s ease-in-out;
-}
+    transition: transform 0.2s ease-in-out;
+  }
 
-.peer:checked ~ .collapse-title:after {
-  transform: rotate(180deg);
-}
+  .peer:checked ~ .collapse-title:after {
+    transform: rotate(180deg);
+  }
 
-.collapse-content {
-  transition: max-height 0.3s ease-in-out, opacity 0.2s ease-in-out;
-}
-  `
+  .collapse-content {
+    transition: max-height 0.3s ease-in-out, opacity 0.2s ease-in-out;
+  }
+
+  @keyframes fade-in-up {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fade-in-up {
+    animation: fade-in-up 0.3s ease-out;
+  }
+`,
 })
 export class NewTicketComponent implements OnInit {
   // Inyección de servicios
@@ -72,9 +94,14 @@ export class NewTicketComponent implements OnInit {
   selectionType = signal<'network' | 'fiber'>('network');
   isSelectionLocked = signal(false);
   readonly FIBER_CUT_FAILURE_ID = 7;
+  showReportingFields = signal(false);
+
+  showDateTimeAlert = signal(false);
+  dateTimeAlertMessage = signal('');
+  private alertTimeout: any = null;
 
   // tempImages = signal<string[]>([]);
-  tempImages = signal<{ url: string, name: string }[]>([]);
+  tempImages = signal<{ url: string; name: string }[]>([]);
   imageFileList: FileList | undefined = undefined;
 
   isUploading = signal(false);
@@ -83,24 +110,92 @@ export class NewTicketComponent implements OnInit {
   // Señal para la fecha de apertura del formulario
   formOpenDate = signal(this.getCurrentDateTimeString());
 
+  generatedTicketNumber = signal<string>('');
+
+  filteredPlatforms = signal<Platform[]>([]);
+
+  filteredFailures = signal<any[]>([]);
+
   // Formulario
+  // ticketForm = this.fb.group({
+  //   groupId: [0, Validators.required],
+  //   severityId: [0, Validators.required],
+  //   platformId: [{ value: 0, disabled: true }, Validators.required], // ← Cambiado aquí
+  //   originId: [0, Validators.required],
+  //   failureId: [0, Validators.required],
+  //   statusId: [{ value: 0, disabled: true }, [Validators.required]],
+  //   elementNetworkId: this.fb.control<number[]>([]),
+  //   fiberLengthId: this.fb.control<number | null>(null),
+  //   definition_problem: [
+  //     '',
+  //     [
+  //       Validators.required,
+  //       Validators.minLength(10),
+  //       Validators.maxLength(500),
+  //     ],
+  //   ],
+  //   evidences_problem: [
+  //     '',
+  //     [
+  //       Validators.required,
+  //       Validators.minLength(10),
+  //       Validators.maxLength(500),
+  //     ],
+  //   ],
+  //   hypothesis: [
+  //     '',
+  //     [Validators.required, Validators.minLength(8), Validators.maxLength(500)],
+  //   ],
+  //   personalRegionId: this.fb.control<number | null>(null),
+  //   impact: ['', [Validators.min(0)]],
+  //   date_hif: ['', Validators.required],
+  //   date_hdc: [null],
+  //   date_hct: [null],
+  //   personPhoneReport: this.fb.group({
+  //     name: [''],
+  //     phone: [''],
+  //   }),
+  // });
+
   ticketForm = this.fb.group({
     groupId: [0, Validators.required],
     severityId: [0, Validators.required],
-    platformId: [0, Validators.required],
+    platformId: [{ value: 0, disabled: true }, Validators.required],
     originId: [0, Validators.required],
     failureId: [0, Validators.required],
     statusId: [{ value: 0, disabled: true }, [Validators.required]],
     elementNetworkId: this.fb.control<number[]>([]),
     fiberLengthId: this.fb.control<number | null>(null),
-    definition_problem: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(500)]],
-    evidences_problem: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(500)]],
-    hypothesis: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(500)]],
+    definition_problem: [
+      '',
+      [
+        Validators.required,
+        Validators.minLength(10),
+        Validators.maxLength(500),
+      ],
+    ],
+    evidences_problem: [
+      '',
+      [
+        Validators.required,
+        Validators.minLength(10),
+        Validators.maxLength(500),
+      ],
+    ],
+    hypothesis: [
+      '',
+      [Validators.required, Validators.minLength(8), Validators.maxLength(500)],
+    ],
     personalRegionId: this.fb.control<number | null>(null),
     impact: ['', [Validators.min(0)]],
     date_hif: ['', Validators.required],
-    date_hdc: [null],
-    date_hct: [null],
+    date_hdc: ['', Validators.required],
+    date_hct: ['', Validators.required],
+    // Inicializar como null - solo se creará cuando sea necesario
+    personPhoneReport: this.fb.group({
+      name: [{ value: '', disabled: true }],
+      phone: [{ value: '', disabled: true }],
+    }),
   });
 
   // Señales para modales y búsquedas
@@ -183,13 +278,168 @@ export class NewTicketComponent implements OnInit {
     stream: () => this.networkElementsService.getNetworkElements({}),
   });
 
+  constructor() {
+    // Efecto para inicializar las plataformas filtradas cuando se cargan las plataformas
+    effect(() => {
+      const platforms = this.platformsResource.value();
+      if (platforms && platforms.length > 0) {
+        this.filteredPlatforms.set(platforms);
+      }
+    });
+  }
+
   ngOnInit(): void {
     this.loadStatuses();
     this.loadFilterOptions();
     this.setupSearchDebouncing();
 
+    // Inicializar filteredFailures con todas las fallas
+    const allFailures = this.failuresResource.value() || [];
+    this.filteredFailures.set(allFailures);
+
     this.ticketForm.get('failureId')?.valueChanges.subscribe((failureId) => {
       this.onFailureChange(failureId);
+    });
+
+    this.ticketForm.get('groupId')?.valueChanges.subscribe((groupId) => {
+      this.onGroupChange(groupId);
+    });
+
+    this.ticketForm.get('originId')?.valueChanges.subscribe((originId) => {
+      this.onOriginChange(originId);
+    });
+
+    // Actualizar las suscripciones de fecha
+    // this.ticketForm.get('date_hif')?.valueChanges.subscribe(() => {
+    //   this.onDateHifChange();
+    // });
+
+    this.ticketForm.get('date_hdc')?.valueChanges.subscribe(() => {
+      this.onDateHdcChange();
+    });
+
+    this.ticketForm.get('date_hct')?.valueChanges.subscribe(() => {
+      this.onDateHctChange();
+    });
+  }
+
+  onOriginChange(originId: number | null): void {
+    const TELEPHONE_ORIGIN_ID = 3;
+
+    if (originId === TELEPHONE_ORIGIN_ID) {
+      this.showReportingFields.set(true);
+
+      // Habilitar y agregar validadores
+      this.ticketForm.get('personPhoneReport')?.enable();
+      this.ticketForm
+        .get('personPhoneReport.name')
+        ?.setValidators([Validators.required, Validators.minLength(3)]);
+      this.ticketForm
+        .get('personPhoneReport.phone')
+        ?.setValidators([Validators.required, this.phoneValidator]);
+    } else {
+      this.showReportingFields.set(false);
+
+      // Remover validadores, limpiar valores y deshabilitar
+      this.ticketForm.get('personPhoneReport.name')?.clearValidators();
+      this.ticketForm.get('personPhoneReport.phone')?.clearValidators();
+
+      this.ticketForm.patchValue({
+        personPhoneReport: {
+          name: '',
+          phone: '',
+        },
+      });
+
+      this.ticketForm.get('personPhoneReport')?.disable();
+    }
+
+    this.ticketForm.get('personPhoneReport.name')?.updateValueAndValidity();
+    this.ticketForm.get('personPhoneReport.phone')?.updateValueAndValidity();
+  }
+
+  phoneValidator(control: any) {
+    if (!control.value) {
+      return null;
+    }
+
+    const phone = control.value.trim();
+
+    // Patrón para números venezolanos: 0212-6630824 o 0414-1234567
+    const phonePattern = /^(02\d{2}-?\d{7}|04(14|24|16|26|12|22)-?\d{7})$/;
+
+    if (!phonePattern.test(phone)) {
+      return { invalidPhone: true };
+    }
+
+    return null;
+  }
+
+  onGroupChange(groupId: number | null): void {
+    if (!groupId || groupId === 0) {
+      // Si no hay grupo seleccionado, deshabilitar plataforma y mostrar todas las fallas
+      this.ticketForm.get('platformId')?.disable();
+      const allPlatforms = this.platformsResource.value() || [];
+      this.filteredPlatforms.set(allPlatforms);
+
+      // Mostrar todas las fallas
+      const allFailures = this.failuresResource.value() || [];
+      this.filteredFailures.set(allFailures);
+
+      this.ticketForm.patchValue({
+        platformId: 0,
+        failureId: 0, // Resetear la falla seleccionada
+      });
+      return;
+    }
+
+    // Habilitar plataforma cuando hay un grupo seleccionado
+    this.ticketForm.get('platformId')?.enable();
+
+    // Filtrar plataformas que pertenecen al grupo seleccionado
+    const allPlatforms = this.platformsResource.value() || [];
+    const platformsForGroup = allPlatforms.filter((platform) =>
+      platform.groups?.some((group) => group.id === groupId)
+    );
+    this.filteredPlatforms.set(platformsForGroup);
+
+    // ✅ NUEVO: Cargar las fallas específicas para este grupo
+    this.loadFailuresByGroup(groupId);
+
+    // Resetear la plataforma si la selección actual no pertenece al grupo
+    const currentPlatformId = this.ticketForm.get('platformId')?.value;
+    if (currentPlatformId && currentPlatformId !== 0) {
+      const currentPlatformValid = platformsForGroup.some(
+        (platform) => platform.id === currentPlatformId
+      );
+      if (!currentPlatformValid) {
+        this.ticketForm.patchValue({ platformId: 0 });
+      }
+    }
+  }
+
+  loadFailuresByGroup(groupId: number): void {
+    this.groupsService.getFailuresByGroup(groupId).subscribe({
+      next: (failures) => {
+        // El endpoint retorna un array de fallas directamente
+        this.filteredFailures.set(failures || []);
+
+        // Resetear la falla seleccionada si no está en las nuevas opciones
+        const currentFailureId = this.ticketForm.get('failureId')?.value;
+        if (currentFailureId && currentFailureId !== 0) {
+          const currentFailureValid = failures?.some(
+            (failure: any) => failure.id === currentFailureId
+          );
+          if (!currentFailureValid) {
+            this.ticketForm.patchValue({ failureId: 0 });
+          }
+        }
+      },
+      error: (error) => {
+        console.error('Error loading failures for group:', error);
+        this.filteredFailures.set([]);
+        this.ticketForm.patchValue({ failureId: 0 });
+      },
     });
   }
 
@@ -266,6 +516,7 @@ export class NewTicketComponent implements OnInit {
     }
 
     this.selectionType.set(type);
+    this.clearDefinitionProblem();
 
     // Limpiar selecciones al cambiar de tipo
     if (type === 'network') {
@@ -284,15 +535,23 @@ export class NewTicketComponent implements OnInit {
   onSubmit(): void {
     this.ticketForm.markAllAsTouched();
 
+    if (!this.validateDateTimeFields()) {
+      return;
+    }
+
     let specificError = '';
 
-    if (this.selectionType() === 'network' &&
-      this.ticketForm.get('elementNetworkId')?.value?.length === 0) {
+    if (
+      this.selectionType() === 'network' &&
+      this.ticketForm.get('elementNetworkId')?.value?.length === 0
+    ) {
       specificError = 'Por favor seleccione al menos un elemento de red';
     }
 
-    if (this.selectionType() === 'fiber' &&
-      !this.ticketForm.get('fiberLengthId')?.value) {
+    if (
+      this.selectionType() === 'fiber' &&
+      !this.ticketForm.get('fiberLengthId')?.value
+    ) {
       specificError = 'Por favor seleccione un tramo de fibra';
     }
 
@@ -321,12 +580,18 @@ export class NewTicketComponent implements OnInit {
     // ✅ Usar getRawValue() para incluir campos disabled (como statusId)
     const formValue = this.ticketForm.getRawValue();
 
+    // console.log('Datos a enviar:', formValue);
+
     // Preparar los datos base del ticket (sin imágenes todavía)
     const ticketData: any = {
       ...formValue,
       formOpenDate: this.formOpenDate(),
-      images: [] // Inicializar como array vacío
+      images: [], // Inicializar como array vacío
     };
+
+    if (this.ticketForm.get('personPhoneReport')?.disabled) {
+      ticketData.personPhoneReport = undefined;
+    }
 
     // Asegurar que los campos opcionales sean null si están vacíos
     ticketData.date_hdc = ticketData.date_hdc || null;
@@ -335,86 +600,91 @@ export class NewTicketComponent implements OnInit {
     ticketData.fiberLengthId = ticketData.fiberLengthId || null;
     ticketData.impact = ticketData.impact || null;
 
-    // console.log('Datos base del ticket:', ticketData);
-
     // Mostrar estado de carga
     this.isUploading.set(true);
 
-  // 1. Primero subir las imágenes al endpoint de files
-  this.ticketsService.uploadImages(this.imageFileList).subscribe({
-    next: (imageUrls) => {
-      // Filtrar posibles errores en la subida
-      const successfulUploads = imageUrls.filter(url => !url.startsWith('error_'));
-      const failedUploads = imageUrls.filter(url => url.startsWith('error_'));
+    // 1. Primero subir las imágenes al endpoint de files
+    this.ticketsService.uploadImages(this.imageFileList).subscribe({
+      next: (imageUrls) => {
+        // Filtrar posibles errores en la subida
+        const successfulUploads = imageUrls.filter(
+          (url) => !url.startsWith('error_')
+        );
+        const failedUploads = imageUrls.filter((url) =>
+          url.startsWith('error_')
+        );
 
-      if (failedUploads.length > 0) {
-        console.warn(`${failedUploads.length} imágenes no se subieron correctamente`);
-        // Opcional: mostrar advertencia al usuario
-      }
-
-      // 2. Agregar las URLs de las imágenes al ticket
-      ticketData.images = successfulUploads;
-
-      // console.log('Creando ticket con imágenes:', ticketData);
-
-      // 3. Crear el ticket con las URLs de las imágenes
-      this.ticketsService.createTicket(ticketData).subscribe({
-        next: (ticket) => {
-          this.isUploading.set(false);
-          Swal.fire({
-            title: 'Éxito',
-            text: 'El ticket se creó correctamente',
-            icon: 'success',
-            showConfirmButton: false,
-            timer: 1500,
-          }).then(() => {
-            this.navigateAfterSubmit();
-          });
-        },
-        error: (error) => {
-          this.isUploading.set(false);
-          console.error('Error creating ticket:', error);
-
-          // Manejo de errores...
+        if (failedUploads.length > 0) {
+          console.warn(
+            `${failedUploads.length} imágenes no se subieron correctamente`
+          );
+          // Opcional: mostrar advertencia al usuario
         }
-      });
-    },
-    error: (uploadError) => {
-      this.isUploading.set(false);
-      console.error('Error subiendo imágenes:', uploadError);
 
-      // Intentar crear el ticket sin imágenes
-      Swal.fire({
-        title: 'Error al subir imágenes',
-        text: '¿Deseas crear el ticket sin las imágenes?',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: 'Sí, crear sin imágenes',
-        cancelButtonText: 'No, cancelar'
-      }).then((result) => {
-        if (result.isConfirmed) {
-          ticketData.images = [];
-          this.ticketsService.createTicket(ticketData).subscribe({
-            next: (ticket) => {
-              Swal.fire({
-                title: 'Éxito',
-                text: 'El ticket se creó sin imágenes',
-                icon: 'success',
-                showConfirmButton: false,
-                timer: 1500,
-              }).then(() => {
-                this.navigateAfterSubmit();
-              });
-            },
-            error: (error) => {
-              console.error('Error creating ticket without images:', error);
-              // Manejo de errores...
-            }
-          });
-        }
-      });
-    }
-  });
+        // 2. Agregar las URLs de las imágenes al ticket
+        ticketData.images = successfulUploads;
+
+        // console.log('Creando ticket con imágenes:', ticketData);
+
+        // 3. Crear el ticket con las URLs de las imágenes
+        this.ticketsService.createTicket(ticketData).subscribe({
+          next: (ticket) => {
+            this.isUploading.set(false);
+            this.generatedTicketNumber.set(ticket.nro_ticket);
+            Swal.fire({
+              title: 'Éxito',
+              html: `El ticket <strong>${ticket.nro_ticket}</strong> se creó correctamente`,
+              icon: 'success',
+              showConfirmButton: true,
+              confirmButtonText: 'Aceptar',
+            }).then(() => {
+              this.navigateAfterSubmit();
+            });
+          },
+          error: (error) => {
+            this.isUploading.set(false);
+            console.error('Error creating ticket:', error);
+
+            // Manejo de errores...
+          },
+        });
+      },
+      error: (uploadError) => {
+        this.isUploading.set(false);
+        console.error('Error subiendo imágenes:', uploadError);
+
+        // Intentar crear el ticket sin imágenes
+        Swal.fire({
+          title: 'Error al subir imágenes',
+          text: '¿Deseas crear el ticket sin las imágenes?',
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonText: 'Sí, crear sin imágenes',
+          cancelButtonText: 'No, cancelar',
+        }).then((result) => {
+          if (result.isConfirmed) {
+            ticketData.images = [];
+            this.ticketsService.createTicket(ticketData).subscribe({
+              next: (ticket) => {
+                Swal.fire({
+                  title: 'Éxito',
+                  text: 'El ticket se creó sin imágenes',
+                  icon: 'success',
+                  showConfirmButton: false,
+                  timer: 1500,
+                }).then(() => {
+                  this.navigateAfterSubmit();
+                });
+              },
+              error: (error) => {
+                console.error('Error creating ticket without images:', error);
+                // Manejo de errores...
+              },
+            });
+          }
+        });
+      },
+    });
   }
 
   private navigateAfterSubmit(): void {
@@ -480,8 +750,9 @@ export class NewTicketComponent implements OnInit {
         statuses[0];
 
       // ✅ Establecer valor manteniendo el estado disabled
-      this.ticketForm.get('statusId')?.setValue(defaultStatus.id, { emitEvent: false });
-
+      this.ticketForm
+        .get('statusId')
+        ?.setValue(defaultStatus.id, { emitEvent: false });
     } catch (error) {
       console.error('Error al establecer status por defecto:', error);
       if (statuses?.length) {
@@ -492,13 +763,13 @@ export class NewTicketComponent implements OnInit {
 
   loadFilterOptions(): void {
     this.statesServices.getStates().subscribe({
-      next: (states) => this.statesList = states,
-      error: (err) => console.error('Error loading states', err)
+      next: (states) => (this.statesList = states),
+      error: (err) => console.error('Error loading states', err),
     });
 
     this.groupsEscalatoryServices.getGroupsEscalatory().subscribe({
-      next: (groups) => this.groupsList = groups,
-      error: (err) => console.error('Error loading groups', err)
+      next: (groups) => (this.groupsList = groups),
+      error: (err) => console.error('Error loading groups', err),
     });
   }
 
@@ -519,7 +790,7 @@ export class NewTicketComponent implements OnInit {
       .getNetworkElements({
         limit: this.itemsPerPage,
         offset,
-        group: '',
+        // group: '',
       })
       .subscribe({
         next: (response) => {
@@ -554,30 +825,44 @@ export class NewTicketComponent implements OnInit {
     this.searchSubject.next(value);
   }
 
-  toggleNetworkElementSelection(element: NetworkElement): void {
-    const currentSelection = this.selectedNetworkElements();
-    const index = currentSelection.findIndex((el) => el.id === element.id);
+toggleNetworkElementSelection(element: NetworkElement): void {
+  const currentSelection = this.selectedNetworkElements();
+  const index = currentSelection.findIndex((el) => el.id === element.id);
 
-    if (index > -1) {
-      this.selectedNetworkElements.set(
-        currentSelection.filter((el) => el.id !== element.id)
-      );
-    } else {
-      this.selectedNetworkElements.set([...currentSelection, element]);
-    }
+  if (index > -1) {
+    // Deseleccionar elemento
+    this.selectedNetworkElements.set(
+      currentSelection.filter((el) => el.id !== element.id)
+    );
+  } else {
+    // Seleccionar elemento
+    this.selectedNetworkElements.set([...currentSelection, element]);
   }
+
+  // ✅ NUEVO: Siempre autocompletar después de cualquier cambio en la selección
+  if (this.selectionType() === 'network') {
+    this.autocompleteWithNetworkElement();
+  }
+}
 
   isElementSelected(element: NetworkElement): boolean {
     return this.selectedNetworkElements().some((el) => el.id === element.id);
   }
 
-  saveNetworkElementsSelection(): void {
-    const selectedIds = this.selectedNetworkElements().map((el) => el.id);
-    this.ticketForm.patchValue({
-      elementNetworkId: selectedIds,
-    });
-    this.closeNetworkElementsModal();
+saveNetworkElementsSelection(): void {
+  const selectedIds = this.selectedNetworkElements().map((el) => el.id);
+  this.ticketForm.patchValue({
+    elementNetworkId: selectedIds,
+  });
+
+  // ✅ NUEVO: El autocompletado ya se ejecutó durante la selección/deselección
+  // pero lo mantenemos por si acaso hay algún caso edge
+  if (this.selectionType() === 'network' && selectedIds.length > 0) {
+    this.autocompleteWithNetworkElement();
   }
+
+  this.closeNetworkElementsModal();
+}
 
   getSelectedNetworkElementsText(): string {
     const selected = this.selectedNetworkElements();
@@ -688,6 +973,9 @@ export class NewTicketComponent implements OnInit {
 
   selectFiberLength(fiberLength: FiberLength): void {
     this.selectedFiberLength.set(fiberLength);
+    if (this.selectionType() === 'fiber') {
+      this.autocompleteWithFiberLength();
+    }
   }
 
   isFiberLengthSelected(fiberLength: FiberLength): boolean {
@@ -701,6 +989,7 @@ export class NewTicketComponent implements OnInit {
         fiberLengthId: selectedFiber.id,
         elementNetworkId: [],
       });
+      this.autocompleteWithFiberLength();
     }
     this.closeFiberLengthsModal();
   }
@@ -810,23 +1099,25 @@ export class NewTicketComponent implements OnInit {
       return;
     }
 
-    this.personalsRegionService.getPersonalRegionByAdvanced(
-      searchTerm !== '' ? searchTerm : undefined,
-      stateIdParam,
-      groupIdParam,
-      nameParam,
-      surnameParam
-    ).subscribe({
-      next: (personals: PersonalRegion[]) => {
-        this.allPersonals.set(personals);
-        this.personalTotalPages.set(1);
-      },
-      error: (err) => {
-        console.error('Error searching personals', err);
-        this.allPersonals.set([]);
-        this.personalTotalPages.set(1);
-      },
-    });
+    this.personalsRegionService
+      .getPersonalRegionByAdvanced(
+        searchTerm !== '' ? searchTerm : undefined,
+        stateIdParam,
+        groupIdParam,
+        nameParam,
+        surnameParam
+      )
+      .subscribe({
+        next: (personals: PersonalRegion[]) => {
+          this.allPersonals.set(personals);
+          this.personalTotalPages.set(1);
+        },
+        error: (err) => {
+          console.error('Error searching personals', err);
+          this.allPersonals.set([]);
+          this.personalTotalPages.set(1);
+        },
+      });
   }
 
   clearFilters(): void {
@@ -946,14 +1237,19 @@ export class NewTicketComponent implements OnInit {
 
     const newImages = Array.from(fileList).map((file) => ({
       url: URL.createObjectURL(file),
-      name: file.name
+      name: file.name,
     }));
 
     this.tempImages.set([...this.tempImages(), ...newImages]);
   }
 
   ngOnDestroy() {
-    this.tempImages().forEach(img => URL.revokeObjectURL(img.url));
+    this.tempImages().forEach((img) => URL.revokeObjectURL(img.url));
+
+    // Limpiar el timeout del alert
+    if (this.alertTimeout) {
+      clearTimeout(this.alertTimeout);
+    }
   }
 
   removeImage(index: number) {
@@ -970,10 +1266,301 @@ export class NewTicketComponent implements OnInit {
 
       // Crear un nuevo DataTransfer para simular FileList
       const dataTransfer = new DataTransfer();
-      filesArray.forEach(file => dataTransfer.items.add(file));
+      filesArray.forEach((file) => dataTransfer.items.add(file));
       this.imageFileList = dataTransfer.files;
     }
 
     this.tempImages.set(newTempImages);
+  }
+
+  // Método helper para formatear el teléfono (opcional)
+  formatPhone(event: any): void {
+    const phoneControl = this.ticketForm.get('personPhoneReport.phone');
+    if (!phoneControl) return;
+
+    let phone = event.target.value.replace(/\D/g, ''); // Remover todo excepto números
+
+    if (phone.length >= 4) {
+      phone = phone.substring(0, 4) + '-' + phone.substring(4);
+    }
+
+    if (phone.length > 12) {
+      phone = phone.substring(0, 12);
+    }
+
+    phoneControl.setValue(phone);
+  }
+
+  private validateDateTimeFields(): boolean {
+    const formOpenDate = new Date(this.formOpenDate());
+
+    const dateHifValue = this.ticketForm.get('date_hif')?.value;
+    const dateHdcValue = this.ticketForm.get('date_hdc')?.value;
+    const dateHctValue = this.ticketForm.get('date_hct')?.value;
+
+    const dateHif = dateHifValue ? new Date(dateHifValue) : null;
+    const dateHdc = dateHdcValue ? new Date(dateHdcValue) : null;
+    const dateHct = dateHctValue ? new Date(dateHctValue) : null;
+
+    // Validación 1: Hora inicio falla debe ser mayor a creación del ticket
+    // if (dateHif && dateHif <= formOpenDate) {
+    //   this.showDateTimeError(
+    //     'La hora de inicio de falla debe ser posterior a la hora de creación del ticket'
+    //   );
+    //   return false;
+    // }
+
+    // Validación 2: Hora diagnóstico COR debe ser mayor a inicio falla
+    if (dateHdc && dateHif && dateHdc <= dateHif) {
+      this.showDateTimeError(
+        'La hora de diagnóstico COR debe ser posterior a la hora de inicio de falla'
+      );
+      return false;
+    }
+
+    // Validación 3: Hora contacto técnico debe ser mayor a diagnóstico COR
+    if (dateHct && dateHdc && dateHct <= dateHdc) {
+      this.showDateTimeError(
+        'La hora de contacto técnico debe ser posterior a la hora de diagnóstico COR'
+      );
+      return false;
+    }
+
+    return true;
+  }
+
+  // onDateHifChange(): void {
+  //   const dateHifValue = this.ticketForm.get('date_hif')?.value;
+  //   if (!dateHifValue) return;
+
+  //   const formOpenDate = new Date(this.formOpenDate());
+  //   const selectedDate = new Date(dateHifValue);
+
+  //   if (selectedDate <= formOpenDate) {
+  //     this.showDateTimeError(
+  //       'La hora de inicio de falla debe ser posterior a la creación del ticket'
+  //     );
+  //     this.ticketForm.patchValue({ date_hif: '' });
+  //   }
+  // }
+
+  onDateHdcChange(): void {
+    const dateHdcValue = this.ticketForm.get('date_hdc')?.value;
+    const dateHifValue = this.ticketForm.get('date_hif')?.value;
+
+    if (!dateHdcValue || !dateHifValue) return;
+
+    const selectedDate = new Date(dateHdcValue);
+    const inicioFallaDate = new Date(dateHifValue);
+
+    if (selectedDate <= inicioFallaDate) {
+      this.showDateTimeError(
+        'La hora de diagnóstico COR debe ser posterior al inicio de falla'
+      );
+      this.ticketForm.patchValue({ date_hdc: '' });
+    }
+  }
+
+  onDateHctChange(): void {
+    const dateHctValue = this.ticketForm.get('date_hct')?.value;
+    const dateHdcValue = this.ticketForm.get('date_hdc')?.value;
+
+    if (!dateHctValue || !dateHdcValue) return;
+
+    const selectedDate = new Date(dateHctValue);
+    const diagnosticoDate = new Date(dateHdcValue);
+
+    if (selectedDate <= diagnosticoDate) {
+      this.showDateTimeError(
+        'La hora de contacto técnico debe ser posterior al diagnóstico COR'
+      );
+      this.ticketForm.patchValue({ date_hct: '' });
+    }
+  }
+
+  onOptionalDateChange(fieldName: string): void {
+    const dateValue = this.ticketForm.get(fieldName)?.value;
+    const dateHifValue = this.ticketForm.get('date_hif')?.value;
+
+    if (!dateValue || !dateHifValue) return;
+
+    const selectedDate = new Date(dateValue);
+    const inicioFallaDate = new Date(dateHifValue);
+
+    if (selectedDate < inicioFallaDate) {
+      const fieldNames: { [key: string]: string } = {
+        date_hdc: 'diagnóstico COR',
+        date_hct: 'contacto técnico',
+      };
+
+      // Configurar SweetAlert con mayor z-index
+      Swal.fire({
+        title: 'Fecha inválida',
+        text: `La hora de ${fieldNames[fieldName]} no puede ser anterior a la hora de inicio de falla`,
+        icon: 'warning',
+        confirmButtonText: 'Corregir',
+        customClass: {
+          popup: 'sweetalert-high-zindex',
+        },
+        didOpen: () => {
+          // Forzar el cierre del calendario después de abrir el SweetAlert
+          const dateInput = document.getElementById(
+            fieldName
+          ) as HTMLInputElement;
+          if (dateInput) {
+            dateInput.blur();
+          }
+        },
+      }).then(() => {
+        this.ticketForm.patchValue({ [fieldName]: '' });
+      });
+    }
+  }
+
+  // Métodos auxiliares para validaciones en el template
+  isDateHifInvalid(): boolean {
+    const dateHifValue = this.ticketForm.get('date_hif')?.value;
+    if (!dateHifValue) return false;
+
+    const selectedDate = new Date(dateHifValue);
+    const formOpenDate = new Date(this.formOpenDate());
+    return selectedDate <= formOpenDate;
+  }
+
+  isDateHdcInvalid(): boolean {
+    const dateHdcValue = this.ticketForm.get('date_hdc')?.value;
+    const dateHifValue = this.ticketForm.get('date_hif')?.value;
+
+    if (!dateHdcValue || !dateHifValue) return false;
+
+    const selectedDate = new Date(dateHdcValue);
+    const inicioFallaDate = new Date(dateHifValue);
+    return selectedDate <= inicioFallaDate;
+  }
+
+  isDateHctInvalid(): boolean {
+    const dateHctValue = this.ticketForm.get('date_hct')?.value;
+    const dateHdcValue = this.ticketForm.get('date_hdc')?.value;
+
+    if (!dateHctValue || !dateHdcValue) return false;
+
+    const selectedDate = new Date(dateHctValue);
+    const diagnosticoDate = new Date(dateHdcValue);
+    return selectedDate <= diagnosticoDate;
+  }
+
+  private showDateTimeError(message: string): void {
+    // Limpiar timeout anterior si existe
+    if (this.alertTimeout) {
+      clearTimeout(this.alertTimeout);
+    }
+
+    this.dateTimeAlertMessage.set(message);
+    this.showDateTimeAlert.set(true);
+
+    // Ocultar automáticamente después de 3 segundos (3000ms)
+    this.alertTimeout = setTimeout(() => {
+      this.showDateTimeAlert.set(false);
+    }, 4000);
+  }
+
+  // Ultimos
+
+private autocompleteWithNetworkElement(): void {
+  const selectedElements = this.selectedNetworkElements();
+
+  if (selectedElements.length === 0) {
+    this.clearDefinitionProblem();
+    return;
+  }
+
+  let definitionText = '';
+
+  if (selectedElements.length === 1) {
+    // Un solo elemento - formato en línea
+    const element = selectedElements[0];
+    definitionText =
+      `${element.model || 'N/A'}, ` +
+      `${element.central?.central_name || 'N/A'}, ` +
+      `${element.acronym || 'N/A'}, ` +
+      `${element.service_ip || 'N/A'}, ` +
+      `Edo.${element.central?.state?.state || 'N/A'}`;
+  } else {
+    // Múltiples elementos - con saltos de línea
+    definitionText = selectedElements.map((element, index) =>
+      `• ${element.model || 'N/A'}, ${element.central?.central_name || 'N/A'}, ${element.acronym || 'N/A'}, ${element.service_ip || 'N/A'}, Edo. ${element.central?.state?.state || 'N/A'}`
+    ).join('\n');
+  }
+
+  this.ticketForm.patchValue({
+    definition_problem: definitionText
+  });
+}
+
+  private autocompleteWithFiberLength(): void {
+    const selectedFiber = this.selectedFiberLength();
+
+    if (!selectedFiber) {
+      return;
+    }
+
+    const definitionText =
+      `Tramo: ${selectedFiber.section_name || 'N/A'}, ` +
+      `Origen: ${selectedFiber.stateA?.state || 'N/A'}, ` +
+      `Destino: ${selectedFiber.stateB?.state || 'N/A'}`;
+
+    // Actualizar el campo de definición del problema
+    this.ticketForm.patchValue({
+      definition_problem: definitionText,
+    });
+  }
+
+  private clearDefinitionProblem(): void {
+    this.ticketForm.patchValue({
+      definition_problem: '',
+    });
+  }
+
+removeNetworkElementFromSelection(element: NetworkElement): void {
+  this.selectedNetworkElements.set(
+    this.selectedNetworkElements().filter((el) => el.id !== element.id)
+  );
+
+  // ✅ NUEVO: Actualizar la definición después de remover
+  if (this.selectionType() === 'network') {
+    this.autocompleteWithNetworkElement();
+  }
+}
+
+  private autocompleteWithMultipleNetworkElements(): void {
+    const selectedElements = this.selectedNetworkElements();
+
+    if (selectedElements.length === 0) {
+      this.clearDefinitionProblem();
+      return;
+    }
+
+    let definitionText = '';
+
+    if (selectedElements.length === 1) {
+      // Un solo elemento - formato detallado
+      const element = selectedElements[0];
+      definitionText =
+        `Elemento: ${element.model || 'N/A'}, ` +
+        `Central: ${element.central?.central_name || 'N/A'}, ` +
+        `Acrónimo: ${element.acronym || 'N/A'}, ` +
+        `IP Servicio: ${element.service_ip || 'N/A'}, ` +
+        `Estado: ${element.central?.state?.state || 'N/A'}`;
+    } else {
+      // Múltiples elementos - formato resumido
+      const acronyms = selectedElements
+        .map((el) => el.acronym || 'N/A')
+        .join(', ');
+      definitionText = `Elementos de red seleccionados: ${acronyms}`;
+    }
+
+    this.ticketForm.patchValue({
+      definition_problem: definitionText,
+    });
   }
 }

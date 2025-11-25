@@ -1,6 +1,13 @@
-<footer class="footer sm:footer-horizontal footer-center bg-base-300 text-base-content p-3">
-  <aside>
-    <p class="text-sm text-center font-semibold">Gerencia Centro Operaciones de la Red</p>
-    <p class="text-sm text-center font-semibold">Coord. Procesos, Medición y Seguimiento © CANTV {{ currentYear }}</p>
-  </aside>
+<footer
+  class="footer sm:footer-horizontal footer-center bg-base-100 text-base-content p-3"
+>
+  <div class="mt-2 text-center text-base-content/60 text-xs">
+    <p>
+      Gestor Integral de Incidencias de la red -
+      <span class="badge badge-xs badge-warning">ALPHA TEST</span> v{{
+        appVersion()
+      }}
+      - © {{ currentYear() }}
+    </p>
+  </div>
 </footer>

@@ -14,8 +14,19 @@ import {
   SearchTicketCriteria,
   Ticket,
   TicketsResponse,
+  CreateTicketResponse,
 } from '@tickets/interfaces/ticket.interface';
-import { Observable, of, tap, catchError, throwError, delay, map, forkJoin, switchMap } from 'rxjs';
+import {
+  Observable,
+  of,
+  tap,
+  catchError,
+  throwError,
+  delay,
+  map,
+  forkJoin,
+  switchMap,
+} from 'rxjs';
 import { environment } from 'src/environments/environment';
 
 const baseUrl = environment.baseUrl;
@@ -68,6 +79,7 @@ export class TicketsService {
           limit,
           offset,
           group,
+          // sort: 'id_ticket,DESC'
         },
       })
       .pipe
@@ -119,96 +131,129 @@ export class TicketsService {
         params = params.append(key, value.toString());
       }
     });
-
+    //  params = params.append('sort', 'id_ticket,DESC');
     return this.http.get<any>(`${baseUrl}/tickets/search/advanced`, { params });
   }
 
-// En el servicio, mejorar el createTicket para manejar errores de imágenes
-createTicket(ticketLike: Partial<Ticket>): Observable<Ticket> {
-  // Asegurarse de que images sea siempre un array
-  const safeTicketData = {
-    ...ticketLike,
-    images: Array.isArray(ticketLike.images) ? ticketLike.images : []
-  };
+  // En el servicio, mejorar el createTicket para manejar errores de imágenes
+  createTicket(ticketLike: Partial<Ticket>): Observable<Ticket> {
+    // Asegurarse de que images sea siempre un array
+    const safeTicketData = {
+      ...ticketLike,
+      images: Array.isArray(ticketLike.images) ? ticketLike.images : [],
+    };
 
-  // console.log('Enviando ticket al backend:', safeTicketData);
+    // console.log('Enviando ticket al backend:', safeTicketData);
 
-  return this.http.post<Ticket>(`${baseUrl}/tickets`, safeTicketData).pipe(
-    catchError(error => {
-      console.error('Error creating ticket:', error);
+    return this.http.post<Ticket>(`${baseUrl}/tickets`, safeTicketData).pipe(
+      catchError((error) => {
+        console.error('Error creating ticket:', error);
 
-      // Si el error es por las imágenes, intentar sin ellas
-      if (error.error?.message?.includes('images') && safeTicketData.images.length > 0) {
-        console.warn('Reintentando sin imágenes debido a error de validación');
-        const { images, ...ticketWithoutImages } = safeTicketData;
-        return this.http.post<Ticket>(`${baseUrl}/tickets`, ticketWithoutImages);
-      }
+        // Si el error es por las imágenes, intentar sin ellas
+        if (
+          error.error?.message?.includes('images') &&
+          safeTicketData.images.length > 0
+        ) {
+          console.warn(
+            'Reintentando sin imágenes debido a error de validación'
+          );
+          const { images, ...ticketWithoutImages } = safeTicketData;
+          return this.http.post<Ticket>(
+            `${baseUrl}/tickets`,
+            ticketWithoutImages
+          );
+        }
 
-      return throwError(() => error);
-    })
-  );
-}
-
-  updateTicket(id: number, ticketLike: Partial<Ticket>): Observable<Ticket> {
-    return this.http.patch<Ticket>(`${baseUrl}/tickets/${id}`, ticketLike);
-    // .pipe(tap((ticket) => this.updateTicketCache(ticket)));
+        return throwError(() => error);
+      })
+    );
   }
 
-uploadImages(images?: FileList): Observable<string[]> {
-  if (!images || images.length === 0) return of([]);
+  // updateTicket(id: number, ticketLike: Partial<Ticket>): Observable<Ticket> {
+  //   return this.http.patch<Ticket>(`${baseUrl}/tickets/${id}`, ticketLike);
+  //   // .pipe(tap((ticket) => this.updateTicketCache(ticket)));
+  // }
 
-  const filesArray = Array.from(images);
-  // console.log('Subiendo archivos:', filesArray.map(f => f.name));
+  updateTicket(id: number, ticketData: any): Observable<Ticket> {
+    // Asegurarse de no enviar campos sensibles
+    const safeTicketData = { ...ticketData };
 
-  // Crear observables para cada upload
-  const uploadObservables = filesArray.map((imageFile) =>
-    this.uploadImage(imageFile).pipe(
-      catchError(error => {
-        console.error(`Error subiendo ${imageFile.name}:`, error);
-        // En caso de error, devolver un nombre de fallback
+    // Eliminar campos que no deben enviarse al backend
+    delete safeTicketData.user; // No enviar información del usuario
+    delete safeTicketData.createdDate; // Campos de auditoría
+    delete safeTicketData.updatedDate;
+    delete safeTicketData.nro_ticket; // No modificable
+
+    // return this.http.patch<Ticket>(`${baseUrl}/${id}`, safeTicketData);
+    return this.http.patch<Ticket>(`${baseUrl}/tickets/${id}`, safeTicketData);
+  }
+
+  uploadImages(images?: FileList): Observable<string[]> {
+    if (!images || images.length === 0) return of([]);
+
+    const filesArray = Array.from(images);
+    // console.log('Subiendo archivos:', filesArray.map(f => f.name));
+
+    // Crear observables para cada upload
+    const uploadObservables = filesArray.map((imageFile) =>
+      this.uploadImage(imageFile).pipe(
+        catchError((error) => {
+          console.error(`Error subiendo ${imageFile.name}:`, error);
+          // En caso de error, devolver un nombre de fallback
+          return of(`error_${Date.now()}_${imageFile.name}`);
+        })
+      )
+    );
+
+    return forkJoin(uploadObservables).pipe(
+      tap((imageNames) => {
+        // console.log('Nombres de imágenes subidas:', imageNames);
+        const errors = imageNames.filter((name) => name.startsWith('error_'));
+        if (errors.length > 0) {
+          console.warn(
+            `${errors.length} imágenes no se pudieron subir correctamente`
+          );
+        }
+      })
+    );
+  }
+
+  uploadImage(imageFile: File): Observable<string> {
+    const formData = new FormData();
+    formData.append('file', imageFile);
+
+    return this.http.post<any>(`${baseUrl}/files/ticket`, formData).pipe(
+      // tap(response => console.log('Respuesta del servidor:', response)),
+      map((resp) => {
+        // El backend devuelve { secureUrl: string }
+        if (resp && resp.secureUrl) {
+          return resp.secureUrl;
+        } else if (typeof resp === 'string') {
+          return resp;
+        } else if (resp && typeof resp === 'object') {
+          // Intentar con diferentes posibles nombres de propiedad
+          return (
+            resp.fileName ||
+            resp.filename ||
+            resp.name ||
+            resp.imageName ||
+            resp.file ||
+            resp.image ||
+            `unknown_${Date.now()}`
+          );
+        } else {
+          console.warn(
+            'Formato de respuesta inesperado, usando nombre temporal'
+          );
+          return `temp_${Date.now()}_${imageFile.name}`;
+        }
+      }),
+      catchError((error) => {
+        console.error('Error en uploadImage:', error);
         return of(`error_${Date.now()}_${imageFile.name}`);
       })
-    )
-  );
-
-  return forkJoin(uploadObservables).pipe(
-    tap((imageNames) => {
-      // console.log('Nombres de imágenes subidas:', imageNames);
-      const errors = imageNames.filter(name => name.startsWith('error_'));
-      if (errors.length > 0) {
-        console.warn(`${errors.length} imágenes no se pudieron subir correctamente`);
-      }
-    })
-  );
-}
-
-uploadImage(imageFile: File): Observable<string> {
-  const formData = new FormData();
-  formData.append('file', imageFile);
-
-  return this.http.post<any>(`${baseUrl}/files/ticket`, formData).pipe(
-    // tap(response => console.log('Respuesta del servidor:', response)),
-    map((resp) => {
-      // El backend devuelve { secureUrl: string }
-      if (resp && resp.secureUrl) {
-        return resp.secureUrl;
-      } else if (typeof resp === 'string') {
-        return resp;
-      } else if (resp && typeof resp === 'object') {
-        // Intentar con diferentes posibles nombres de propiedad
-        return resp.fileName || resp.filename || resp.name || resp.imageName ||
-               resp.file || resp.image || `unknown_${Date.now()}`;
-      } else {
-        console.warn('Formato de respuesta inesperado, usando nombre temporal');
-        return `temp_${Date.now()}_${imageFile.name}`;
-      }
-    }),
-    catchError(error => {
-      console.error('Error en uploadImage:', error);
-      return of(`error_${Date.now()}_${imageFile.name}`);
-    })
-  );
-}
+    );
+  }
 
   getGroups(): Observable<Group[]> {
     return this.http.get<Group[]>(`${baseUrl}/groups`);
@@ -233,5 +278,4 @@ uploadImage(imageFile: File): Observable<string> {
   getFailures(): Observable<Failure[]> {
     return this.http.get<Failure[]>(`${baseUrl}/failures`);
   }
-
 }

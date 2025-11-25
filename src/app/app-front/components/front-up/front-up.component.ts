@@ -1,24 +1,23 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { ThemeService } from '../../../shared/theme/theme.service';
-import { ThemeToggleComponent } from "../../../shared/theme/theme-toggle/theme-toggle.component";
+// import { ThemeService } from '../../../shared/theme/theme.service';
+import { ThemeToggleComponent } from '../../../shared/theme/theme-toggle/theme-toggle.component';
 import { AuthService } from '@auth/services/auth.service';
 import Swal from 'sweetalert2';
 import { Router } from '@angular/router';
-import { NgOptimizedImage } from "@angular/common";
+import { NgOptimizedImage } from '@angular/common';
+import { ThemeService } from 'src/app/services/theme.service';
 
 @Component({
   selector: 'front-up',
-  imports: [ThemeToggleComponent],
+  imports: [],
   templateUrl: './front-up.component.html',
-    styles: `
+  styles: `
     .swal2-popup .swal2-html {
     text-transform: uppercase;
 }
   `,
 })
 export class FrontUpComponent {
-  isDarkMode = signal<boolean>(false);
-
   authService = inject(AuthService);
   user = computed(() => this.authService.user());
   router = inject(Router);
@@ -28,32 +27,36 @@ export class FrontUpComponent {
     this.themeService.toggleTheme();
   }
 
-  get currentTheme(): string {
-    return this.themeService.getCurrentTheme();
+  // get currentTheme(): string {
+  //   return this.themeService.getCurrentTheme();
+  // }
+
+  get isDarkMode(): boolean {
+    return this.themeService.isDarkMode();
   }
 
-    exitSystem() {
+  exitSystem() {
+    Swal.fire({
+      title: 'Salida del sistema',
+      text: 'Estas seguro(a) que desea salir?',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Si, salir',
+      cancelButtonText: 'Cancelar',
+    }).then((result) => {
+      if (result.isConfirmed) {
         Swal.fire({
-          title: "Salida del sistema",
-          text: "Estas seguro(a) que desea salir?",
-          icon: "question",
-          showCancelButton: true,
-          confirmButtonColor: "#3085d6",
-          cancelButtonColor: "#d33",
-          confirmButtonText: "Si, salir",
-          cancelButtonText: "Cancelar"
-        }).then((result) => {
-          if (result.isConfirmed) {
-            Swal.fire({
-              title: "Salida del sistema exitosa.",
-              html: `Hasta luego: <b>${this.user()?.fullName}</b>`.toUpperCase(),
-              icon: "success",
-              showConfirmButton: false,
-              timer: 2000,
-            });
-            this.authService.logout();
-            this.router.navigateByUrl('/');
-          }
+          title: 'Salida del sistema exitosa.',
+          html: `Hasta luego: <b>${this.user()?.fullName}</b>`.toUpperCase(),
+          icon: 'success',
+          showConfirmButton: false,
+          timer: 2000,
         });
+        this.authService.logout();
+        this.router.navigateByUrl('/');
       }
+    });
+  }
 }

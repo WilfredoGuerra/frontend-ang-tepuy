@@ -1,15 +1,123 @@
+<!-- <div class="flex flex-row justify-between">
+  <div>
+    <h1 class="text-accent font-semibold text-lg font-montserrat">
+      Usuarios del sistema
+    </h1>
+  </div>
+
+  <ticket-search-input
+    (value)="query.set($event)"
+    placeholder="Nombre, apellido o correo"
+  />
+
+  @if (authService.user()?.roles?.includes('super_user')) {
+  <div>
+    <button routerLink="/auth/register" class="btn btn-soft btn-primary">
+      Nuevo
+    </button>
+  </div>
+  }
+</div>
+
+@if (usersResource.isLoading()) {
+<div class="flex justify-center items-center py-8">
+  <span class="loading loading-spinner loading-lg text-primary"></span>
+  <span class="ml-2">Buscando usuarios...</span>
+</div>
+} @else if (usersResource.error()) {
+<div class="alert alert-error mt-4">
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    class="stroke-current shrink-0 h-6 w-6"
+    fill="none"
+    viewBox="0 0 24 24"
+  >
+    <path
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="2"
+      d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+    />
+  </svg>
+  <span>Error al buscar usuarios: {{ usersResource.error()?.message }}</span>
+</div>
+} @else {
+@if (query() && query().trim() !== '') {
+<div class="my-4">
+  <p class="text-sm text-gray-600">
+    Resultados para: <span class="font-semibold">"{{ query() }}"</span>
+    @if (usersResource.value()?.count !== undefined) {
+    <span> - {{ usersResource.value()?.count }} usuarios encontrados</span>
+    }
+  </p>
+</div>
+}
+
+<users-table [user]="usersResource.value()?.users ?? []" />
+} @if (!query()) {
+<div class="m-4 flex justify-center">
+  <app-pagination
+    [currentPage]="paginationService.currentPage()"
+    [pages]="usersResource.value()?.pages ?? 0"
+  />
+</div>
+} -->
+
+<!-- users-page.component.html -->
 <div class="flex flex-row justify-between">
   <div>
     <h1 class="text-accent font-semibold text-lg font-montserrat">Usuarios del sistema</h1>
   </div>
 
-  @if (authService.isAdmin()) {
+  <!-- Pasar el método correcto para manejar búsqueda -->
+  <ticket-search-input
+    (value)="onSearchChange($event)"
+    placeholder="Nombre, apellido o correo"
+  />
+
+  @if (authService.user()?.roles?.includes('super_user')) {
   <div>
     <button routerLink="/auth/register" class="btn btn-soft btn-primary">Nuevo</button>
   </div>
   }
-
 </div>
 
+@if (usersResource.isLoading()) {
+  <div class="flex justify-center items-center py-8">
+    <span class="loading loading-spinner loading-lg text-primary"></span>
+    <span class="ml-2">Buscando usuarios...</span>
+  </div>
+}
+@else if (usersResource.error()) {
+  <div class="alert alert-error mt-4">
+    <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+    <span>Error al buscar usuarios: {{ usersResource.error()?.message }}</span>
+  </div>
+}
+@else {
+  <!-- Mostrar información de búsqueda -->
+  @if (query() && query().trim() !== '') {
+    <div class="my-4">
+      <p class="text-sm text-gray-600">
+        Resultados para: <span class="font-semibold">"{{ query() }}"</span>
+        @if (usersResource.value()?.count !== undefined) {
+          <span> - {{ usersResource.value()?.count }} usuarios encontrados</span>
+        }
+      </p>
+    </div>
+  }
 
-<users-table [user]="usersResource.value()?.users ?? []" />
+  <users-table [user]="usersResource.value()?.users ?? []" />
+}
+
+<!-- Mostrar paginación solo si hay resultados -->
+@if (usersResource.value()?.pages && usersResource.value()!.pages > 1) {
+<div class="m-4 flex justify-center">
+  <app-pagination
+    [currentPage]="paginationService.currentPage()"
+    [pages]="usersResource.value()?.pages ?? 0"
+  />
+</div>
+}

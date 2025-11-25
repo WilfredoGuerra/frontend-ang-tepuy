@@ -16,5 +16,4 @@ export class StatesService {
     getStates(): Observable<State[]> {
       return this.http.get<State[]>(`${baseUrl}/states`);
     }
-
 }

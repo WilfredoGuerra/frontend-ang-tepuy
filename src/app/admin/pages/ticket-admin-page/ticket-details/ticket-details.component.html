@@ -5,118 +5,216 @@
 
 <form [formGroup]="ticketForm" (ngSubmit)="onSubmit()" class="shadow-md rounded-lg px-8 pt-3 pb-2 mb-4">
   <!-- Primera fila - 3 columnas con selects -->
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-3">
-    <!-- Columna 1 -->
-    <div class="space-y-4">
-      <!-- Grupo -->
-      <div>
-        <label class="block text-sm font-bold mb-2 text-primary" for="group">
-          Grupo
-        </label>
-        <select formControlName="groupId" class="select mb-1 py-2 w-full capitalize" id="groupId" name="groupId"
-          [class.border-red-500]="ticketForm.get('groupId')?.errors ?? false" required>
-          <option class="" disabled [ngValue]="null">Seleccione un grupo</option>
-          @for (group of groupsResource.value(); track group.id) {
-          <option class="capitalize rounded-sm px-2 py-1 hover:font-bold hover:italic" [ngValue]="group.id">{{
-            group.group }}
-          </option>
-          }
-        </select>
-        <form-error-label [control]="ticketForm.get('groupId')!" />
-      </div>
-
-      <!-- Origen -->
-      <div>
-        <label class="block text-sm font-bold mb-2 text-primary" for="origin">
-          Origen
-        </label>
-        <select formControlName="originId" class="select mb-1 py-2 w-full capitalize" id="origin" name="origin"
-          [class.border-red-500]="ticketForm.get('originId')?.errors ?? false" required>
-          <option class="" disabled [ngValue]="null">Seleccione origen</option>
-          @for (origin of originsResource.value(); track origin.id) {
-          <option class="capitalize rounded-sm px-2 py-1 hover:font-bold hover:italic" [ngValue]="origin.id">{{
-            origin.origin }}
-          </option>
-          }
-        </select>
-        <form-error-label [control]="ticketForm.get('originId')!" />
-      </div>
-    </div>
-
-    <!-- Columna 2 -->
-    <div class="space-y-4">
-      <!-- Severidad -->
-      <div>
-        <label class="block text-sm font-bold mb-2 text-primary" for="severity">
-          Severidad
-        </label>
-        <select formControlName="severityId" class="select mb-1 py-2 w-full capitalize" id="severity" name="severity"
-          [class.border-red-500]="ticketForm.get('severityId')?.errors ?? false" required>
-          <option class="" disabled [ngValue]="null">Seleccione severidad</option>
-          @for (severity of severitiesResource.value(); track severity.id) {
-          <option class="capitalize rounded-sm px-2 py-1 hover:font-bold hover:italic" [ngValue]="severity.id">{{
-            severity.severity }}
-          </option>
-          }
-        </select>
-        <form-error-label [control]="ticketForm.get('severityId')!" />
-      </div>
-
-      <!-- Falla -->
-      <div>
-        <label class="block text-sm font-bold mb-2 text-primary" for="failure">
-          Falla
-        </label>
-        <select formControlName="failureId" class="select mb-1 py-2 w-full capitalize" id="failure" name="failure"
-          [class.border-red-500]="ticketForm.get('failureId')?.errors ?? false" required>
-          <option class="" disabled [ngValue]="null">Seleccione tipo de falla</option>
-          @for (failure of failuresResource.value(); track failure.id) {
-          <option class="capitalize rounded-sm px-2 py-1 hover:font-bold hover:italic" [ngValue]="failure.id">
-            {{ failure.failure }}
-          </option>
-          }
-        </select>
-        <form-error-label [control]="ticketForm.get('failureId')!" />
-      </div>
-    </div>
-
-    <!-- Columna 3 -->
-    <div class="space-y-4">
-      <!-- Plataforma -->
-      <div>
-        <label class="block text-sm font-bold mb-2 text-primary" for="platform">
-          Plataforma
-        </label>
-        <select formControlName="platformId" class="select mb-1 py-2 w-full capitalize" id="platform" name="platform"
-          [class.border-red-500]="ticketForm.get('platformId')?.errors ?? false" required>
-          <option class="" disabled [ngValue]="null">Seleccione una plataforma</option>
-          @for (platform of platformsResource.value(); track platform.id) {
-          <option class="capitalize rounded-sm px-2 py-1 hover:font-bold hover:italic" [ngValue]="platform.id">{{
-            platform.platform }}
-          </option>
-          }
-        </select>
-        <form-error-label [control]="ticketForm.get('platformId')!" />
-      </div>
-
-      <!-- Status -->
-      <div>
-        <label class="block text-sm font-bold mb-2 text-primary" for="status">
-          Estatus
-        </label>
-        <select formControlName="statusId" class="select mb-1 py-2 w-full capitalize" id="status" name="status"
-          [class.border-red-500]="ticketForm.get('statusId')?.errors ?? false" required>
-          <option class="" disabled [ngValue]="null">Seleccione un estatus</option>
-          @for (status of statusesResource.value(); track status.id) {
-          <option class="capitalize rounded-sm px-2 py-1 hover:font-bold hover:italic" [ngValue]="status.id">{{
-            status.status }}
-          </option>
-          }
-        </select>
-        <form-error-label [control]="ticketForm.get('statusId')!" />
-      </div>
+<!-- Primera fila - 3 columnas con selects REORDENADOS -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-3">
+  <!-- Columna 1: Grupo -->
+  <div class="space-y-4">
+    <!-- Grupo -->
+    <div>
+      <label class="block text-sm font-bold mb-2 text-primary" for="group">
+        Grupo
+      </label>
+      <select formControlName="groupId" class="select mb-1 py-2 w-full capitalize" id="groupId" name="groupId"
+        [class.border-red-500]="ticketForm.get('groupId')?.errors ?? false" required>
+        <option class="" disabled [ngValue]="null">Seleccione un grupo</option>
+        @for (group of groupsResource.value(); track group.id) {
+        <option class="capitalize rounded-sm px-2 py-1 hover:font-bold hover:italic" [ngValue]="group.id">{{
+          group.group }}
+        </option>
+        }
+      </select>
+      <form-error-label [control]="ticketForm.get('groupId')!" />
     </div>
   </div>
+
+  <!-- Columna 2: Plataforma -->
+  <div class="space-y-4">
+    <!-- Plataforma -->
+    <div>
+      <label class="block text-sm font-bold mb-2 text-primary" for="platform">
+        Plataforma
+      </label>
+      <select formControlName="platformId" class="select mb-1 py-2 w-full capitalize" id="platform" name="platform"
+        [class.border-red-500]="ticketForm.get('platformId')?.errors ?? false" required>
+        <option class="" disabled [ngValue]="null">Seleccione una plataforma</option>
+        @for (platform of filteredPlatforms(); track platform.id) {
+        <option class="capitalize rounded-sm px-2 py-1 hover:font-bold hover:italic" [ngValue]="platform.id">{{
+          platform.platform }}
+        </option>
+        }
+      </select>
+      @if (filteredPlatforms().length === 0) {
+      <label class="label">
+        <span class="text-amber-500 text-xs">No hay plataformas disponibles para el grupo seleccionado</span>
+      </label>
+      }
+      <form-error-label [control]="ticketForm.get('platformId')!" />
+    </div>
+  </div>
+
+  <!-- Columna 3: Origen -->
+  <div class="space-y-4">
+    <!-- Origen -->
+    <div>
+      <label class="block text-sm font-bold mb-2 text-primary" for="origin">
+        Origen
+      </label>
+      <select formControlName="originId" class="select mb-1 py-2 w-full capitalize" id="origin" name="origin"
+        [class.border-red-500]="ticketForm.get('originId')?.errors ?? false" required>
+        <option class="" disabled [ngValue]="null">Seleccione origen</option>
+        @for (origin of originsResource.value(); track origin.id) {
+        <option class="capitalize rounded-sm px-2 py-1 hover:font-bold hover:italic" [ngValue]="origin.id">{{
+          origin.origin }}
+        </option>
+        }
+      </select>
+      <form-error-label [control]="ticketForm.get('originId')!" />
+    </div>
+  </div>
+</div>
+
+<!-- Campos de reporte telefónico (condicionales) -->
+@if (showReportingFields() && ticketForm.get('personPhoneReport')) {
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-3 mt-4 p-4 bg-base-100 rounded-lg border border-primary/20">
+  <!-- Columna 1: Texto informativo -->
+  <div class="flex items-center">
+    <div class="text-sm text-primary font-semibold">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+      </svg>
+      Indica nombre, apellido y teléfono de quien reportó la falla
+    </div>
+  </div>
+
+  <!-- Columna 2: Nombre y apellido -->
+  <div>
+    <label class="block text-sm font-bold mb-2 text-primary" for="name_reporting">
+      Nombre y Apellido *
+    </label>
+    <div formGroupName="personPhoneReport">
+      <input type="text" formControlName="name"
+             class="input input-bordered w-full"
+             id="name_reporting"
+             placeholder="Ej: María González"
+             [class.border-red-500]="ticketForm.get('personPhoneReport.name')?.errors && ticketForm.get('personPhoneReport.name')?.touched">
+    </div>
+    @if (ticketForm.get('personPhoneReport.name')?.errors?.['required'] && ticketForm.get('personPhoneReport.name')?.touched) {
+      <label class="label">
+        <span class="text-red-500 text-xs">El nombre es requerido</span>
+      </label>
+    }
+    @if (ticketForm.get('personPhoneReport.name')?.errors?.['minlength'] && ticketForm.get('personPhoneReport.name')?.touched) {
+      <label class="label">
+        <span class="text-red-500 text-xs">Mínimo 3 caracteres</span>
+      </label>
+    }
+  </div>
+
+  <!-- Columna 3: Teléfono -->
+  <div>
+    <label class="block text-sm font-bold mb-2 text-primary" for="phone_reporting">
+      Teléfono *
+    </label>
+    <div formGroupName="personPhoneReport">
+      <input type="text" formControlName="phone"
+             class="input input-bordered w-full font-mono"
+             id="phone_reporting"
+             placeholder="Ej: 0414-1234567"
+             (input)="formatPhone($event)"
+             maxlength="12"
+             [class.border-red-500]="ticketForm.get('personPhoneReport.phone')?.errors && ticketForm.get('personPhoneReport.phone')?.touched">
+    </div>
+    @if (ticketForm.get('personPhoneReport.phone')?.errors?.['required'] && ticketForm.get('personPhoneReport.phone')?.touched) {
+      <label class="label">
+        <span class="text-red-500 text-xs">El teléfono es requerido</span>
+      </label>
+    }
+    @if (ticketForm.get('personPhoneReport.phone')?.errors?.['invalidPhone'] && ticketForm.get('personPhoneReport.phone')?.touched) {
+      <label class="label">
+        <span class="text-red-500 text-xs">Formato inválido. Ej: 0212-6630824 o 0414-1234567</span>
+      </label>
+    }
+
+    <!-- Información de formatos válidos -->
+    <div class="mt-1 text-xs text-gray-500">
+      <div>Formatos válidos:</div>
+      <div>Fijo: 0212-6630824</div>
+      <div>Celular: 0414, 0424, 0416, 0426, 0412, 0422</div>
+    </div>
+  </div>
+</div>
+}
+
+<!-- FIN Campos de reporte telefónico (condicionales) -->
+
+<!-- Segunda fila - 3 columnas con selects REORDENADOS -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-3">
+  <!-- Columna 1: Severidad -->
+  <div class="space-y-4">
+    <!-- Severidad -->
+    <div>
+      <label class="block text-sm font-bold mb-2 text-primary" for="severity">
+        Severidad
+      </label>
+      <select formControlName="severityId" class="select mb-1 py-2 w-full capitalize" id="severity" name="severity"
+        [class.border-red-500]="ticketForm.get('severityId')?.errors ?? false" required>
+        <option class="" disabled [ngValue]="null">Seleccione severidad</option>
+        @for (severity of severitiesResource.value(); track severity.id) {
+        <option class="capitalize rounded-sm px-2 py-1 hover:font-bold hover:italic" [ngValue]="severity.id">{{
+          severity.severity }}
+        </option>
+        }
+      </select>
+      <form-error-label [control]="ticketForm.get('severityId')!" />
+    </div>
+  </div>
+
+  <!-- Columna 2: Falla -->
+  <div class="space-y-4">
+    <!-- Falla -->
+    <div>
+      <label class="block text-sm font-bold mb-2 text-primary" for="failure">
+        Falla
+      </label>
+      <select formControlName="failureId" class="select mb-1 py-2 w-full capitalize" id="failure" name="failure"
+        [class.border-red-500]="ticketForm.get('failureId')?.errors ?? false" required>
+        <option class="" disabled [ngValue]="null">Seleccione tipo de falla</option>
+        @for (failure of failuresResource.value(); track failure.id) {
+        <option class="capitalize rounded-sm px-2 py-1 hover:font-bold hover:italic" [ngValue]="failure.id">
+          {{ failure.failure }}
+        </option>
+        }
+      </select>
+      <form-error-label [control]="ticketForm.get('failureId')!" />
+    </div>
+  </div>
+
+  <!-- Columna 3: Estatus (DESHABILITADO) -->
+<div class="space-y-4">
+  <!-- Status -->
+  <div>
+    <label class="block text-sm font-bold mb-2 text-primary" for="status">
+      Estatus
+    </label>
+    <div (click)="onStatusClick()" class="cursor-pointer">
+      <select formControlName="statusId" class="select mb-1 py-2 w-full capitalize" id="status" name="status"
+        [class.border-red-500]="ticketForm.get('statusId')?.errors ?? false" required
+        style="pointer-events: none;">
+        <option class="" disabled [ngValue]="null">Seleccione un estatus</option>
+        @for (status of statusesResource.value(); track status.id) {
+        <option class="capitalize rounded-sm px-2 py-1 hover:font-bold hover:italic" [ngValue]="status.id">{{
+          status.status }}
+        </option>
+        }
+      </select>
+    </div>
+    <form-error-label [control]="ticketForm.get('statusId')!" />
+    <!-- <label class="label">
+      <span class="text-info text-xs italic">El estatus se modifica desde el cierre del ticket</span>
+    </label> -->
+  </div>
+</div>
+</div>
 
   <!-- Segunda fila - Selector de tipo y elemento de red/tramo de fibra -->
   <div class="mb-3">
@@ -707,54 +805,99 @@
     </div>
   </div>
 
-  <!-- Campos de fecha (séptima fila) -->
-  <div class="grid grid-rows-1 md:grid-cols-4 gap-6 mb-3">
-    <!-- Fecha creación (nuevo campo) -->
-    <div>
-      <label class="block text-sm font-bold mb-2 text-primary" for="fechaApertura">
-        Hora creación del ticket
-      </label>
-      <input type="datetime-local" [value]="formatDateForInput(ticket().createdDate)" class="form-control input input-bordered w-full" readonly
-        id="fechaApertura" disabled />
-    </div>
+<!-- Campos de fecha (séptima fila) - MODIFICADO -->
+<div class="grid grid-rows-1 md:grid-cols-3 gap-6 mb-3">
+  <!-- Fecha inicio -->
+  <div>
+    <label class="block text-sm font-bold mb-2 text-primary" for="fechaInicio">
+      Hora de inicio falla *
+    </label>
+    <input type="datetime-local" id="date_hif" formControlName="date_hif"
+      class="form-control input input-bordered w-full"
+      [class.border-red-500]="ticketForm.get('date_hif')?.errors ?? false"
+      [class.border-orange-500]="isDateHifInvalid()" />
+    <form-error-label [control]="ticketForm.get('date_hif')!" />
+    @if (isDateHifInvalid()) {
+    <label class="label">
+      <span class="text-orange-500 text-xs">⚠️ La fecha no puede ser posterior a la actual</span>
+    </label>
+    }
+  </div>
 
-    <!-- Fecha inicio -->
-    <div>
-      <label class="block text-sm font-bold mb-2 text-primary" for="fechaInicio">
-        Hora de inicio falla
-      </label>
-      <input type="datetime-local" id="date_hif" formControlName="date_hif"
-        class="form-control input input-bordered w-full"
-        [class.border-red-500]="ticketForm.get('date_hif')?.errors ?? false" />
-      <form-error-label [control]="ticketForm.get('date_hif')!" />
-    </div>
+  <!-- Fecha diagnóstico (obligatorio) -->
+  <div>
+    <label class="block text-sm font-bold mb-2 text-primary" for="fechaDiagnostico">
+      Hora diagnóstico COR *
+    </label>
+    <input id="date_hdc" type="datetime-local" formControlName="date_hdc"
+      class="form-control input input-bordered w-full"
+      [class.border-red-500]="ticketForm.get('date_hdc')?.errors ?? false"
+      [class.border-orange-500]="isDateHdcInvalid()"
+      required />
+    <form-error-label [control]="ticketForm.get('date_hdc')!" />
+    @if (isDateHdcInvalid()) {
+    <label class="label">
+      <span class="text-orange-500 text-xs">⚠️ No puede ser anterior o igual al inicio de falla</span>
+    </label>
+    }
+  </div>
 
-    <!-- Fecha diagnóstico (opcional) -->
-    <div>
-      <label class="block text-sm font-bold mb-2 text-primary" for="fechaDiagnostico">
-        Hora diagnóstico COR
-      </label>
-      <input id="date_hdc" type="datetime-local" formControlName="date_hdc"
-        class="form-control input input-bordered w-full" />
-    </div>
+  <!-- Fecha contacto (obligatorio) -->
+  <div>
+    <label class="block text-sm font-bold mb-2 text-primary" for="fechaContacto">
+      Hora contacto técnico *
+    </label>
+    <input id="date_hct" type="datetime-local" formControlName="date_hct"
+      class="form-control input input-bordered w-full"
+      [class.border-red-500]="ticketForm.get('date_hct')?.errors ?? false"
+      [class.border-orange-500]="isDateHctInvalid()"
+      required />
+    <form-error-label [control]="ticketForm.get('date_hct')!" />
+    @if (isDateHctInvalid()) {
+    <label class="label">
+      <span class="text-orange-500 text-xs">⚠️ No puede ser anterior o igual al diagnóstico COR</span>
+    </label>
+    }
+  </div>
+</div>
 
-    <!-- Fecha contacto (opcional) -->
-    <div>
-      <label class="block text-sm font-bold mb-2 text-primary" for="fechaContacto">
-        Hora contacto técnico
-      </label>
-      <input id="date_hct" type="datetime-local" formControlName="date_hct"
-        class="form-control input input-bordered w-full" />
+@if (showDateTimeAlert()) {
+<div class="fixed inset-0 flex items-end justify-center z-50 pointer-events-none">
+  <div class="w-full max-w-md mb-8 mx-4">
+    <div role="alert" class="alert alert-error alert-soft shadow-lg animate-fade-in-up">
+      <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      </svg>
+      <div>
+        <h3 class="font-bold">Error en fechas</h3>
+        <div class="text-xs">{{ dateTimeAlertMessage() }}</div>
+      </div>
     </div>
   </div>
+</div>
+}
 
   <!-- Botones -->
-  <div class="flex items-center justify-end space-x-4 mt-4">
-    <button class="btn btn-neutral" type="button" (click)="onCancel()">
-      Cancelar
-    </button>
-    <button class="btn btn-primary" type="submit">
-      Guardar
-    </button>
+  <div class="flex items-center justify-between space-x-4 mt-4">
+    <div>
+      <a [routerLink]="['/admin/tickets', ticket().id_ticket, 'history']" class="btn btn-outline btn-sm">
+        📋 Ver Historial Completo
+      </a>
+    </div>
+
+    <div class="flex items-center space-x-4">
+      <button class="btn btn-neutral" type="button" (click)="onCancel()">
+        Cancelar
+      </button>
+      <button class="btn btn-primary" type="submit">
+        Guardar
+      </button>
+    </div>
   </div>
+
+  <!-- <div class="mt-8">
+    <app-ticket-history [ticketId]="ticket().id_ticket" />
+  </div> -->
+
 </form>

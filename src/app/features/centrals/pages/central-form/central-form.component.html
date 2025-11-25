@@ -1,0 +1,139 @@
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-6">
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+    <!-- Código de Central -->
+    <div class="form-control">
+      <label class="label">
+        <span class="label-text font-semibold">Código de Central <span class="text-error">*</span></span>
+      </label>
+      <input type="text" formControlName="central_code" class="input input-bordered w-full" placeholder="Ej: 3135x"
+        [class.input-error]="hasError('central_code')">
+      @if (hasError('central_code')) {
+      <label class="label">
+        <span class="label-text-alt text-error">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          {{ getErrorMessage('central_code') }}
+        </span>
+      </label>
+      }
+    </div>
+
+    <!-- Nombre de Central -->
+    <div class="form-control">
+      <label class="label">
+        <span class="label-text font-semibold">Nombre de Central <span class="text-error">*</span></span>
+      </label>
+      <input type="text" formControlName="central_name" class="input input-bordered w-full" placeholder="Ej: camuri"
+        [class.input-error]="hasError('central_name')">
+      @if (hasError('central_name')) {
+      <label class="label">
+        <span class="label-text-alt text-error">
+          <i class="ri-error-warning-line mr-1"></i>
+          {{ getErrorMessage('central_name') }}
+        </span>
+      </label>
+      }
+    </div>
+
+    <!-- Estado -->
+    <div class="form-control">
+      <label class="label">
+        <span class="label-text font-semibold">Estado <span class="text-error">*</span></span>
+      </label>
+      <select formControlName="stateId" class="select select-bordered w-full"
+        [class.select-error]="hasError('stateId')">
+        <option value="" disabled selected>Seleccione un estado</option>
+        @for (state of states | async; track state.id) {
+        <option [value]="state.id">{{ state.state }}</option>
+        }
+      </select>
+      @if (hasError('stateId')) {
+      <label class="label">
+        <span class="label-text-alt text-error">
+          <i class="ri-error-warning-line mr-1"></i>
+          {{ getErrorMessage('stateId') }}
+        </span>
+      </label>
+      }
+    </div>
+
+    <!-- Espacio para mantener la cuadrícula -->
+    <div class="form-control"></div>
+
+  </div>
+
+  <!-- Sección de Coordenadas -->
+  <div class="bg-base-200 p-4 rounded-lg">
+    <h4 class="font-semibold text-lg mb-4 text-base-content/80">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2" fill="none" viewBox="0 0 24 24"
+        stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+      </svg>
+      Coordenadas Geográficas
+    </h4>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="form-control">
+        <label class="label">
+          <span class="label-text font-medium">Latitud</span>
+        </label>
+        <input type="text" formControlName="coord_lat" class="input input-bordered w-full" placeholder="Ej: 10.123456">
+      </div>
+
+      <div class="form-control">
+        <label class="label">
+          <span class="label-text font-medium">Longitud</span>
+        </label>
+        <input type="text" formControlName="coord_lng" class="input input-bordered w-full" placeholder="Ej: -66.123456">
+      </div>
+    </div>
+  </div>
+
+  <!-- Observaciones -->
+  <div class="form-control">
+    <label class="label">
+      <span class="label-text font-semibold">Observaciones</span>
+    </label>
+    <textarea formControlName="observations" class="textarea textarea-bordered h-24"
+      placeholder="Ingrese observaciones adicionales..."></textarea>
+    <label class="label">
+      <span class="label-text-alt text-base-content/60">Opcional</span>
+    </label>
+  </div>
+
+  <!-- Mensaje de validación general solo al enviar -->
+  @if (submitted && form.invalid) {
+  <div class="alert alert-warning shadow-lg">
+    <div>
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z" />
+      </svg>
+      <span>Por favor, complete todos los campos requeridos correctamente.</span>
+    </div>
+  </div>
+  }
+
+  <!-- Botones -->
+  <div class="flex justify-end gap-3 pt-4 border-t border-base-content/10">
+    <button type="button" class="btn btn-ghost" (click)="onCancel()">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24"
+        stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+      Cancelar
+    </button>
+    <button type="submit" class="btn btn-primary" [class.loading]="false">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24"
+        stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+      </svg>
+      {{ isEdit ? 'Actualizar' : 'Crear' }} Central
+    </button>
+  </div>
+</form>

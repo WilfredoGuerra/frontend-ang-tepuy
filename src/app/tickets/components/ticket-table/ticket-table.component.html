@@ -115,18 +115,28 @@
 
 
         <td>
-          <div class="flex gap-2">
-            @if (authService.isAdmin()) {
+          <div class="flex gap-0">
+            @if (authService.isAdmin() && tick.statusId !== 2 && tick.statusId !== 3) {
             <div class="tooltip" data-tip="Editar">
-              <button class="btn btn-circle btn-soft btn-warning btn-sm"
-                [routerLink]="['/admin/tickets/by/', tick.id_ticket]">
-                <img class="" src="assets/icons/{{ 'mynaui--edit-one-solid' }}.svg">
+              <button class="btn btn-ghost btn-circle" [routerLink]="['/admin/tickets/by/', tick.id_ticket]">
+                <img class="mt-1" src="assets/icons/edit-flat.svg"
+                  alt="">
               </button>
             </div>
             }
+            @else if(authService.isAdmin()) {
+            <div class="tooltip" data-tip="Ticket NO editable">
+              <button class="btn btn-ghost btn-circle">
+                <img class="mt-1"
+                  src="assets/icons/edit-lock-16-filled.svg" alt="">
+              </button>
+            </div>
+            }
+
             <div class="tooltip" data-tip="Información" [routerLink]="['/tickets/tickets/by/', tick.id_ticket]">
-              <button class="btn btn-circle btn-soft btn-success btn-sm">
-                <img class="" src="assets/icons/{{ 'hugeicons--information-circle' }}.svg">
+              <button class="btn btn-ghost btn-circle">
+                <img class="mt-1"
+                  src="assets/icons/information-circle.svg" alt="">
               </button>
             </div>
           </div>

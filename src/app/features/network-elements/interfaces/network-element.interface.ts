@@ -33,5 +33,5 @@ export interface NetworkElement {
   central?:       Central;
   platform?:      Platform;
   group?:         Group;
-  provider?:      Provider;
+  provider:      Provider;
 }

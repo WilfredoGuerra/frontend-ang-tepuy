@@ -1,6 +1,5 @@
 import { Region } from "@features/regions/interfaces/region.interface";
 
-
 export interface State {
   id:          number;
   state:       string;

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 
 @Component({
   selector: 'app-footer',
@@ -6,7 +6,10 @@ import { Component } from '@angular/core';
   templateUrl: './footer.component.html',
 })
 export class FooterComponent {
+  currentYear = signal<number>(0);
+  appVersion = signal<string>('0.1.0');
 
-  currentYear = new Date().getFullYear();
-
+  ngOnInit() {
+    this.currentYear.set(new Date().getFullYear());
+  }
 }

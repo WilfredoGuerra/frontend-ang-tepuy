@@ -1,122 +1,14 @@
 <!-- dashboard.component.html -->
-<div class="p-6 bg-base-200 min-h-screen">
+<div class="p-4 bg-base-200 min-h-screen rounded-lg shadow-md">
   <!-- Header -->
-  <div class="flex justify-between items-center mb-6">
-    <p class="btn btn-ghost text-md font-montserrat">
-      Dashboard
-      <span class="text-secondary">| Tickets</span><span
-        class="bg-gradient-to-r from-secondary via-violet-600 to-fuchsia-700 inline-block text-transparent bg-clip-text uppercase text-3xl font-bold">Tepuy</span>
-    </p>
-    <div>
+  <div class="flex justify-between items-center mb-4">
+    <div class="text-center">
       <p class="text-secondary mt-1 font-montserrat font-semibold">Estadísticas y métricas del módulo de tickets</p>
-    </div>
-    <div class="flex gap-2">
-      @if (authService.isAdmin()) {
-        <button routerLink="/admin/tickets" class="btn btn-accent">Ir a tickets</button>
-      }
-      @else {
-        <button routerLink="/tickets" class="btn btn-accent">Ir a tickets</button>
-      }
-      <button class="btn btn-primary" (click)="resetFilters()">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
-          stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-        </svg>
-        Reiniciar Filtros
-      </button>
-    </div>
-  </div>
-
-  <!-- Filtros en Collapse -->
-  <div class="collapse collapse-arrow bg-base-100 rounded-lg shadow mb-6">
-    <input type="checkbox" class="peer" [checked]="filtersOpen" (change)="toggleFilters()" />
-    <div class="collapse-title text-xl font-semibold">
-      Filtros
-    </div>
-    <div class="collapse-content">
-      <form [formGroup]="filterForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-4">
-        <div class="form-control">
-          <label class="label">
-            <span class="label-text">Fecha Inicio</span>
-          </label>
-          <input type="date" class="input input-bordered" formControlName="startDate">
-        </div>
-
-        <div class="form-control">
-          <label class="label">
-            <span class="label-text">Fecha Fin</span>
-          </label>
-          <input type="date" class="input input-bordered" formControlName="endDate">
-        </div>
-
-        <div class="form-control">
-          <label class="label">
-            <span class="label-text">Grupo</span>
-          </label>
-          <select class="select select-bordered" formControlName="groupId">
-            <option value="">Todos los grupos</option>
-            <option *ngFor="let group of filterOptions.groups" [value]="group.id">{{group.group}}</option>
-          </select>
-        </div>
-
-        <div class="form-control">
-          <label class="label">
-            <span class="label-text">Plataforma</span>
-          </label>
-          <select class="select select-bordered" formControlName="platformId">
-            <option value="">Todas las plataformas</option>
-            <option *ngFor="let platform of filterOptions.platforms" [value]="platform.id">{{platform.platform}}
-            </option>
-          </select>
-        </div>
-
-        <div class="form-control">
-          <label class="label">
-            <span class="label-text">Severidad</span>
-          </label>
-          <select class="select select-bordered" formControlName="severityId">
-            <option value="">Todas las severidades</option>
-            <option *ngFor="let severity of filterOptions.severities" [value]="severity.id">{{severity.severity}}
-            </option>
-          </select>
-        </div>
-
-        <div class="form-control">
-          <label class="label">
-            <span class="label-text">Estado</span>
-          </label>
-          <select class="select select-bordered" formControlName="statusId">
-            <option value="">Todos los estados</option>
-            <option *ngFor="let status of filterOptions.statuses" [value]="status.id">{{status.status}}</option>
-          </select>
-        </div>
-
-        <div class="form-control">
-          <label class="label">
-            <span class="label-text">Origen</span>
-          </label>
-          <select class="select select-bordered" formControlName="originId">
-            <option value="">Todos los orígenes</option>
-            <option *ngFor="let origin of filterOptions.origins" [value]="origin.id">{{origin.origin}}</option>
-          </select>
-        </div>
-
-        <div class="form-control">
-          <label class="label">
-            <span class="label-text">Tipo de Falla</span>
-          </label>
-          <select class="select select-bordered" formControlName="failureId">
-            <option value="">Todos los tipos</option>
-            <option *ngFor="let failure of filterOptions.failures" [value]="failure.id">{{failure.failure}}</option>
-          </select>
-        </div>
-      </form>
     </div>
   </div>
 
   <!-- Cards de Estadísticas -->
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 font-montserrat">
     <div class="stats shadow bg-base-100 hover:shadow-md transition-shadow">
       <div class="stat">
         <div class="stat-figure text-primary">
@@ -133,70 +25,62 @@
 
     <div class="stats shadow bg-base-100 hover:shadow-md transition-shadow">
       <div class="stat">
-        <div class="stat-figure text-secondary">
+        <div class="stat-figure text-warning">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         </div>
-        <div class="stat-title">Tickets Abiertos</div>
-        <div class="stat-value text-secondary">{{stats.openTickets || 0}}</div>
+        <div class="stat-title">Tickets En proceso</div>
+        <div class="stat-value text-warning">{{ticketsByStatus['en proceso'] || 0}}</div>
         <div class="stat-desc">{{stats.openPercentage || 0}}% del total</div>
       </div>
     </div>
 
     <div class="stats shadow bg-base-100 hover:shadow-md transition-shadow">
       <div class="stat">
-        <div class="stat-figure text-accent">
+        <div class="stat-figure text-success">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         </div>
         <div class="stat-title">Tickets Resueltos</div>
-        <div class="stat-value text-accent">{{stats.resolvedTickets || 0}}</div>
+        <div class="stat-value text-success">{{stats.resolvedTickets || 0}}</div>
         <div class="stat-desc">{{stats.resolvedPercentage || 0}}% del total</div>
       </div>
     </div>
 
     <div class="stats shadow bg-base-100 hover:shadow-md transition-shadow">
       <div class="stat">
-        <div class="stat-figure text-info">
+        <div class="stat-figure text-error">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
           </svg>
         </div>
-        <div class="stat-title">Tiempo Promedio</div>
-        <div class="stat-value text-info">{{stats.averageResolutionTime || 0}}</div>
-        <div class="stat-desc">Horas para resolver</div>
+        <div class="stat-title">Tickets cancelados</div>
+        <div class="stat-value text-error">{{ticketsByStatus['cancelado'] || 0}}</div>
+        <div class="stat-desc">% del total</div>
       </div>
     </div>
   </div>
 
   <!-- Sección de Gráficos -->
-  <div class="mb-6">
-    <h2 class="text-2xl font-bold mb-4">Métricas y Estadísticas</h2>
+  <div class="mb-6 font-montserrat">
+    <h2 class="text-2xl font-bold mb-6 text-center font-montserrat">Métricas Principales</h2>
 
     <!-- Primera fila de gráficos -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-      <!-- Gráfico 1: Tickets por Grupo -->
-      <div class="bg-base-100 p-4 rounded-lg shadow hover:shadow-md transition-shadow">
-        <div class="flex justify-between items-center mb-4">
-          <h3 class="text-lg font-semibold">Tickets por Grupo</h3>
-          <div class="badge badge-primary">Bar Chart</div>
-        </div>
-        <div class="h-80 flex items-center justify-center">
+      <div class="bg-base-100 p-6 rounded-lg shadow hover:shadow-lg transition-shadow">
+        <!-- <h3 class="text-lg font-semibold mb-4 text-center">Tickets por Grupo</h3> -->
+        <div class="h-80">
           <canvas id="groupChart"></canvas>
         </div>
       </div>
 
-      <!-- Gráfico 2: Tickets por Plataforma (Ahora es Bar Chart) -->
-      <div class="bg-base-100 p-4 rounded-lg shadow hover:shadow-md transition-shadow">
-        <div class="flex justify-between items-center mb-4">
-          <h3 class="text-lg font-semibold">Tickets por Plataforma</h3>
-          <div class="badge badge-secondary">Bar Chart</div>
-        </div>
-        <div class="h-80 flex items-center justify-center">
+      <div class="bg-base-100 p-6 rounded-lg shadow hover:shadow-lg transition-shadow">
+        <!-- <h3 class="text-lg font-semibold mb-4 text-center">Tickets por Plataforma</h3> -->
+        <div class="h-80">
           <canvas id="platformChart"></canvas>
         </div>
       </div>
@@ -204,140 +88,123 @@
 
     <!-- Segunda fila de gráficos -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-      <!-- Gráfico 3: Tickets por Severidad (Doughnut) -->
-      <div class="bg-base-100 p-4 rounded-lg shadow hover:shadow-md transition-shadow">
-        <div class="flex justify-between items-center mb-4">
-          <h3 class="text-lg font-semibold">Tickets por Severidad</h3>
-          <div class="badge badge-accent">Doughnut Chart</div>
-        </div>
-        <div class="h-96 flex flex-col items-center justify-center p-4">
-          <div class="w-full h-72 mb-2">
-            <canvas id="severityChart"></canvas>
-          </div>
-          <div class="w-full px-4">
-            <div class="flex flex-wrap justify-center gap-2">
-              <div *ngFor="let key of getSeverityKeys()" class="flex items-center">
-                <div class="w-3 h-3 rounded-full mr-1" [style.backgroundColor]="getSeverityColor(key)"></div>
-                <span class="text-xs font-medium">{{key}}: {{ticketsBySeverity[key]}}</span>
-              </div>
-            </div>
-          </div>
+      <div class="bg-base-100 p-6 rounded-lg shadow hover:shadow-lg transition-shadow">
+        <h3 class="text-lg font-semibold mb-4 text-center">Tickets por Severidad</h3>
+        <div class="h-80">
+          <canvas id="severityChart"></canvas>
         </div>
       </div>
 
-      <!-- Gráfico 4: Tickets por Estado (Pie) -->
-      <div class="bg-base-100 p-4 rounded-lg shadow hover:shadow-md transition-shadow">
-        <div class="flex justify-between items-center mb-4">
-          <h3 class="text-lg font-semibold">Tickets por Estado</h3>
-          <div class="badge badge-info">Pie Chart</div>
-        </div>
-        <div class="h-96 flex flex-col items-center justify-center p-4">
-          <div class="w-full h-72 mb-2">
-            <canvas id="statusChart"></canvas>
-          </div>
-          <div class="w-full px-4">
-            <div class="flex flex-wrap justify-center gap-2">
-              <div *ngFor="let key of getStatusKeys()" class="flex items-center">
-                <div class="w-3 h-3 rounded-full mr-1" [style.backgroundColor]="getStatusColor(key)"></div>
-                <span class="text-xs font-medium">{{key}}: {{ticketsByStatus[key]}}</span>
-              </div>
-            </div>
-          </div>
+      <div class="bg-base-100 p-6 rounded-lg shadow hover:shadow-lg transition-shadow">
+        <h3 class="text-lg font-semibold mb-4 text-center">Tickets por Estatus</h3>
+        <div class="h-80">
+          <canvas id="statusChart"></canvas>
         </div>
       </div>
     </div>
 
     <!-- Tercera fila de gráficos -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-      <!-- Gráfico 5: Tickets por Origen -->
-      <div class="bg-base-100 p-4 rounded-lg shadow hover:shadow-md transition-shadow">
-        <div class="flex justify-between items-center mb-4">
-          <h3 class="text-lg font-semibold">Tickets por Origen</h3>
-          <div class="badge badge-warning">Bar Chart</div>
-        </div>
-        <div class="h-80 flex items-center justify-center">
+      <div class="bg-base-100 p-6 rounded-lg shadow hover:shadow-lg transition-shadow">
+        <!-- <h3 class="text-lg font-semibold mb-4 text-center">Tickets por Origen</h3> -->
+        <div class="h-80">
           <canvas id="originChart"></canvas>
         </div>
       </div>
 
-      <!-- Gráfico 6: Tickets por Tipo de Falla -->
-      <div class="bg-base-100 p-4 rounded-lg shadow hover:shadow-md transition-shadow">
-        <div class="flex justify-between items-center mb-4">
-          <h3 class="text-lg font-semibold">Tickets por Tipo de Falla</h3>
-          <div class="badge badge-success">Bar Chart</div>
-        </div>
-        <div class="h-80 flex items-center justify-center">
+      <div class="bg-base-100 p-6 rounded-lg shadow hover:shadow-lg transition-shadow">
+        <!-- <h3 class="text-lg font-semibold mb-4 text-center">Tickets por Tipo de Falla</h3> -->
+        <div class="h-80">
           <canvas id="failureChart"></canvas>
         </div>
       </div>
     </div>
 
-    <!-- Cuarta fila - Gráfico ancho -->
-    <div class="bg-base-100 p-4 rounded-lg shadow hover:shadow-md transition-shadow mb-6">
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="text-lg font-semibold">Tickets por Usuario</h3>
-        <div class="badge badge-primary">Bar Chart</div>
+    <!-- Cuarta fila - Gráfico de Cortes de Fibra -->
+    <!-- <div class="bg-base-100 p-6 rounded-lg shadow hover:shadow-lg transition-shadow">
+      <h3 class="text-lg font-semibold mb-4 text-center">Cortes de Fibra por Estado</h3>
+      <div class="h-80">
+        <canvas id="fiberCutChart"></canvas>
       </div>
-      <div class="h-96 flex items-center justify-center">
-        <canvas id="userChart"></canvas>
+    </div> -->
+    <!-- Cuarta fila - Gráfico de Cortes de Fibra DIVIDIDO CON LEYENDA -->
+<div class="bg-base-100 p-6 rounded-lg shadow hover:shadow-lg transition-shadow">
+  <h3 class="text-lg font-semibold mb-4 text-center">Cortes de Fibra por Estado</h3>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+    <!-- Lado izquierdo: Gráfica con leyenda -->
+    <div class="flex flex-col">
+      <!-- Gráfico (un poco más pequeño para dar espacio a la leyenda) -->
+      <div class="h-72">
+        <canvas id="fiberCutChart"></canvas>
       </div>
+
+      <!-- Leyenda personalizada -->
+      <div class="mt-4 p-4 bg-base-200 rounded-lg border border-base-300">
+        <!-- <h4 class="text-sm font-semibold mb-3 text-center text-base-700">Estados - Cortes de Fibra</h4> -->
+        <div class="flex flex-wrap justify-center gap-3">
+          <div *ngFor="let state of fiberCutStates; let i = index"
+               class="flex items-center bg-base-100 px-3 py-2 rounded-lg shadow-sm border border-base-300">
+            <div class="w-3 h-3 rounded-full mr-2 border border-white shadow"
+                 [style.background-color]="getChartColor(i)"></div>
+            <span class="text-xs font-medium capitalize text-base-700">
+              {{state.state}}
+            </span>
+            <span class="text-xs font-bold text-primary ml-2">
+              ({{state.count}})
+            </span>
+          </div>
+        </div>
+        <!-- <div class="mt-3 pt-3 border-t border-base-300 text-center">
+          <span class="text-sm font-semibold text-base-700">Total: </span>
+          <span class="text-sm font-bold text-primary">{{totalFiberCuts}} cortes</span>
+        </div> -->
+      </div>
+    </div>
+
+    <!-- Lado derecho: Tabla -->
+    <div class="flex flex-col">
+      <div class="overflow-x-auto flex-1 mt-15">
+        <table class="table table-zebra table-sm w-full">
+          <thead>
+            <tr class="bg-base-300">
+              <th class="font-bold text-sm">Estado/Provincia</th>
+              <th class="font-bold text-sm text-center">Cortes de Fibra</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let state of fiberCutStates" class="hover:bg-base-200 transition-colors">
+              <td class="font-medium capitalize">{{state.state}}</td>
+              <td class="text-center font-semibold">{{state.count}}</td>
+            </tr>
+            <tr *ngIf="fiberCutStates.length === 0">
+              <td colspan="2" class="text-center text-gray-500 py-4">
+                No hay datos de cortes de fibra
+              </td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr class="bg-base-300 font-bold">
+              <td class="text-sm">Total</td>
+              <td class="text-center text-sm">{{totalFiberCuts}}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <!-- Información adicional -->
+      <!-- <div class="">
+        <div class="flex items-center text-info">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span class="text-sm font-medium">Total de tickets con corte de fibra: {{totalFiberCuts}}</span>
+        </div>
+      </div> -->
     </div>
   </div>
-
-  <!-- Tabla de Tickets Recientes -->
-  <div class="bg-base-100 p-4 rounded-lg shadow hover:shadow-md transition-shadow">
-    <div class="flex justify-between items-center mb-4">
-      <h2 class="text-2xl font-bold">Tickets Recientes</h2>
-      <div class="badge badge-outline">{{recentTickets.length}} tickets</div>
-    </div>
-    <div class="overflow-x-auto">
-      <table class="table table-zebra w-full">
-        <thead>
-          <tr class="bg-base-300">
-            <th class="font-bold">ID</th>
-            <th class="font-bold">Nro. Ticket</th>
-            <th class="font-bold">Problema</th>
-            <th class="font-bold">Usuario</th>
-            <th class="font-bold">Grupo</th>
-            <th class="font-bold">Estado</th>
-            <th class="font-bold">Severidad</th>
-            <th class="font-bold">Fecha Creación</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let ticket of recentTickets" class="hover:bg-base-200 transition-colors">
-            <td class="font-mono font-semibold">{{ticket.id_ticket}}</td>
-            <td class="font-mono">{{ticket.nro_ticket}}</td>
-            <td>
-              <div class="tooltip" [attr.data-tip]="ticket.definition_problem">
-                {{ticket.definition_problem | slice:0:50}}{{ticket.definition_problem.length > 50 ? '...' : ''}}
-              </div>
-            </td>
-            <td>{{ticket.user}}</td>
-            <td>{{ticket.group}}</td>
-            <td>
-              <span class="badge badge-lg" [ngClass]="{
-                'badge-error': ticket.status === 'Abierto',
-                'badge-warning': ticket.status === 'En Proceso' || ticket.status === 'En Progreso',
-                'badge-success': ticket.status === 'Resuelto' || ticket.status === 'Cerrado',
-                'badge-info': ticket.status === 'Pendiente'
-              }">{{ticket.status}}</span>
-            </td>
-            <td>
-              <span class="badge badge-lg" [ngClass]="{
-                'badge-info': ticket.severity === 'Baja' || ticket.severity === 'Disponibilidad de Servicio',
-                'badge-warning': ticket.severity === 'Media' || ticket.severity === 'Medio',
-                'badge-error': ticket.severity === 'Alta' || ticket.severity === 'Alto' || ticket.severity === 'Crítica' || ticket.severity === 'Crítico' || ticket.severity === 'Urgente'
-              }">{{ticket.severity}}</span>
-            </td>
-            <td>{{ticket.createdDate | date:'short'}}</td>
-          </tr>
-        </tbody>
-      </table>
-      <div *ngIf="recentTickets.length === 0" class="text-center py-8 text-gray-500">
-        No hay tickets recientes para mostrar
-      </div>
-    </div>
+</div>
   </div>
 </div>
 
@@ -346,8 +213,7 @@
   <div class="fixed inset-0 bg-base-100 bg-opacity-80 flex items-center justify-center z-50">
     <div class="text-center">
       <span class="loading loading-spinner loading-lg text-primary"></span>
-      <p class="mt-4 text-lg font-semibold">Cargando datos del dashboard...</p>
+      <p class="mt-4 text-lg font-semibold">Cargando dashboard...</p>
     </div>
   </div>
 </ng-container>
-

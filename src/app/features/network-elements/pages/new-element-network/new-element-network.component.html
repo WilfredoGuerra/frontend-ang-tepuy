@@ -9,12 +9,18 @@
         <label class="label" for="groupId">
           <span class="label-text font-semibold">Grupo <span class="text-error">*</span></span>
         </label>
-        <select formControlName="groupId" class="select select-bordered w-full" id="groupId" name="groupId">
-          <option disabled selected>Seleccione un grupo</option>
+        <select formControlName="groupId" class="select select-bordered w-full" id="groupId"
+                [class.select-error]="hasError('groupId')">
+          <option value="0" disabled selected>Seleccione un grupo</option>
           @for (group of groupsResource.value(); track group.id) {
-          <option>{{ group.group }}</option>
+            <option class="capitalize" [value]="group.id">{{ group.group }}</option>
           }
         </select>
+        @if (hasError('groupId')) {
+          <label class="label">
+            <span class="label-text-alt text-error">{{ getErrorMessage('groupId') }}</span>
+          </label>
+        }
       </div>
 
       <!-- Plataforma -->
@@ -22,12 +28,18 @@
         <label class="label" for="platformId">
           <span class="label-text font-semibold">Plataforma <span class="text-error">*</span></span>
         </label>
-        <select formControlName="platformId" class="select select-bordered w-full" id="platform" name="platform">
-          <option disabled selected>Seleccione una plataforma</option>
+        <select formControlName="platformId" class="select select-bordered w-full" id="platformId"
+                [class.select-error]="hasError('platformId')">
+          <option value="0" disabled selected>Seleccione una plataforma</option>
           @for (platform of platformsResource.value(); track platform.id) {
-          <option>{{ platform.platform }}</option>
+            <option class="capitalize" [value]="platform.id">{{ platform.platform }}</option>
           }
         </select>
+        @if (hasError('platformId')) {
+          <label class="label">
+            <span class="label-text-alt text-error">{{ getErrorMessage('platformId') }}</span>
+          </label>
+        }
       </div>
     </div>
 
@@ -38,8 +50,8 @@
         <label class="label" for="management_ip">
           <span class="label-text font-semibold">IP Gestión</span>
         </label>
-        <input formControlName="management_ip" type="text" placeholder="192.168.1.1" class="input input-bordered w-full"
-          id="management_ip" name="management_ip" required />
+        <input formControlName="management_ip" type="text" placeholder="192.168.1.1"
+               class="input input-bordered w-full" id="management_ip" />
       </div>
 
       <!-- IP Servicio -->
@@ -47,8 +59,8 @@
         <label class="label" for="service_ip">
           <span class="label-text font-semibold">IP Servicio</span>
         </label>
-        <input formControlName="service_ip" type="text" placeholder="10.0.0.1" class="input input-bordered w-full"
-          id="service_ip" name="service_ip" required />
+        <input formControlName="service_ip" type="text" placeholder="10.0.0.1"
+               class="input input-bordered w-full" id="service_ip" />
       </div>
 
       <!-- IP ADSL -->
@@ -56,29 +68,35 @@
         <label class="label" for="adsl_ip">
           <span class="label-text font-semibold">IP ADSL</span>
         </label>
-        <input formControlName="adsl_ip" id="adsl_ip" name="adsl_ip" required type="text" placeholder="172.16.0.1"
-          class="input input-bordered w-full" />
+        <input formControlName="adsl_ip" type="text" placeholder="172.16.0.1"
+               class="input input-bordered w-full" id="adsl_ip" />
       </div>
     </div>
 
-    <!-- Fila 3: Descripción, IP Elemento y Acrónimo -->
+    <!-- Fila 3: Descripción, ID Elemento y Acrónimo -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
       <!-- Descripción -->
       <div class="form-control">
         <label class="label" for="description">
           <span class="label-text font-semibold">Descripción <span class="text-error">*</span></span>
         </label>
-        <input formControlName="description" id="description" name="description" required type="text"
-          placeholder="Descripción del equipo" class="input input-bordered w-full" />
+        <input formControlName="description" type="text" placeholder="Descripción del equipo"
+               class="input input-bordered w-full" id="description"
+               [class.input-error]="hasError('description')" />
+        @if (hasError('description')) {
+          <label class="label">
+            <span class="label-text-alt text-error">{{ getErrorMessage('description') }}</span>
+          </label>
+        }
       </div>
 
-      <!-- IP Elemento -->
+      <!-- ID Elemento -->
       <div class="form-control">
         <label class="label" for="element_id">
           <span class="label-text font-semibold">ID Elemento</span>
         </label>
-        <input formControlName="element_id" id="element_id" name="element_id" required type="text"
-          placeholder="Element ID" class="input input-bordered w-full" />
+        <input formControlName="element_id" type="text" placeholder="Element ID"
+               class="input input-bordered w-full" id="element_id" />
       </div>
 
       <!-- Acrónimo -->
@@ -86,8 +104,14 @@
         <label class="label" for="acronym">
           <span class="label-text font-semibold">Acrónimo <span class="text-error">*</span></span>
         </label>
-        <input formControlName="acronym" id="acronym" name="acronym" required type="text"
-          placeholder="Siglas del equipo" class="input input-bordered w-full" />
+        <input formControlName="acronym" type="text" placeholder="Siglas del equipo"
+               class="input input-bordered w-full uppercase" id="acronym"
+               [class.input-error]="hasError('acronym')" />
+        @if (hasError('acronym')) {
+          <label class="label">
+            <span class="label-text-alt text-error">{{ getErrorMessage('acronym') }}</span>
+          </label>
+        }
       </div>
     </div>
 
@@ -98,8 +122,14 @@
         <label class="label" for="model">
           <span class="label-text font-semibold">Modelo <span class="text-error">*</span></span>
         </label>
-        <input formControlName="model" id="model" name="model" required type="text" placeholder="Modelo del equipo"
-          class="input input-bordered w-full" />
+        <input formControlName="model" type="text" placeholder="Modelo del equipo"
+               class="input input-bordered w-full" id="model"
+               [class.input-error]="hasError('model')" />
+        @if (hasError('model')) {
+          <label class="label">
+            <span class="label-text-alt text-error">{{ getErrorMessage('model') }}</span>
+          </label>
+        }
       </div>
 
       <!-- Proveedor -->
@@ -107,13 +137,18 @@
         <label class="label" for="providerId">
           <span class="label-text font-semibold">Proveedor <span class="text-error">*</span></span>
         </label>
-        <select formControlName="providerId" id="providerId" name="providerId" required
-          class="select select-bordered w-full">
-          <option disabled selected>Seleccione un proveedor</option>
-          @for (provider of providersResource.value(); track $index) {
-          <option>{{ provider.provider_name }}</option>
+        <select formControlName="providerId" class="select select-bordered w-full" id="providerId"
+                [class.select-error]="hasError('providerId')">
+          <option value="0" disabled selected>Seleccione un proveedor</option>
+          @for (provider of providersResource.value(); track provider.id) {
+            <option class="capitalize" [value]="provider.id">{{ provider.provider_name }}</option>
           }
         </select>
+        @if (hasError('providerId')) {
+          <label class="label">
+            <span class="label-text-alt text-error">{{ getErrorMessage('providerId') }}</span>
+          </label>
+        }
       </div>
 
       <!-- Localidad -->
@@ -121,8 +156,14 @@
         <label class="label" for="locality">
           <span class="label-text font-semibold">Localidad <span class="text-error">*</span></span>
         </label>
-        <input formControlName="locality" id="locality" name="locality" required type="text" placeholder="Ubicación"
-          class="input input-bordered w-full" />
+        <input formControlName="locality" type="text" placeholder="Ubicación"
+               class="input input-bordered w-full" id="locality"
+               [class.input-error]="hasError('locality')" />
+        @if (hasError('locality')) {
+          <label class="label">
+            <span class="label-text-alt text-error">{{ getErrorMessage('locality') }}</span>
+          </label>
+        }
       </div>
     </div>
 
@@ -134,46 +175,75 @@
           <span class="label-text font-semibold">Central <span class="text-error">*</span></span>
         </label>
         <div class="join w-full">
-          <input type="text" placeholder="Seleccione una central" class="input input-bordered join-item w-full"
-            readonly />
-          <button class="btn btn-primary join-item" type="button" onclick="my_modal_3.showModal()">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-              stroke="currentColor">
+          <input type="text"
+                 [value]="selectedCentral() ? selectedCentral()!.central_code + ' - ' + selectedCentral()!.central_name : ''"
+                 placeholder="Seleccione una central"
+                 class="input input-bordered join-item w-full"
+                 readonly
+                 [class.input-error]="hasError('centralId')" />
+          <button type="button" class="btn btn-primary join-item" (click)="showCentralSelector.set(true)">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
             </svg>
           </button>
         </div>
+        @if (hasError('centralId')) {
+          <label class="label">
+            <span class="label-text-alt text-error">{{ getErrorMessage('centralId') }}</span>
+          </label>
+        }
       </div>
-
-      <dialog id="my_modal_3" class="modal">
-        <div class="modal-box w-11/12 max-w-5xl">
-          <div class="">
-            <centrals-page />
-          </div>
-        </div>
-      </dialog>
 
       <!-- Piso -->
       <div class="form-control">
-        <label class="label">
+        <label class="label" for="floor">
           <span class="label-text font-semibold">Piso</span>
         </label>
-        <input type="text" placeholder="Número de piso" class="input input-bordered w-full" />
+        <input formControlName="floor" type="text" placeholder="Número de piso"
+               class="input input-bordered w-full" id="floor" />
       </div>
 
       <!-- Sala -->
       <div class="form-control">
-        <label class="label">
+        <label class="label" for="hall">
           <span class="label-text font-semibold">Sala</span>
         </label>
-        <input type="text" placeholder="Número de sala" class="input input-bordered w-full" />
+        <input formControlName="hall" type="text" placeholder="Número de sala"
+               class="input input-bordered w-full" id="hall" />
       </div>
     </div>
+
+    <!-- Modal para selección de central -->
+    @if (showCentralSelector()) {
+      <div class="modal modal-open">
+        <div class="modal-box max-w-6xl w-11/12 max-h-[90vh]">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-bold">Seleccionar Central</h3>
+            <button class="btn btn-ghost btn-sm" (click)="showCentralSelector.set(false)">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <centrals-page
+            [isSelectorMode]="true"
+            (selected)="onCentralSelected($event)"
+            (closed)="showCentralSelector.set(false)"
+          />
+        </div>
+        <div class="modal-backdrop" (click)="showCentralSelector.set(false)"></div>
+      </div>
+    }
 
     <!-- Botones de acción -->
     <div class="flex justify-end gap-4 pt-6 border-t border-base-300">
       <button type="button" class="btn btn-ghost" (click)="onCancel()">Cancelar</button>
-      <button type="submit" class="btn btn-primary">Guardar</button>
+      <button type="submit" class="btn btn-primary" [class.loading]="false">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+        Guardar Elemento
+      </button>
     </div>
   </form>
 </div>

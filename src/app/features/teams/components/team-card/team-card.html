@@ -1,0 +1,66 @@
+<div class="card bg-base-100 shadow-sm">
+  <div class="card-body p-0">
+    <div class="overflow-x-auto rounded-box border border-base-content/20 bg-base-100">
+      <div class="flex justify-between p-3 uppercase font-montserrat text-primary bg-base-300">
+        <div class="grid">
+          <h2 class="font-bold text-shadow-lg mb-2">
+            {{ team().team_name }} ({{ team().team_code }})
+          </h2>
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-normal opacity-80 lowercase">
+              {{ team().entry_time }} - {{ team().departure_time }}
+            </span>
+            <span class="badge badge-xs {{ getJornadaBadgeClass(team().entry_time, team().departure_time) }}">
+              {{ getTipoJornada(team().entry_time, team().departure_time) }}
+            </span>
+          </div>
+        </div>
+
+        @if (getTeamLeader(team().user!)) {
+        <h2 class="text-error">
+          {{ getTeamLeader(team().user!).fullName | shortName:getTeamLeader(team().user!).surnames }}
+        </h2>
+        } @else {
+        <h2 class="text-error opacity-50">Sin líder asignado</h2>
+        }
+
+      </div>
+      <table class="table table-zebra table-xs">
+        <!-- head -->
+        <thead>
+          <tr>
+            <th>Personal Técnico</th>
+            <th>Especialidad</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- row 1 -->
+          @for (user of getUsersWithGroup(team().user!); track $index) {
+          <tr>
+            <td>
+              <div class="flex items-center gap-3">
+                <!-- <div class="avatar">
+                     <div class="mask mask-squircle h-12 w-12">
+                       <img src="https://img.daisyui.com/images/profile/demo/2@94.webp"
+                         alt="Avatar Tailwind CSS Component" />
+                     </div>
+                   </div> -->
+                <div>
+                  <div class="capitalize text-sm font-bold text-primary">{{ user.fullName }}, {{ user.surnames }}</div>
+                  <div class="opacity-50 uppercase italic font-semibold">{{ user.position.position }}</div>
+                </div>
+              </div>
+            </td>
+            <td class="first-letter:uppercase">{{ user.group.group }}</td>
+          </tr>
+          }
+      </table>
+    </div>
+
+    <!-- Acciones del card -->
+    <!-- <div class="card-actions justify-end p-3 border-t border-base-300">
+      <button class="btn btn-primary btn-xs">Exportar</button>
+      <button class="btn btn-outline btn-xs">Cerrar</button>
+    </div> -->
+  </div>
+</div>

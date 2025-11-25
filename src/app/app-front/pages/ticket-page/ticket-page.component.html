@@ -14,16 +14,13 @@
 </div>
 }
 
-<!-- Ticket -->
 @if (ticketResource.hasValue()) {
 <div class="tabs tabs-lift mb-4">
   <input type="radio" name="my_tabs_3" class="tab text-green-500 font-bold" aria-label="Inicio" checked="checked" />
   <div class="tab-content bg-base-100 border-base-300 p-6">
-    <!-- Contenido del ticket (se mantiene igual) -->
     <div class="bg-base-300 min-h-screen p-4 md:p-6">
       <div class="max-w-6xl mx-auto">
         <!-- Header -->
-
         <div class="grid grid-cols-1 lg:grid-cols-1 gap-3 mb-2">
           <div class="bg-base-100 rounded-xl shadow-sm p-6 card-hover">
             <header class="mb-2">
@@ -47,16 +44,21 @@
                     }
                   </span>
                 </div>
+                <div>
+                  <h3 class="text-md font-semibold">
+                    <p class="text-primary">Generado por:</p>
+                    {{ ticketResource.value().user?.fullName }} {{ ticketResource.value().user?.surnames || '' }}
+                  </h3>
+                </div>
               </div>
             </header>
 
             <p class="text-secondary font-semibold">Definición del problema:</p>
-            <span class="">{{ ticketResource.value().definition_problem }}</span>
+            <span class="uppercase">{{ ticketResource.value().definition_problem }}</span>
 
             <!-- Section network element/fiber length -->
-            <div class="network-section">
+            <!-- <div class="network-section">
               <div class="text-primary font-mono uppercase ticket-content">
-                <!-- Información de elementos de red -->
                 @if (ticketResource.value().network_elements?.length) {
                 <div class="field">
                   <span class="field-name">Modelo:</span>
@@ -134,7 +136,7 @@
                 </div>
                 }
               </div>
-            </div>
+            </div> -->
             <!-- End section network element/fiber length -->
 
             <div class="divider my-1"></div>
@@ -142,7 +144,8 @@
             <div class="flex flex-row justify-between">
               <div>
                 <p class="text-secondary font-semibold">Hora creación del ticket</p>
-                <p class="">{{ ticketResource.value().form_open_date | date : "d/MM/yyyy, hh:mm a" }}</p>
+                <!-- <p class="">{{ ticketResource.value().createdDate | date : "d/MM/yyyy, hh:mm a" }}</p> -->
+                <p class="">{{ formatVenezuelaTime(ticketResource.value().createdDate, 'dd/MM/yyyy, h:mm a') }}</p>
               </div>
               <div>
                 <p class="text-secondary font-semibold">Hora de Inicio Falla</p>
@@ -227,7 +230,6 @@
         <div class="grid grid-cols-1 lg:grid-cols-1 gap-3">
           <div class="space-y-6">
             <div class="bg-base-100 rounded-xl shadow-sm p-6 card-hover">
-              <!-- Personal área resolutoria -->
               @if (ticketResource.value().personalRegionId) {
               <div>
                 <p class="text-secondary font-semibold">Personal de área resolutoria</p>
@@ -280,9 +282,7 @@
               <p>Este ticket, en su creación, no fue asociado a personal de área resolutoria.</p>
               }
 
-              <!-- SECCIÓN DE IMÁGENES - NUEVA -->
               @let ticket = ticketResource.value();
-              <!-- @if (ticketResource.value().images && ticketResource.value().images!.length > 0) { -->
               @if (ticket?.images && ticket.images!.length > 0) {
               <div class="space-y-4 mt-6">
                 <div class="divider my-1"></div>
@@ -297,7 +297,6 @@
                     @for (item of ticket.images; track $index) {
                     @let imageUrl = getImageUrl(item);
                     <div class="relative group">
-                      <!-- Imagen con enlace para abrir en nueva pestaña -->
                       <a [href]="imageUrl" target="_blank" rel="noopener noreferrer" class="block cursor-pointer">
                         <img [src]="imageUrl" [alt]="'Evidencia ' + ($index + 1)"
                           class="w-full h-24 object-cover rounded-lg border border-base-300 shadow-sm transition-all duration-300 group-hover:scale-105 group-hover:shadow-md"
@@ -313,8 +312,6 @@
                 </div>
               </div>
               }
-              <!-- FIN SECCIÓN DE IMÁGENES -->
-
             </div>
           </div>
         </div>
@@ -325,7 +322,6 @@
   <!-- Pestaña de Seguimiento -->
   <input type="radio" name="my_tabs_3" class="tab text-yellow-500 font-bold" aria-label="Documentaciones" />
   <div class="tab-content bg-base-100 border-base-300 p-6">
-    <!-- Header con botón de nuevo seguimiento -->
     <div class="flex justify-between items-center mb-6">
       <h2 class="text-xl font-bold text-primary">Historial de Documentación</h2>
       <div>
@@ -335,7 +331,7 @@
           </h3>
         </div>
       </div>
-      <button class="btn btn-primary" (click)="openModal()">
+      <button class="btn btn-primary" (click)="openModal()" [disabled]="!canCreateNewProgress()">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
           stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -369,7 +365,6 @@
 
       @for (progress of progressTickets; track progress.id; let i = $index) {
       <div class="bg-base-200 rounded-xl p-6 shadow-sm border-l-4 border-primary">
-        <!-- Header con información del registro -->
         <div class="flex flex-col md:flex-row justify-between items-start mb-4 gap-4">
           <div class="flex-1">
             <h3 class="text-md font-semibold text-primary mb-2">Descripción:</h3>
@@ -377,28 +372,58 @@
               <span class="badge badge-primary badge-lg">#{{ progressTicketsCount - i }}</span>
               <div class="flex flex-col justify-between text-sm font-mono">
                 <div class="text-primary">
-                  @if (progress.network_elements?.length) {
-                  <div class="">
-                    <span class="font-mono uppercase">
-                      {{ progress.network_elements?.[0]?.acronym }} -
-                      @if (progress.network_elements?.[0]?.management_ip) {
-                      ({{ progress.network_elements?.[0]?.management_ip }} ) -
+
+                  <!-- @if (ticketResource.value().network_elements?.length) {
+                  <div class="space-y-2 mb-4">
+                    <span class="font-semibold text-primary text-sm">Elementos de Red de inicio del ticket:</span>
+                    <div class="flex flex-wrap gap-2">
+                      @for (element of ticketResource.value().network_elements; track element.id; let i = $index) {
+                      <div class="px-3 py-2 rounded-lg">
+                        <span class="font-mono uppercase text-sm">
+                          <span class="font-bold">#{{ i + 1 }}:</span>
+                          {{ element.acronym }}
+                          @if (element.management_ip) {
+                          ({{ element.management_ip }})
+                          }
+                        </span>
+                      </div>
                       }
-                      {{ progress.network_elements?.[0]?.description }} -
-                      {{ progress.network_elements?.[0]?.model }} -
-                      {{ progress.network_elements?.[0]?.provider?.provider_name }} -
-                      {{ progress.network_elements?.[0]?.central?.central_name }} -
-                      {{ progress.network_elements?.[0]?.locality }}
-                    </span>
+                    </div>
                   </div>
-                  } @else if (progress.fiberLengthId && progress.fiberLength) {
-                  <div class="mt-2">
-                    <span class="font-medium text-sm">Tramo de Fibra:</span>
-                    <span class="font-mono uppercase">
-                      {{ progress.fiberLength.section_name }}
-                    </span>
+                  } -->
+
+                  @if (progress.network_elements?.length) {
+                  <div class="space-y-2 mt-3">
+                    <span class="font-semibold text-warning text-sm">Elementos de Red:</span>
+                    <div class="flex flex-wrap gap-2">
+                      @for (element of progress.network_elements; track element.id; let i = $index) {
+                      <div class="bg-warning text-warning-content px-2 py-1 rounded text-xs">
+                        <span class="font-mono uppercase">
+                          {{ element.acronym }}
+                          @if (element.management_ip) {
+                          ({{ element.management_ip }})
+                          }
+                        </span>
+                      </div>
+                      }
+                    </div>
                   </div>
                   }
+
+                  @else if (progress.fiberLengthId) {
+                  @let fiberInfo = getFiberDisplayInfo(progress);
+                  <div class="space-y-2">
+                    <span class="font-semibold text-primary text-sm">Tramo de Fibra:</span>
+                    <div class="py-2 rounded-lg">
+                      <span class="font-mono uppercase text-sm">
+                        {{ fiberInfo.section_name }}
+                        - Del Estado: {{ fiberInfo.stateA }}
+                        - Al Estado: {{ fiberInfo.stateB }}
+                      </span>
+                    </div>
+                  </div>
+                  }
+
                 </div>
                 <div>
                   {{ progress.progress }}
@@ -406,38 +431,25 @@
               </div>
             </div>
 
-            <!-- Información de usuarios asignados -->
             <div class="space-y-1 text-md">
-              <!-- Usuario que creó el registro -->
               <p>
                 <span class="font-semibold text-primary mb-2">Propietario TT:</span>
                 {{ ticketResource.value().user?.fullName }} {{ ticketResource.value().user?.surnames || '' }}
               </p>
 
-
-
-              <!-- Usuario asignado -->
+              @if (progress.assignedUser) {
               <div class="flex justify-start gap-1">
                 <div>
                   <span class="font-semibold text-primary mb-2">Asignado a:</span>
                 </div>
                 <div>
-                  @if (progress.assignedUser) {
-                  <p>
+                  <p class="capitalize-names">
                     {{ progress.assignedUser.fullName }} {{ progress.assignedUser.surnames }}
                   </p>
-                  }
-                  @else {
-                  <p class="text-gray-500">
-                    {{ ticketResource.value().user?.fullName }} {{ ticketResource.value().user?.surnames || '' }}
-                  </p>
-                  }
                 </div>
               </div>
+              }
 
-
-
-              <!-- Personal de región asignado -->
               @if (progress.personal_region) {
               <p>
                 <span class="font-semibold text-primary mb-2 first-letter:uppercase">Personal de área resolutoria:
@@ -447,9 +459,6 @@
                 <span class="capitalize">({{ progress.personal_region.states[0].state }})</span>
               </p>
               }
-
-
-
             </div>
 
           </div>
@@ -463,15 +472,14 @@
             <p class="font-medium">{{ progress.user?.fullName }}</p>
 
             @if (progress.impact) {
-              <div class="flex mt-8 gap-2">
-                <p class="font-semibold text-warning uppercase">Impacto:</p>
-                <p>{{ progress.impact }}</p>
-              </div>
+            <div class="flex mt-8 gap-2">
+              <p class="font-semibold text-warning uppercase">Impacto:</p>
+              <p>{{ progress.impact }}</p>
+            </div>
             }
           </div>
         </div>
 
-        <!-- 2. Información del ticket asociado -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 p-4 bg-base-300 rounded-lg">
           <div>
             <p class="text-sm font-medium text-gray-600">Hora Inicio Falla</p>
@@ -493,7 +501,6 @@
           </div>
         </div>
 
-        <!-- Observaciones -->
         @if (progress.observations && progress.observations.trim() !== '') {
         <div class="mb-4 p-4 bg-base-300 rounded-lg">
           <p class="font-semibold text-primary mb-2">Avances:</p>
@@ -501,7 +508,6 @@
         </div>
         }
 
-        <!-- Imágenes -->
         @if (progress.images && progress.images.length > 0) {
         <div class="mt-6">
           <p class="text-sm font-semibold text-gray-600 mb-3">
@@ -547,8 +553,811 @@
     }
   </div>
 
+  <!-- Pestaña de Cierre -->
   <input type="radio" name="my_tabs_3" class="tab text-red-500 font-bold" aria-label="Cierre" />
-  <div class="tab-content bg-base-100 border-base-300 p-6">Cierre de ticket</div>
+  <div class="tab-content bg-base-100 border-base-300 p-6">
+    <div class="flex flex-wrap justify-between items-center mb-4 gap-4">
+      <div class="flex items-center gap-4">
+        <h2 class="text-xl font-bold text-primary">Cierre del Ticket</h2>
+        <h3 class="text-lg font-bold text-accent uppercase">
+          #{{ ticketResource.value().nro_ticket }}
+        </h3>
+      </div>
+
+      @if (ticketResource.value().closure) {
+      <div class="flex items-center gap-6">
+        <div class="text-center">
+          <p class="text-sm font-medium">Estado:</p>
+          <span class="text-lg font-bold uppercase">
+            @if (ticketResource.value().statusId === 1) {
+            <span class="badge bg-warning/20 text-warning badge-sm">EN PROCESO</span>
+            }
+            @else if (ticketResource.value().statusId === 2) {
+            <span class="badge bg-error/20 text-error badge-sm">CANCELADO</span>
+            }
+            @else if (ticketResource.value().statusId === 3) {
+            <span class="badge bg-success/20 text-success badge-sm">RESUELTO</span>
+            }
+          </span>
+        </div>
+
+        <div class="text-center">
+          <p class="text-sm font-medium">Documentaciones:</p>
+          <span class="text-xl font-bold text-primary">{{ progressTicketsCount }}</span>
+        </div>
+      </div>
+      }
+    </div>
+
+    @if (ticketResource.value().closure) {
+    @let closure = ticketResource.value().closure!;
+
+    <div class="bg-base-200 p-4 rounded-xl mb-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <div class="bg-base-100 p-3 rounded-lg">
+          <p class="text-xs font-medium text-gray-600">Fecha y hora de cierre:</p>
+          <p class="font-semibold text-sm" *ngIf="closure.createdDate">
+            {{ formatVenezuelaTime(closure.createdDate.toString(), 'dd/MM/yyyy, h:mm a') }}
+          </p>
+          <p class="font-semibold text-sm text-gray-500" *ngIf="!closure.createdDate">
+            No disponible
+          </p>
+        </div>
+        <div class="bg-base-100 p-3 rounded-lg">
+          <p class="text-xs font-medium text-gray-600">Cerrado por:</p>
+          <p class="font-semibold text-sm">{{ closure.user.fullName }}</p>
+        </div>
+        <div class="bg-base-100 p-3 rounded-lg">
+          <p class="text-xs font-medium text-gray-600">Tiempo de resolución:</p>
+          <p class="font-semibold text-sm" *ngIf="closure.date_hlls && closure.date_hff">
+            {{ calcularTiempoResolucion(closure.date_hlls, closure.date_hff) }}
+          </p>
+          <p class="font-semibold text-sm text-gray-500" *ngIf="!closure.date_hlls || !closure.date_hff">
+            No disponible
+          </p>
+        </div>
+      </div>
+
+      <div class="bg-base-100 p-3 rounded-lg mb-4">
+        <h4 class="font-semibold text-primary mb-2 text-sm">Categorización del Incidente</h4>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-center">
+          <div class="bg-primary/5 p-2 rounded">
+            <div class="font-bold text-primary text-xs uppercase">Grupo</div>
+            <div class="capitalize text-xs truncate" [title]="closure.group">
+              {{ closure.group || 'N/A' }}
+            </div>
+          </div>
+
+          <div class="bg-warning/5 p-2 rounded">
+            <div class="font-bold text-primary text-xs uppercase">Incidente</div>
+            <div class="capitalize text-xs truncate" [title]="closure.incident">
+              {{ closure.incident || 'N/A' }}
+            </div>
+          </div>
+
+          <div class="bg-info/5 p-2 rounded">
+            <div class="font-bold text-primary text-xs uppercase">Detalle</div>
+            <div class="capitalize text-xs truncate" [title]="closure.incidentDetail">
+              {{ closure.incidentDetail || 'N/A' }}
+            </div>
+          </div>
+
+          <div class="bg-success/5 p-2 rounded">
+            <div class="font-bold text-primary text-xs uppercase">Acciones</div>
+            <div class="text-xs truncate" [title]="closure.action_taken">
+              {{ (closure.action_taken || 'No especificadas').substring(0, 20) }}{{ (closure.action_taken || '').length
+              > 20 ? '...' : '' }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-base-100 p-3 rounded-lg mb-4">
+        <h4 class="font-semibold text-primary mb-2 text-sm">Línea de Tiempo</h4>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 text-center">
+          <div class="bg-success/5 p-2 rounded">
+            <div class="font-bold text-primary text-xs">Llegada al Sitio</div>
+            <div class="font-mono text-xs" *ngIf="closure.date_hlls">
+              {{ formatVenezuelaTime(closure.date_hlls.toString(), 'dd/MM/yyyy, h:mm a') }}
+            </div>
+            <div class="font-mono text-xs text-gray-500" *ngIf="!closure.date_hlls">
+              <div>--/--/----</div>
+              <div>--:-- --</div>
+            </div>
+          </div>
+
+          <div class="bg-info/5 p-2 rounded">
+            <div class="font-bold text-primary text-xs">Inicio Reparación</div>
+            <div class="font-mono text-xs" *ngIf="closure.date_hir">
+              {{ formatVenezuelaTime(closure.date_hir.toString(), 'dd/MM/yyyy, h:mm a') }}
+            </div>
+            <div class="font-mono text-xs text-gray-500" *ngIf="!closure.date_hir">
+              <div>--/--/----</div>
+              <div>--:-- --</div>
+            </div>
+          </div>
+
+          <div class="bg-warning/5 p-2 rounded">
+            <div class="font-bold text-primary text-xs">Rest. Servicio</div>
+            <div class="font-mono text-xs" *ngIf="closure.date_hrs">
+              {{ formatVenezuelaTime(closure.date_hrs.toString(), 'dd/MM/yyyy, h:mm a') }}
+            </div>
+            <div class="font-mono text-xs text-gray-500" *ngIf="!closure.date_hrs">
+              <div>--/--/----</div>
+              <div>--:-- --</div>
+            </div>
+          </div>
+
+          <div class="bg-error/5 p-2 rounded">
+            <div class="font-bold text-primary text-xs">Fin de Falla</div>
+            <div class="font-mono text-xs" *ngIf="closure.date_hff">
+              {{ formatVenezuelaTime(closure.date_hff.toString(), 'dd/MM/yyyy, h:mm a') }}
+            </div>
+            <div class="font-mono text-xs text-gray-500" *ngIf="!closure.date_hff">
+              <div>--/--/----</div>
+              <div>--:-- --</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-base-100 p-3 rounded-lg mb-4">
+        <div class="collapse collapse-arrow border border-base-300">
+          <input type="checkbox" class="peer" />
+          <div class="flex gap-2 collapse-title font-semibold text-primary text-sm p-3">
+            <p>Elementos de Red Involucrados</p>
+            <p class="text-warning">(Click para expandir)</p>
+          </div>
+<div class="collapse-content">
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+    <!-- Elemento Origen -->
+    <div class="bg-base-200 p-3 rounded-lg">
+      <h5 class="font-semibold text-primary mb-2 text-xs">
+        Elemento(s) Origen
+        @if (closure.network_element.length) {
+          <span class="badge badge-primary badge-xs ml-1">{{ closure.network_element.length }}</span>
+        }
+      </h5>
+
+      @if (closure.network_element.length) {
+        <div class="space-y-3">
+          @for (element of closure.network_element; track element.id; let i = $index) {
+            <div class="bg-base-300 p-2 rounded">
+              <div class="text-xs font-semibold text-primary mb-1">Elemento #{{ i + 1 }}</div>
+              <div class="space-y-1 text-xs">
+                <div class="flex justify-between">
+                  <span class="font-medium">Acrónimo:</span>
+                  <span class="font-mono uppercase">{{ element.acronym || 'N/A' }}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="font-medium">Descripción:</span>
+                  <span class="capitalize truncate">{{ element.description || 'No especificada' }}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="font-medium">Modelo:</span>
+                  <span class="capitalize">{{ element.model || 'No especificado' }}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="font-medium">Proveedor:</span>
+                  <span class="capitalize">{{ element.provider.provider_name || 'No especificado' }}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="font-medium">Central:</span>
+                  <span class="capitalize">{{ element.central?.central_name || 'No especificada' }}</span>
+                </div>
+                @if (element.management_ip) {
+                  <div class="flex justify-between">
+                    <span class="font-medium">IP Gestión:</span>
+                    <span class="font-mono">{{ element.management_ip }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="text-center text-gray-500 text-xs py-4">
+          No hay elementos de origen registrados
+        </div>
+      }
+    </div>
+
+    <!-- Elemento de Cierre -->
+<div class="bg-base-200 p-3 rounded-lg">
+  <h5 class="font-semibold text-primary mb-2 text-xs">
+    Elemento(s) de Cierre
+    @if (closure.network_element_closure.length) {
+      <span class="badge badge-primary badge-xs ml-1">{{ closure.network_element_closure.length }}</span>
+    }
+  </h5>
+
+  @if (closure.network_element_closure.length) {
+    <div class="space-y-3">
+      @for (element of closure.network_element_closure; track element.id; let i = $index) {
+        <div class="bg-base-300 p-2 rounded">
+          <div class="text-xs font-semibold text-primary mb-1">Elemento #{{ i + 1 }}</div>
+          <div class="space-y-1 text-xs">
+            <div class="flex justify-between">
+              <span class="font-medium">Acrónimo:</span>
+              <span class="font-mono uppercase">{{ element.acronym || 'N/A' }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="font-medium">Descripción:</span>
+              <span class="capitalize truncate">{{ element.description || 'No especificada' }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="font-medium">Modelo:</span>
+              <span class="capitalize">{{ element.model || 'No especificado' }}</span>
+            </div>
+            <!-- ✅ ESTAS SON LAS LÍNEAS CRÍTICAS -->
+            <div class="flex justify-between">
+              <span class="font-medium">Proveedor:</span>
+              <span class="capitalize">{{ element.provider.provider_name || 'No especificado' }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="font-medium">Central:</span>
+              <span class="capitalize">{{ element.central?.central_name || 'No especificada' }}</span>
+            </div>
+            <!-- FIN LÍNEAS CRÍTICAS -->
+            @if (element.management_ip) {
+              <div class="flex justify-between">
+                <span class="font-medium">IP Gestión:</span>
+                <span class="font-mono">{{ element.management_ip }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  } @else {
+    <div class="text-center text-gray-500 text-xs py-4">
+      No hay elementos de cierre registrados
+    </div>
+  }
+</div>
+
+  </div>
+</div>
+        </div>
+      </div>
+
+      <div class="bg-base-100 p-3 rounded-lg">
+        <h4 class="font-semibold text-primary mb-2 text-sm">Impactos Reportados</h4>
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
+          <div class="bg-base-200 p-2 rounded text-center">
+            <div class="font-bold text-primary text-xs">Inter BBIP</div>
+            <div class="font-semibold text-lg" [class.text-warning]="closure.impacto_inter_bbip > 0"
+              [class.text-gray-500]="closure.impacto_inter_bbip === 0">
+              {{ closure.impacto_inter_bbip || 0 }}
+            </div>
+          </div>
+
+          <div class="bg-base-200 p-2 rounded text-center">
+            <div class="font-bold text-primary text-xs">Abon Voz</div>
+            <div class="font-semibold text-lg" [class.text-warning]="closure.impacto_abon_voz > 0"
+              [class.text-gray-500]="closure.impacto_abon_voz === 0">
+              {{ closure.impacto_abon_voz || 0 }}
+            </div>
+          </div>
+
+          <div class="bg-base-200 p-2 rounded text-center">
+            <div class="font-bold text-primary text-xs">Ptos ABA</div>
+            <div class="font-semibold text-lg" [class.text-warning]="closure.impacto_ptos_aba > 0"
+              [class.text-gray-500]="closure.impacto_ptos_aba === 0">
+              {{ closure.impacto_ptos_aba || 0 }}
+            </div>
+          </div>
+
+          <div class="bg-base-200 p-2 rounded text-center">
+            <div class="font-bold text-primary text-xs">Inter ME</div>
+            <div class="font-semibold text-lg" [class.text-warning]="closure.impacto_inter_me > 0"
+              [class.text-gray-500]="closure.impacto_inter_me === 0">
+              {{ closure.impacto_inter_me || 0 }}
+            </div>
+          </div>
+
+          <div class="bg-base-200 p-2 rounded text-center">
+            <div class="font-bold text-primary text-xs">Circuitos</div>
+            <div class="font-semibold text-lg" [class.text-warning]="closure.impacto_circuitos > 0"
+              [class.text-gray-500]="closure.impacto_circuitos === 0">
+              {{ closure.impacto_circuitos || 0 }}
+            </div>
+          </div>
+
+          <div class="bg-base-200 p-2 rounded text-center">
+            <div class="font-bold text-primary text-xs">Intercon</div>
+            <div class="font-semibold text-lg" [class.text-warning]="closure.impacto_intercon > 0"
+              [class.text-gray-500]="closure.impacto_intercon === 0">
+              {{ closure.impacto_intercon || 0 }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      @if (closure.action_taken) {
+      <div class="mt-4">
+        <div class="collapse collapse-arrow border border-base-300">
+          <input type="checkbox" class="peer" />
+          <div class="flex gap-2 collapse-title font-semibold text-primary text-sm p-3">
+            <p>Acciones Tomadas</p>
+            <p class="text-warning">(Click para expandir)</p>
+          </div>
+          <div class="collapse-content">
+            <p class="bg-base-200 p-3 rounded text-sm">{{ closure.action_taken }}</p>
+          </div>
+        </div>
+      </div>
+      }
+    </div>
+    }
+
+    @if (ticketResource.value().statusId === 2 && !ticketResource.value().closure) {
+    @let ticket = ticketResource.value();
+    <div class="bg-base-200 p-6 rounded-xl mb-6">
+      <h3 class="text-lg font-bold text-error mb-4">❌ Ticket Cancelado</h3>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div>
+          <p class="text-sm font-medium text-gray-600">Fecha de cancelación:</p>
+          <p class="font-semibold">
+            @if (ticket.cancelledAt) {
+            {{ formatVenezuelaTime(ticket.cancelledAt, 'dd/MM/yyyy h:mm a') }}
+            } @else {
+            {{ formatVenezuelaTime(ticket.updatedDate, 'dd/MM/yyyy h:mm a') }}
+            }
+          </p>
+        </div>
+        <div>
+          <p class="text-sm font-medium text-gray-600">Cancelado por:</p>
+          @if (ticket.cancelledBy) {
+          <p class="font-semibold capitalize-names">{{ ticket.cancelledBy.fullName }}, {{ ticket.cancelledBy.surnames }}
+          </p>
+          } @else if (ticket.updatedBy) {
+          <p class="font-semibold capitalize-names">{{ ticket.updatedBy.fullName }}</p>
+          } @else {
+          <p class="font-semibold capitalize-names">{{ ticket.user?.fullName || 'Sistema' }}</p>
+          }
+        </div>
+      </div>
+
+      @if (ticket.cancellation_note) {
+      <div class="mt-4 bg-base-100 p-4 rounded-lg">
+        <p class="text-sm font-semibold text-primary mb-2">Motivo de cancelación:</p>
+        <p class="mt-1 whitespace-pre-line">{{ ticket.cancellation_note }}</p>
+      </div>
+      } @else {
+      <div class="mt-4 bg-base-100 p-4 rounded-lg">
+        <p class="text-sm font-semibold">Razón de cancelación:</p>
+        <p class="mt-1 text-gray-500">No se especificó un motivo de cancelación.</p>
+      </div>
+      }
+    </div>
+    }
+
+    @if (!ticketResource.value().closure && ticketResource.value().statusId !== 2) {
+    <div class="bg-base-200 p-6 rounded-xl">
+      @if (progressTicketsCount === 0) {
+      <div class="alert alert-warning mb-6">
+        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+        <div>
+          <h3 class="font-bold">Advertencia importante</h3>
+          <div class="text-xs">No se han registrado documentaciones para este ticket.
+            Se recomienda crear al menos una documentación antes de proceder con el cierre.
+            De lo contrario, considere cancelar el ticket.</div>
+        </div>
+      </div>
+      }
+
+      <form [formGroup]="closureForm" (ngSubmit)="onSubmitClosure()" class="space-y-4">
+        <div class="bg-base-100 p-4 rounded-lg">
+          <h4 class="font-semibold text-primary mb-3">📋 Datos del Cierre</h4>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+            <div class="form-control">
+              <label class="label py-1">
+                <span class="label-text font-medium">Grupo *</span>
+              </label>
+              <select class="select select-bordered select-primary w-full" formControlName="groupId">
+                <option [ngValue]="null" disabled selected>Seleccione un grupo</option>
+                @for (group of groupsResource.value(); track group.id) {
+                <option [ngValue]="group.id">{{ group.group }}</option>
+                }
+              </select>
+              @if (closureForm.get('groupId')?.invalid && closureForm.get('groupId')?.touched) {
+              <label class="label">
+                <span class="label-text-alt text-error">Seleccione un grupo</span>
+              </label>
+              }
+            </div>
+
+            <div class="form-control">
+              <label class="label py-1">
+                <span class="label-text font-medium">Incidente *</span>
+              </label>
+              <select class="select select-bordered select-primary w-full" formControlName="incidentId"
+                (change)="onIncidentChange($event)">
+                <option [ngValue]="null" disabled selected>Seleccione un incidente</option>
+                @for (incident of incidentsResource.value(); track incident.id) {
+                <option [ngValue]="incident.id">{{ incident.incident_name }}</option>
+                }
+              </select>
+              @if (closureForm.get('incidentId')?.invalid && closureForm.get('incidentId')?.touched) {
+              <label class="label">
+                <span class="label-text-alt text-error">Seleccione un incidente</span>
+              </label>
+              }
+            </div>
+
+            <div class="form-control">
+              <label class="label py-1">
+                <span class="label-text font-medium">Detalle del Incidente *</span>
+              </label>
+              <select class="select select-bordered select-primary w-full" formControlName="incidentDetailId"
+                [class.opacity-50]="!closureForm.get('incidentDetailId')?.enabled"
+                [class.cursor-not-allowed]="!closureForm.get('incidentDetailId')?.enabled">
+                <option [ngValue]="null" disabled selected>
+                  {{ closureForm.get('incidentId')?.value ? 'Seleccione un detalle' : 'Primero seleccione un incidente'
+                  }}
+                </option>
+                @for (detail of filteredIncidentDetails(); track detail.id) {
+                <option [ngValue]="detail.id">{{ detail.inc_detail_name }}</option>
+                }
+              </select>
+              @if (closureForm.get('incidentDetailId')?.invalid && closureForm.get('incidentDetailId')?.touched) {
+              <label class="label">
+                <span class="label-text-alt text-error">Seleccione un detalle del incidente</span>
+              </label>
+              }
+            </div>
+          </div>
+
+          <div class="form-control">
+
+            @if (selectedClosureElementType() === 'network') {
+            <div class="mb-4 p-4 bg-base-200 rounded-lg border-l-4 border-warning">
+              <label class="label py-1">
+                <span class="label-text font-medium text-warning">Elemento de red afectado (Última documentación)</span>
+              </label>
+
+              @if (selectedClosureNetworkElements().length > 0) {
+              <div class="space-y-2">
+                @for (element of selectedClosureNetworkElements(); track element.id; let i = $index) {
+                <div class="bg-warning/20 text-warning-content p-3 rounded-lg">
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                    <div><strong>#{{ i + 1 }} - Acrónimo:</strong> {{ element.acronym }}</div>
+                    <div><strong>IP Gestión:</strong> {{ element.management_ip || 'N/A' }}</div>
+                    <div><strong>Modelo:</strong> {{ element.model }}</div>
+                    <div><strong>Central:</strong> {{ element.central?.central_name }}</div>
+                    <div class="md:col-span-2"><strong>Descripción:</strong> {{ element.description }}</div>
+                  </div>
+                </div>
+                }
+              </div>
+              } @else {
+              <input type="text" class="input input-bordered input-warning w-full"
+                value="No hay elementos de red en la última documentación" disabled>
+              }
+
+              <div class="text-xs text-warning mt-1">
+                {{ selectedClosureNetworkElements().length }} elemento(s) de la última documentación (solo
+                visualización)
+              </div>
+            </div>
+            }
+
+            <label class="label py-1">
+              <span class="label-text font-medium">Elemento de Cierre *</span>
+              <span class="label-text-alt text-warning">
+                (@if (selectedClosureElementType() === 'network') {
+                {{ selectedClosureNetworkElementsClosure().length }} Elemento(s) de Red
+                }
+                @else if (selectedClosureElementType() === 'fiber') { Tramo de Fibra }
+                @else { Sin selección })
+              </span>
+            </label>
+
+            <!-- Botones de selección de tipo -->
+            <div class="flex gap-2 mb-3">
+              <button type="button" class="btn btn-sm flex-1"
+                [class.btn-primary]="selectedClosureElementType() === 'network'"
+                [class.btn-outline]="selectedClosureElementType() !== 'network'"
+                [class.btn-disabled]="selectedClosureElementType() === 'fiber'" (click)="openNetworkElementModal()"
+                [disabled]="selectedClosureElementType() === 'fiber'">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24"
+                  stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                Elemento(s) de Red
+                @if (selectedClosureElementType() === 'fiber') {
+                <span class="badge badge-xs badge-error ml-1">❌</span>
+                }
+              </button>
+              <button type="button" class="btn btn-sm flex-1"
+                [class.btn-primary]="selectedClosureElementType() === 'fiber'"
+                [class.btn-outline]="selectedClosureElementType() !== 'fiber'"
+                [class.btn-disabled]="selectedClosureElementType() === 'network'" (click)="openFiberElementModal()"
+                [disabled]="selectedClosureElementType() === 'network'">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24"
+                  stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                Tramo de Fibra
+                @if (selectedClosureElementType() === 'network') {
+                <span class="badge badge-xs badge-error ml-1">❌</span>
+                }
+              </button>
+            </div>
+
+            <!-- Información del elemento seleccionado -->
+            @if (selectedClosureElementType() === 'network' && selectedClosureNetworkElementsClosure().length > 0) {
+            <div class="mt-2 space-y-2">
+              <div class="flex justify-between items-center">
+                <span class="text-sm font-medium text-primary">
+                  {{ selectedClosureNetworkElementsClosure().length }} elemento(s) seleccionado(s)
+                </span>
+                <button type="button" class="btn btn-ghost btn-xs" (click)="clearClosureNetworkElement()">
+                  Limpiar Todos
+                </button>
+              </div>
+
+              @for (element of selectedClosureNetworkElementsClosure(); track element.id; let i = $index) {
+              <div class="p-3 bg-base-200 rounded-lg border-l-4 border-primary">
+                <div class="flex justify-between items-start">
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm flex-1">
+                    <div><strong>#{{ i + 1 }} - Acrónimo:</strong> {{ element.acronym }}</div>
+                    <div><strong>IP Gestión:</strong> {{ element.management_ip || 'N/A' }}</div>
+                    <div><strong>Modelo:</strong> {{ element.model }}</div>
+                    <div><strong>Central:</strong> {{ element.central?.central_name }}</div>
+                    <div class="md:col-span-2"><strong>Descripción:</strong> {{ element.description }}</div>
+                  </div>
+                  <button type="button" class="btn btn-ghost btn-xs btn-error ml-2"
+                    (click)="removeClosureNetworkElement(element)">
+                    ✕
+                  </button>
+                </div>
+              </div>
+              }
+            </div>
+            }
+
+            @if (selectedClosureElementType() === 'fiber' && selectedClosureFiberElement()) {
+            <div class="mt-2 p-3 bg-base-200 rounded-lg border-l-4 border-secondary">
+              <div class="flex justify-between items-start">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm flex-1 capitalize">
+                  <div><strong>Tramo:</strong> {{ selectedClosureFiberElement()!.section_name }}</div>
+                  @if (selectedClosureFiberElement()!.stateA?.state) {
+                  <div><strong>Estado A:</strong> {{ selectedClosureFiberElement()!.stateA.state }}</div>
+                  } @else {
+                  <div><strong>Estado A:</strong> N/A</div>
+                  }
+                  @if (selectedClosureFiberElement()!.stateB?.state) {
+                  <div><strong>Estado B:</strong> {{ selectedClosureFiberElement()!.stateB.state }}</div>
+                  } @else {
+                  <div><strong>Estado B:</strong> N/A</div>
+                  }
+                  <div><strong>Longitud:</strong> {{ selectedClosureFiberElement()!.length_km || 'N/A' }} km</div>
+                </div>
+                <button type="button" class="btn btn-ghost btn-xs ml-2" (click)="clearClosureFiberElement()">
+                  Cambiar
+                </button>
+              </div>
+            </div>
+            }
+
+            <!-- Validación -->
+            @if ((closureForm.get('networkElementClosureIds')?.invalid || closureForm.get('fiberLengthId')?.invalid) &&
+            (closureForm.get('networkElementClosureIds')?.touched || closureForm.get('fiberLengthId')?.touched)) {
+            <label class="label">
+              <span class="label-text-alt text-error">Seleccione al menos un elemento de red o un tramo de fibra</span>
+            </label>
+            }
+          </div>
+
+        </div>
+
+        <div class="bg-base-100 p-4 rounded-lg">
+          <h4 class="font-semibold text-primary mb-3">⏰ Horas del Cierre</h4>
+          <p class="text-sm text-warning italic">Fecha/Hora de referencia para el cierre (HCT): {{
+            ticketResource.value().date_hct | date : "d/MM/yyyy, hh:mm a" }}</p>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <!-- Hora llegada sitio (HLLS) -->
+            <div class="form-control">
+              <label class="label py-1">
+                <span class="label-text font-medium">Hora llegada sitio (HLLS) *</span>
+              </label>
+              <input type="datetime-local" class="input input-bordered input-primary" formControlName="date_hlls"
+                [class.border-orange-500]="isDateHllsInvalid()"
+                [class.border-red-500]="closureForm.get('date_hlls')?.errors && closureForm.get('date_hlls')?.touched">
+              @if (isDateHllsInvalid()) {
+              <label class="label">
+                <span class="text-orange-500 text-xs">⚠️ No puede ser anterior al contacto técnico</span>
+              </label>
+              }
+              @if (closureForm.get('date_hlls')?.errors?.['required'] && closureForm.get('date_hlls')?.touched) {
+              <label class="label">
+                <span class="text-red-500 text-xs">Este campo es requerido</span>
+              </label>
+              }
+            </div>
+
+            <!-- Hora inicio reparación (HIR) -->
+            <div class="form-control">
+              <label class="label py-1">
+                <span class="label-text font-medium">Hora inicio reparación (HIR) *</span>
+              </label>
+              <input type="datetime-local" class="input input-bordered input-primary" formControlName="date_hir"
+                [class.border-orange-500]="isDateHirInvalid()"
+                [class.border-red-500]="closureForm.get('date_hir')?.errors && closureForm.get('date_hir')?.touched">
+              @if (isDateHirInvalid()) {
+              <label class="label">
+                <span class="text-orange-500 text-xs">⚠️ No puede ser anterior a la llegada al sitio</span>
+              </label>
+              }
+              @if (closureForm.get('date_hir')?.errors?.['required'] && closureForm.get('date_hir')?.touched) {
+              <label class="label">
+                <span class="text-red-500 text-xs">Este campo es requerido</span>
+              </label>
+              }
+            </div>
+
+            <!-- Hora restablec. servicio (HRS) -->
+            <div class="form-control">
+              <label class="label py-1">
+                <span class="label-text font-medium">Hora restablec. servicio (HRS) *</span>
+              </label>
+              <input type="datetime-local" class="input input-bordered input-primary" formControlName="date_hrs"
+                [class.border-orange-500]="isDateHrsInvalid()"
+                [class.border-red-500]="closureForm.get('date_hrs')?.errors && closureForm.get('date_hrs')?.touched">
+              @if (isDateHrsInvalid()) {
+              <label class="label">
+                <span class="text-orange-500 text-xs">⚠️ No puede ser anterior al inicio de reparación</span>
+              </label>
+              }
+              @if (closureForm.get('date_hrs')?.errors?.['required'] && closureForm.get('date_hrs')?.touched) {
+              <label class="label">
+                <span class="text-red-500 text-xs">Este campo es requerido</span>
+              </label>
+              }
+            </div>
+
+            <!-- Hora fin falla (HFF) -->
+            <div class="form-control">
+              <label class="label py-1">
+                <span class="label-text font-medium">Hora fin falla (HFF) *</span>
+              </label>
+              <input type="datetime-local" class="input input-bordered input-primary" formControlName="date_hff"
+                [class.border-orange-500]="isDateHffInvalid()"
+                [class.border-red-500]="closureForm.get('date_hff')?.errors && closureForm.get('date_hff')?.touched">
+              @if (isDateHffInvalid()) {
+              <label class="label">
+                <span class="text-orange-500 text-xs">⚠️ No puede ser anterior al restablecimiento</span>
+              </label>
+              }
+              @if (closureForm.get('date_hff')?.errors?.['required'] && closureForm.get('date_hff')?.touched) {
+              <label class="label">
+                <span class="text-red-500 text-xs">Este campo es requerido</span>
+              </label>
+              }
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-base-100 p-4 rounded-lg">
+          <h4 class="font-semibold text-primary mb-3">📊 Impactos del Incidente</h4>
+          <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+            <div class="form-control">
+              <label class="label cursor-pointer justify-start gap-2">
+                <input type="number" min="0" class="input input-bordered input-sm w-20"
+                  formControlName="impacto_inter_bbip" placeholder="0">
+                <span class="label-text">Inter BBIP</span>
+              </label>
+            </div>
+            <div class="form-control">
+              <label class="label cursor-pointer justify-start gap-2">
+                <input type="number" min="0" class="input input-bordered input-sm w-20"
+                  formControlName="impacto_abon_voz" placeholder="0">
+                <span class="label-text">Abon Voz</span>
+              </label>
+            </div>
+            <div class="form-control">
+              <label class="label cursor-pointer justify-start gap-2">
+                <input type="number" min="0" class="input input-bordered input-sm w-20"
+                  formControlName="impacto_ptos_aba" placeholder="0">
+                <span class="label-text">Ptos ABA</span>
+              </label>
+            </div>
+            <div class="form-control">
+              <label class="label cursor-pointer justify-start gap-2">
+                <input type="number" min="0" class="input input-bordered input-sm w-20"
+                  formControlName="impacto_inter_me" placeholder="0">
+                <span class="label-text">Inter ME</span>
+              </label>
+            </div>
+            <div class="form-control">
+              <label class="label cursor-pointer justify-start gap-2">
+                <input type="number" min="0" class="input input-bordered input-sm w-20"
+                  formControlName="impacto_circuitos" placeholder="0">
+                <span class="label-text">Circuitos</span>
+              </label>
+            </div>
+            <div class="form-control">
+              <label class="label cursor-pointer justify-start gap-2">
+                <input type="number" min="0" class="input input-bordered input-sm w-20"
+                  formControlName="impacto_intercon" placeholder="0">
+                <span class="label-text">Intercon</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-base-100 p-4 rounded-lg">
+          <h4 class="font-semibold text-primary mb-3">🛠️ Acciones Tomadas *</h4>
+          <div class="form-control">
+            <textarea placeholder="Describa en detalle las acciones realizadas para resolver el incidente..."
+              class="textarea textarea-bordered textarea-primary h-32 w-full" formControlName="action_taken">
+            </textarea>
+            @if (closureForm.get('action_taken')?.invalid && closureForm.get('action_taken')?.touched) {
+            <label class="label">
+              <span class="label-text-alt text-error">
+                @if (closureForm.get('action_taken')?.errors?.['required']) { Las acciones son requeridas }
+                @if (closureForm.get('action_taken')?.errors?.['minlength']) { Mínimo 10 caracteres }
+              </span>
+            </label>
+            }
+          </div>
+        </div>
+
+        <div class="flex justify-end space-x-3 pt-2">
+          @if (authService.isAdmin()) {
+          <button type="button" class="btn btn-error" (click)="onCancelTicket()" [disabled]="isSubmittingClosure()">
+            @if (isSubmittingClosure()) {
+            <span class="loading loading-spinner loading-sm"></span>
+            }
+            Cancelar Ticket
+          </button>
+          }
+          @else {
+          <div class="tooltip tooltip-warning" data-tip="Debe solicitar a un supervisor la cancelación del ticket">
+            <button class="btn" disabled="disabled">Cancelar Ticket</button>
+          </div>
+          }
+
+          <button type="submit" class="btn btn-success" [disabled]="isSubmittingClosure() || closureForm.invalid">
+            @if (isSubmittingClosure()) {
+            <span class="loading loading-spinner loading-sm"></span>
+            Procesando...
+            } @else {
+            Cerrar Ticket
+            }
+          </button>
+        </div>
+      </form>
+    </div>
+    }
+  </div>
+</div>
+}
+
+<!-- Alert para validaciones de fecha/hora en cierre -->
+@if (showDateTimeAlert()) {
+<div class="fixed inset-0 flex items-end justify-center z-50 pointer-events-none">
+  <div class="w-full max-w-md mb-8 mx-4">
+    <div role="alert" class="alert alert-error alert-soft shadow-lg animate-fade-in-up">
+      <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      </svg>
+      <div>
+        <h3 class="font-bold">Error en fechas de cierre</h3>
+        <div class="text-xs">{{ dateTimeAlertMessage() }}</div>
+      </div>
+    </div>
+  </div>
 </div>
 }
 
@@ -566,7 +1375,6 @@
     <h3 class="font-bold text-2xl text-primary mb-6 text-center">Seguimiento</h3>
     <form [formGroup]="progressForm" (ngSubmit)="onSubmit()" class="space-y-6">
 
-      <!-- SECCIÓN 1: INFORMACIÓN BÁSICA -->
       <div class="collapse collapse-arrow bg-base-200 border-base-300 border rounded-box">
         <input type="checkbox" class="peer" />
         <div class="collapse-title font-medium">
@@ -576,7 +1384,6 @@
         </div>
         <div class="collapse-content">
           <div class="grid grid-cols-1 md:grid-cols-1 gap-4">
-            <!-- Progress -->
             <div class="form-control">
               <label class="label">
                 <span class="label-text font-medium mb-2">Descripción *</span>
@@ -584,7 +1391,7 @@
               <textarea placeholder="Describa en detalle la descripción de la nueva documentación."
                 class="textarea textarea-bordered textarea-primary w-full" formControlName="progress"
                 [class.textarea-error]="progressForm.get('progress')?.invalid && progressForm.get('progress')?.touched">
-          </textarea>
+              </textarea>
               @if (progressForm.get('progress')?.invalid && progressForm.get('progress')?.touched) {
               <label class="label">
                 <span class="label-text-alt text-error">
@@ -598,7 +1405,6 @@
         </div>
       </div>
 
-      <!-- SECCIÓN 2: OBSERVACIONES -->
       <div class="bg-base-200 p-5 rounded-xl">
         <div class="form-control">
           <label class="label">
@@ -619,7 +1425,6 @@
         </div>
       </div>
 
-      <!-- SECCIÓN 3: ELEMENTOS DE RED/TRAMO FIBRA - AHORA EN COLLAPSE -->
       <div class="collapse collapse-arrow bg-base-200 border-base-300 border rounded-box">
         <input type="checkbox" class="peer" />
         <div class="collapse-title font-medium">
@@ -629,37 +1434,78 @@
         </div>
         <div class="collapse-content">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <!-- Tipo de Selección -->
             <div class="form-control">
               <label class="label">
                 <span class="label-text font-medium mr-2">Tipo de Elemento</span>
               </label>
               <div class="join">
                 <input type="radio" name="elementType" class="join-item btn" aria-label="Elementos de Red"
-                  [checked]="selectedElementType() === 'network'" (change)="selectedElementType.set('network')">
+                  [checked]="selectedElementType() === 'network'" (change)="onElementTypeChange('network')">
                 <input type="radio" name="elementType" class="join-item btn" aria-label="Tramos de Fibra"
-                  [checked]="selectedElementType() === 'fiber'" (change)="selectedElementType.set('fiber')">
+                  [checked]="selectedElementType() === 'fiber'" (change)="onElementTypeChange('fiber')">
               </div>
             </div>
 
-            <!-- Elemento Seleccionado -->
             <div class="form-control">
+              <label class="label">
+                <span class="label-text font-medium mb-1">Elemento Seleccionado</span>
+              </label>
+
+              @if (selectedElementType() === 'network' && selectedNetworkElements().length > 0) {
+              <div class="bg-base-200 p-3 rounded-lg">
+                <p class="text-sm font-semibold mb-2">
+                  {{ selectedNetworkElements().length }} elemento(s) de red seleccionado(s)
+                </p>
+                <div class="flex flex-wrap gap-2">
+                  @for (element of selectedNetworkElements(); track element.id) {
+                  <div class="bg-primary text-primary-content px-2 py-1 rounded text-xs flex items-center gap-1">
+                    <span>{{ element.acronym }}</span>
+                    <button type="button" class="btn btn-xs btn-ghost btn-circle"
+                      (click)="removeNetworkElement(element)">
+                      ✕
+                    </button>
+                  </div>
+                  }
+                </div>
+              </div>
+              }
+              @else if (selectedElementType() === 'fiber' && selectedFiberElement()) {
+              <div class="bg-base-200 p-3 rounded-lg border-l-4 border-secondary">
+                <div class="flex justify-between items-center">
+                  <div>
+                    <p class="text-sm font-semibold">Tramo de Fibra:</p>
+                    <p class="font-mono uppercase text-sm">{{ selectedFiberElement().section_name }}</p>
+                  </div>
+                  <button type="button" class="btn btn-ghost btn-xs" (click)="clearFiberSelection()">
+                    Cambiar
+                  </button>
+                </div>
+              </div>
+              }
+              @else {
+              <input type="text" class="input input-bordered input-primary" value="Ninguno"
+                placeholder="Seleccione un elemento" readonly>
+              }
+            </div>
+
+            <!-- <div class="form-control">
               <label class="label">
                 <span class="label-text font-medium mb-1">Elemento Seleccionado</span>
               </label>
               <input type="text" class="input input-bordered input-primary"
                 [value]="selectedElement()?.acronym || selectedElement()?.section_name || 'Ninguno'"
                 placeholder="Seleccione un elemento" readonly>
-            </div>
+            </div> -->
           </div>
 
-          <!-- Tabla de Elementos de Red con búsqueda y paginación -->
           @if (selectedElementType() === 'network') {
           <div class="space-y-3">
-            <!-- Campo de búsqueda mejorado -->
             <div class="form-control">
               <label class="label">
                 <span class="label-text mr-2">Buscar elemento de red</span>
+                <span class="label-text-alt text-primary">
+                  {{ selectedNetworkElements().length }} elemento(s) seleccionado(s)
+                </span>
               </label>
               <input type="text" placeholder="Buscar por acrónimo o IP..." class="input input-bordered input-sm"
                 [value]="searchNetworkQuery()" (input)="onNetworkSearchChange($event)">
@@ -668,7 +1514,64 @@
               </div>
             </div>
 
-            <!-- Tabla con resultados de búsqueda -->
+            <!-- Elementos seleccionados actualmente -->
+            <!-- @if (selectedNetworkElements().length > 0) {
+            <div class="bg-base-300 p-3 rounded-lg">
+              <p class="font-semibold text-sm mb-2">Elementos seleccionados:</p>
+              <div class="flex flex-wrap gap-2">
+                @for (element of selectedNetworkElements(); track element.id; let i = $index) {
+                <div class="bg-primary text-primary-content px-2 py-1 rounded text-xs flex items-center gap-1">
+                  <span>{{ element.acronym }}</span>
+                  <button type="button" class="btn btn-xs btn-ghost btn-circle" (click)="removeNetworkElement(element)">
+                    ✕
+                  </button>
+                </div>
+                }
+              </div>
+            </div>
+            } -->
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-medium mb-1">Elemento Seleccionado</span>
+              </label>
+
+              @if (selectedElementType() === 'network' && selectedNetworkElements().length > 0) {
+              <div class="bg-base-200 p-3 rounded-lg">
+                <p class="text-sm font-semibold mb-2">
+                  {{ selectedNetworkElements().length }} elemento(s) de red seleccionado(s)
+                </p>
+                <div class="flex flex-wrap gap-2">
+                  @for (element of selectedNetworkElements(); track element.id) {
+                  <div class="bg-primary text-primary-content px-2 py-1 rounded text-xs flex items-center gap-1">
+                    <span>{{ element.acronym }}</span>
+                    <button type="button" class="btn btn-xs btn-ghost btn-circle"
+                      (click)="removeNetworkElement(element)">
+                      ✕
+                    </button>
+                  </div>
+                  }
+                </div>
+              </div>
+              }
+              @else if (selectedElementType() === 'fiber' && selectedFiberElement()) {
+              <div class="bg-base-200 p-3 rounded-lg border-l-4 border-secondary">
+                <div class="flex justify-between items-center">
+                  <div>
+                    <p class="text-sm font-semibold">Tramo de Fibra:</p>
+                    <p class="font-mono uppercase text-sm">{{ selectedFiberElement().section_name }}</p>
+                  </div>
+                  <button type="button" class="btn btn-ghost btn-xs" (click)="clearFiberSelection()">
+                    Cambiar
+                  </button>
+                </div>
+              </div>
+              }
+              @else {
+              <input type="text" class="input input-bordered input-primary" value="Ninguno"
+                placeholder="Seleccione un elemento" readonly>
+              }
+            </div>
+
             <div class="overflow-x-auto max-h-60 overflow-y-auto">
               <table class="table table-zebra table-sm">
                 <thead class="sticky top-0 bg-base-200">
@@ -678,25 +1581,33 @@
                     <th>IP Gestión</th>
                     <th>IP Servicio</th>
                     <th>Central</th>
+                    <th>Descripción</th>
                   </tr>
                 </thead>
                 <tbody>
                   @for (element of networkSearchResults; track element.id) {
-                  <tr class="hover:bg-base-300 cursor-pointer">
+                  <tr class="hover:bg-base-300 cursor-pointer" [class.bg-primary]="isNetworkElementSelected(element)">
                     <td>
-                      <button type="button" class="btn btn-xs btn-primary" (click)="selectNetworkElement(element)">
-                        Seleccionar
+                      @if (isNetworkElementSelected(element)) {
+                      <button type="button" class="btn btn-xs btn-error" (click)="removeNetworkElement(element)">
+                        Quitar
                       </button>
+                      } @else {
+                      <button type="button" class="btn btn-xs btn-primary" (click)="addNetworkElement(element)">
+                        Agregar
+                      </button>
+                      }
                     </td>
                     <td class="font-mono uppercase">{{ element.acronym }}</td>
                     <td class="font-mono">{{ element.management_ip }}</td>
                     <td class="font-mono">{{ element.service_ip }}</td>
                     <td class="font-mono uppercase">{{ element.central?.central_name }}</td>
+                    <td class="font-mono">{{ element.description }}</td>
                   </tr>
                   }
                   @if (networkSearchResults.length === 0 && searchNetworkQuery()) {
                   <tr>
-                    <td colspan="5" class="text-center text-gray-500 py-4">
+                    <td colspan="6" class="text-center text-gray-500 py-4">
                       No se encontraron elementos de red
                     </td>
                   </tr>
@@ -707,22 +1618,20 @@
           </div>
           }
 
-          <!-- Tabla de Tramos de Fibra con búsqueda y paginación -->
           @if (selectedElementType() === 'fiber') {
           <div class="space-y-3">
-            <!-- Campo de búsqueda mejorado -->
             <div class="form-control">
               <label class="label">
                 <span class="label-text mr-2">Buscar tramo de fibra</span>
               </label>
-              <input type="text" placeholder="Buscar por nombre de tramo..." class="input input-bordered input-sm"
-                [value]="searchFiberQuery()" (input)="onFiberSearchChange($event)">
+              <input type="text" placeholder="Buscar por nombre de tramo o estado..."
+                class="input input-bordered input-sm" [value]="searchFiberModalQuery()"
+                (input)="onFiberModalSearchChange($event)">
               <div class="text-xs text-gray-500 mt-1">
-                {{ fiberSearchResults.length }} resultado(s) encontrado(s)
+                {{ modalFiberSearchResults.length }} resultado(s) encontrado(s)
               </div>
             </div>
 
-            <!-- Tabla con resultados de búsqueda -->
             <div class="overflow-x-auto max-h-60 overflow-y-auto">
               <table class="table table-zebra table-sm">
                 <thead class="sticky top-0 bg-base-200">
@@ -734,7 +1643,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  @for (fiber of fiberSearchResults; track fiber.id) {
+                  @for (fiber of modalFiberSearchResults; track fiber.id) {
                   <tr class="hover:bg-base-300 cursor-pointer">
                     <td>
                       <button type="button" class="btn btn-xs btn-primary" (click)="selectFiberLength(fiber)">
@@ -742,22 +1651,14 @@
                       </button>
                     </td>
                     <td class="font-mono uppercase">{{ fiber.section_name }}</td>
-                    <td class="uppercase">
-                      @if (fiber.stateA) {
-                      {{ fiber.stateA }}
-                      }
-                    </td>
-                    <td class="uppercase">
-                      @if (fiber.stateB) {
-                      {{ fiber.stateB }}
-                      }
-                    </td>
+                    <td class="uppercase">{{ fiber.stateA.state || 'N/A' }}</td>
+                    <td class="uppercase">{{ fiber.stateB.state || 'N/A' }}</td>
                   </tr>
                   }
-                  @if (fiberSearchResults.length === 0 && searchFiberQuery()) {
+                  @if (modalFiberSearchResults.length === 0 && searchFiberQuery()) {
                   <tr>
-                    <td colspan="5" class="text-center text-gray-500 py-4">
-                      No se encontraron tramos de fibra
+                    <td colspan="4" class="text-center text-gray-500 py-4">
+                      No se encontraron tramos de fibra para "{{ searchFiberQuery() }}"
                     </td>
                   </tr>
                   }
@@ -766,15 +1667,12 @@
             </div>
           </div>
           }
+
         </div>
       </div>
 
-      <!-- SECCIÓN 4: CLASIFICACIÓN TÉCNICA -->
       <div class="bg-base-200 p-5 rounded-xl">
-        <!-- <h4 class="text-lg font-semibold text-primary mb-4">🏷️ Clasificación Técnica</h4> -->
-
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <!-- Group -->
           <div class="form-control">
             <label class="label">
               <span class="label-text font-medium mb-2">Grupo *</span>
@@ -789,7 +1687,6 @@
             </select>
           </div>
 
-          <!-- Severity -->
           <div class="form-control">
             <label class="label">
               <span class="label-text font-medium mb-2">Severidad *</span>
@@ -804,7 +1701,6 @@
             </select>
           </div>
 
-          <!-- Platform -->
           <div class="form-control">
             <label class="label">
               <span class="label-text font-medium mb-2">Plataforma *</span>
@@ -819,7 +1715,6 @@
             </select>
           </div>
 
-          <!-- Origin -->
           <div class="form-control">
             <label class="label">
               <span class="label-text font-medium mb-2">Origen *</span>
@@ -834,7 +1729,6 @@
             </select>
           </div>
 
-          <!-- Failure -->
           <div class="form-control">
             <label class="label">
               <span class="label-text font-medium mb-2">Tipo de Falla *</span>
@@ -849,7 +1743,6 @@
             </select>
           </div>
 
-          <!-- Impact -->
           <div class="form-control">
             <label class="label">
               <span class="label-text font-medium mb-2">Impacto *</span>
@@ -860,16 +1753,15 @@
         </div>
       </div>
 
-      <!-- SECCIÓN 5: ASIGNACIÓN -->
       <div class="bg-base-200 p-5 rounded-xl">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <!-- Personal Region -->
           <div class="form-control">
             <label class="label">
-              <span class="label-text font-medium mr-2 mb-2">Región Personal</span>
+              <span class="label-text font-medium mr-2 mb-2">Región Personal <span
+                  class="text-gray-500 text-sm">(Opcional)</span></span>
             </label>
             <select class="select select-bordered select-primary" formControlName="personalRegionId">
-              <option [ngValue]="null" disabled selected>Seleccione región</option>
+              <option [ngValue]="null" selected>Sin región específica</option>
               @for (region of personalsRegionResource.value()?.personalsRegions; track region.id) {
               <option [ngValue]="region.id">
                 {{ region.names }} {{ region.surnames }} - {{ region.states[0].state }}
@@ -878,56 +1770,28 @@
             </select>
           </div>
 
-          <!-- Usuario Asignado - CAMBIADO: eliminado el asterisco -->
           <div class="form-control">
             <label class="label">
-              <span class="label-text font-medium mb-2">Usuario Asignado</span> <!-- ← Sin * -->
+              <span class="label-text font-medium mb-2">Usuario Asignado (Opcional)</span>
             </label>
 
-            <!-- Input de búsqueda con debounce -->
-            <input type="text" placeholder="Buscar usuario por nombre o email..."
-              class="input input-bordered input-primary mb-2" [value]="searchUserQuery()"
-              (input)="onUserSearchChange($event)">
-
-            <!-- Lista de resultados de búsqueda -->
-            @if (searchUserQuery() && userSearchResults.length > 0) {
-            <div class="border rounded-lg bg-base-100 max-h-48 overflow-y-auto">
-              <ul class="menu menu-sm">
-                @for (user of userSearchResults; track user.id) {
-                <li>
-                  <a (click)="selectUser(user)" class="cursor-pointer hover:bg-base-200">
-                    <div class="flex flex-col">
-                      <span class="font-medium">{{ user.fullName }}</span>
-                      <span class="text-xs text-gray-500">{{ user.email }}</span>
-                    </div>
-                  </a>
-                </li>
-                }
-              </ul>
-            </div>
-            }
-          </div>
-
-          <div class="form-control">
-            <!-- Select tradicional como fallback -->
-            <select class="select select-bordered select-primary mt-8" formControlName="assignedUserId"
-              *ngIf="!searchUserQuery() || userSearchResults.length === 0">
-              <option [ngValue]="null" selected>Ninguno</option> <!-- ← Opción "Ninguno" por defecto -->
-              @for (user of userSearchResults; track user.id) {
+            <!-- Select simplificado sin el input de búsqueda que no se usa -->
+            <select class="select select-bordered select-primary" formControlName="assignedUserId">
+              <option [ngValue]="null" selected>Sin usuario asignado</option>
+              @for (user of allUsers(); track user.id) {
               <option [ngValue]="user.id">
                 {{ user.fullName }} - {{ user.email }}
               </option>
               }
-              @if (searchUserQuery() && userSearchResults.length === 0) {
-              <option disabled>No se encontraron usuarios</option>
-              }
             </select>
+
+            <div class="text-xs text-gray-500 mt-1">
+              Deje en "Sin usuario asignado" si no requiere asignar un usuario específico
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- SECCIÓN 6: EVIDENCIAS -->
-      <!-- SECCIÓN 6: EVIDENCIAS -->
       <div class="collapse collapse-arrow bg-base-200 border-base-300 border rounded-box">
         <input type="checkbox" class="peer" />
         <div class="collapse-title font-medium">
@@ -952,7 +1816,6 @@
                 Formatos: JPG, PNG, GIF. Tamaño máximo: 5MB por archivo. Máximo 5 archivos.
               </div>
 
-              <!-- Archivos seleccionados -->
               @if (selectedFiles().length > 0) {
               <div class="mt-4 p-3 bg-base-100 rounded-lg border">
                 <p class="text-sm font-medium text-gray-700 mb-2">Archivos seleccionados:</p>
@@ -985,7 +1848,6 @@
         </div>
       </div>
 
-      <!-- ACCIONES -->
       <div class="flex justify-end space-x-3 pt-4 border-t">
         <button type="button" class="btn btn-ghost" (click)="closeModal()" [disabled]="isSubmitting()">
           Cancelar
@@ -1007,3 +1869,137 @@
   </div>
 </div>
 }
+
+<!-- Modal para selección de elementos de red en cierre -->
+@if (showNetworkElementModal()) {
+<div class="modal modal-open">
+  <div class="modal-box max-w-4xl max-h-[90vh] overflow-y-auto">
+    <h3 class="font-bold text-2xl text-primary mb-6 text-center">Seleccionar Elemento de Red para Cierre</h3>
+
+    <div class="form-control mb-4">
+      <label class="label">
+        <span class="label-text font-medium">Buscar elemento de red</span>
+      </label>
+      <input type="text" placeholder="Buscar por acrónimo, IP o descripción..."
+        class="input input-bordered input-primary" [value]="closureNetworkSearchQuery()"
+        (input)="onClosureNetworkSearchChange($event)">
+    </div>
+
+    <div class="overflow-x-auto max-h-96 overflow-y-auto">
+      <table class="table table-zebra table-sm">
+        <thead class="sticky top-0 bg-base-200">
+          <tr>
+            <th>Seleccionar</th>
+            <th>Acrónimo</th>
+            <th>IP Gestión</th>
+            <th>IP Servicio</th>
+            <th>Modelo</th>
+            <th>Central</th>
+            <th>Descripción</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (element of closureNetworkSearchResults; track element.id) {
+          <tr class="hover:bg-base-300 cursor-pointer" [class.bg-primary]="isClosureNetworkElementSelected(element)">
+            <td>
+              @if (isClosureNetworkElementSelected(element)) {
+              <button type="button" class="btn btn-xs btn-error" (click)="removeClosureNetworkElement(element)">
+                Quitar
+              </button>
+              } @else {
+              <button type="button" class="btn btn-xs btn-primary" (click)="addClosureNetworkElement(element)">
+                Agregar
+              </button>
+              }
+            </td>
+            <td class="font-mono uppercase">{{ element.acronym }}</td>
+            <td class="font-mono">{{ element.management_ip || 'N/A' }}</td>
+            <td class="font-mono">{{ element.service_ip || 'N/A' }}</td>
+            <td class="uppercase">{{ element.model }}</td>
+            <td class="uppercase">{{ element.central?.central_name }}</td>
+            <td class="text-sm">{{ element.description }}</td>
+          </tr>
+          }
+          @if (closureNetworkSearchResults.length === 0 && closureNetworkSearchQuery()) {
+          <tr>
+            <td colspan="7" class="text-center text-gray-500 py-4">
+              No se encontraron elementos de red
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="modal-action">
+      <button type="button" class="btn btn-ghost" (click)="closeNetworkElementModal()">Cancelar</button>
+    </div>
+  </div>
+</div>
+}
+
+
+<!-- Modal para selección de tramos de fibra en cierre -->
+@if (showFiberElementModal()) {
+<div class="modal modal-open">
+  <div class="modal-box max-w-4xl max-h-[90vh] overflow-y-auto">
+    <h3 class="font-bold text-2xl text-primary mb-6 text-center">Seleccionar Tramo de Fibra para Cierre</h3>
+
+    <!-- Búsqueda -->
+    <div class="form-control mb-4">
+      <label class="label">
+        <span class="label-text font-medium">Buscar tramo de fibra</span>
+      </label>
+      <input type="text" placeholder="Buscar por nombre de tramo o estado..." class="input input-bordered input-primary"
+        [value]="searchFiberClosureQuery()" (input)="onFiberClosureSearchChange($event)">
+    </div>
+
+    <!-- Tabla de resultados -->
+    <div class="overflow-x-auto max-h-96 overflow-y-auto">
+      <table class="table table-zebra table-sm">
+        <thead class="sticky top-0 bg-base-200">
+          <tr>
+            <th>Seleccionar</th>
+            <th>Tramo</th>
+            <th>Estado A</th>
+            <th>Estado B</th>
+            <th>Longitud</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (fiber of closureFiberSearchResults; track fiber.id) {
+          <tr class="hover:bg-base-300 cursor-pointer">
+            <td>
+              <button type="button" class="btn btn-xs btn-primary" (click)="selectClosureFiberElement(fiber)">
+                Seleccionar
+              </button>
+            </td>
+            <td class="font-mono uppercase">{{ fiber.section_name }}</td>
+            <td class="uppercase">{{ fiber.stateA.state || 'N/A' }}</td>
+            <td class="uppercase">{{ fiber.stateB.state || 'N/A' }}</td>
+            <!-- <td class="font-mono">{{ fiber.length_km || 'N/A' }} km</td> -->
+          </tr>
+          }
+          @if (closureFiberSearchResults.length === 0 && fiberSearchQuery()) {
+          <tr>
+            <td colspan="5" class="text-center text-gray-500 py-4">
+              No se encontraron tramos de fibra para "{{ fiberSearchQuery() }}"
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="modal-action">
+      <button type="button" class="btn btn-ghost" (click)="closeFiberElementModal()">Cancelar</button>
+    </div>
+  </div>
+</div>
+}
+
+<!-- <div class="bg-warning text-warning-content p-2 rounded text-xs mt-2">
+  Debug: Network Elements: {{ selectedNetworkElements().length }},
+  Fiber: {{ selectedFiberElement() ? 'Yes' : 'No' }},
+  Type: {{ selectedElementType() }}
+</div> -->

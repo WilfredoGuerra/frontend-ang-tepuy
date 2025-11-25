@@ -1,0 +1,74 @@
+<div class="min-h-screen bg-base-100 transition-colors duration-300 flex">
+  <!-- Sidebar/Navbar Lateral - FIJO -->
+  <aside
+    class="bg-base-200 border-r border-base-300 transition-all duration-300 ease-in-out flex-shrink-0 h-screen fixed left-0 top-0 z-50"
+    [class.w-56]="!isSidebarCollapsed"
+    [class.w-18]="isSidebarCollapsed"
+  >
+    <sidebar
+      [isCollapsed]="isSidebarCollapsed"
+      (toggleCollapse)="toggleSidebar()"
+    />
+  </aside>
+
+  <!-- Contenido Principal con Barra Superior -->
+  <div
+    class="flex-1 flex flex-col min-h-screen transition-all duration-300"
+    [class.ml-56]="!isSidebarCollapsed"
+    [class.ml-18]="isSidebarCollapsed"
+  >
+    <!-- Barra Superior - Fija en la parte superior -->
+    <header
+      class="h-[72px] bg-base-200 border-b border-base-300 flex items-center justify-between px-6 flex-shrink-0 sticky top-0 z-40"
+    >
+      <!-- Lado Izquierdo: Logo CANTV + Título -->
+      <div class="flex items-center space-x-4">
+        <!-- Logo CANTV - Solo cuando sidebar colapsado -->
+        @if (isSidebarCollapsed) {
+        <img
+          [src]="
+            isDarkMode
+              ? 'assets/layout/images/logo_cantv.png'
+              : 'assets/layout/images/logo_cantv_color.png'
+          "
+          alt="CANTV"
+          class="h-12 w-auto"
+        />
+        }
+
+        <!-- Título - Se mueve según estado del sidebar -->
+        <div class="flex items-center space-x-2 transition-all duration-300">
+          <span
+            class="bg-gradient-to-r from-secondary via-violet-600 to-fuchsia-700 text-transparent bg-clip-text uppercase text-xl font-bold font-montserrat"
+            >Gran Sabana</span
+          >
+          <span class="text-primary">|</span>
+          <span class="text-primary font-semibold font-montserrat">Tepuy</span>
+        </div>
+      </div>
+
+      <!-- Lado Derecho: Logo Gran Sabana -->
+      <div class="flex items-center">
+        <img
+          [src]="
+            isDarkMode
+              ? 'assets/layout/images/logo_gran_sabana.png'
+              : 'assets/layout/images/logo_gran_sabana_light.png'
+          "
+          alt="Gran Sabana"
+          class="h-14 w-auto"
+        />
+      </div>
+    </header>
+
+    <!-- Contenido Principal - Scrollable -->
+    <main class="flex-1 overflow-auto bg-base-100">
+      <section class="p-6 min-h-full">
+        <router-outlet />
+      </section>
+    </main>
+    <div>
+      <app-footer />
+    </div>
+  </div>
+</div>

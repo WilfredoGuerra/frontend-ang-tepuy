@@ -1,6 +1,6 @@
-import { HttpClient } from '@angular/common/http';
-import { inject, Injectable, signal } from '@angular/core';
-import { Observable, catchError, throwError } from 'rxjs';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { inject, Injectable } from '@angular/core';
+import { Observable, catchError, throwError, map } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import {
   NetworkElement,
@@ -12,7 +12,7 @@ const baseUrl = environment.baseUrl;
 interface Options {
   limit?: number;
   offset?: number;
-  group?: string;
+  isActive?: boolean;
 }
 
 @Injectable({
@@ -21,15 +21,15 @@ interface Options {
 export class NetworkElementsService {
   private http = inject(HttpClient);
 
-  getNetworkElements(options: Options): Observable<NetworksElement> {
-    const { limit = 9, offset = 0, group = '' } = options;
-    return this.http.get<NetworksElement>(`${baseUrl}/network-elements`, {
-      params: {
-        limit,
-        offset,
-        group,
-      },
-    });
+  getNetworkElements(options: Options = {}): Observable<NetworksElement> {
+    const { limit = 9, offset = 0, isActive = true } = options;
+
+    let params = new HttpParams()
+      .set('limit', limit.toString())
+      .set('offset', offset.toString())
+      .set('isActive', isActive.toString());
+
+    return this.http.get<NetworksElement>(`${baseUrl}/network-elements`, { params });
   }
 
   getNetworkElementBy(query: string): Observable<NetworkElement[]> {
@@ -42,25 +42,43 @@ export class NetworkElementsService {
           return throwError(
             () =>
               new Error(
-                `No se pudo obtener un elemento de red con el termino: ${query}`
+                `No se pudo obtener un elemento de red con el término: ${query}`
               )
           );
         })
       );
   }
 
-  createNetworkElement(networkElementLike: Partial<NetworkElement>): Observable<NetworkElement> {
-    return this.http.post<NetworkElement>(`${baseUrl}/network-elements`, networkElementLike)
-    // .pipe(tap((ticket) => this.updateTicketCache(ticket)));
+  searchNetworkElements(term: string, options: Options = {}): Observable<NetworksElement> {
+    const { limit = 9, offset = 0 } = options;
+
+    return this.http.get<NetworkElement[]>(`${baseUrl}/network-elements/${term}`)
+      .pipe(
+        catchError((error) => {
+          console.log('Error searching network elements:', error);
+          return throwError(
+            () => new Error(`No se encontraron elementos con: ${term}`)
+          );
+        })
+      )
+      .pipe(
+        map((elements: NetworkElement[]) => ({
+          count: elements.length,
+          pages: Math.ceil(elements.length / limit),
+          networksElements: elements.slice(offset, offset + limit)
+        }))
+      );
   }
 
-  getNetworkElementsSearch(query: string, options: Options = {}): Observable<NetworksElement> {
-    const { limit = 9, offset = 0 } = options;
-    return this.http.get<NetworksElement>(`${baseUrl}/network-elements/${query}`, {
-      params: {
-        limit,
-        offset,
-      },
-    });
+  createNetworkElement(networkElementLike: Partial<NetworkElement>): Observable<NetworkElement> {
+    return this.http.post<NetworkElement>(`${baseUrl}/network-elements`, networkElementLike);
+  }
+
+  updateNetworkElement(id: number, networkElementLike: Partial<NetworkElement>): Observable<NetworkElement> {
+    return this.http.patch<NetworkElement>(`${baseUrl}/network-elements/${id}`, networkElementLike);
+  }
+
+  deleteNetworkElement(id: number): Observable<void> {
+    return this.http.delete<void>(`${baseUrl}/network-elements/${id}`);
   }
 }

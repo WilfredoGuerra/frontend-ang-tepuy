@@ -1,0 +1,61 @@
+<div class="flex justify-between">
+  <div>
+    <h1 class="text-xl font-black font-montserrat">Rol de Guardias</h1>
+    <h2 class="text-ls">Distribución de Equipos de Trabajo</h2>
+  </div>
+  <div>
+    <button class="btn btn-primary" onclick="my_modal_4.showModal()">Coordinación MyC</button>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<div class="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-2 mt-2 gap-5">
+  @for (team of teamsResource.value() ?? [] | sortById; track team.id) {
+  <team-card [team]="team" />
+  }
+</div>
+
+<dialog id="my_modal_4" class="modal">
+  <div class="modal-box w-11/12 max-w-5xl">
+    <div class="flex gap-2 justify-center items-center flex-wrap">
+      <h3 class="text-lg font-bold">Coordinadores:</h3>
+      @for (coordinator of getAllCoordinates(); track coordinator.id; let i = $index) {
+      <span class="badge badge-soft {{ i % 2 === 0 ? 'badge-primary' : 'badge-secondary' }} gap-1 text-lg font-semibold">
+        {{ coordinator.fullName }} {{ coordinator.surnames }}
+      </span>
+      }
+    </div>
+    <div class="overflow-x-auto">
+      <table class="table table-zebra">
+        <thead>
+          <tr>
+            <th>Personal</th>
+            <th>Especialidad</th>
+            <th>Actividades</th>
+          </tr>
+        </thead>
+        <tbody>
+
+          @for (user of getLeadersByPositionAndGroup(); track user.id) {
+          <tr>
+            <td>
+              <div class="flex items-center gap-3">
+                <div class="capitalize">{{ user.fullName }}, {{ user.surnames }}</div>
+              </div>
+            </td>
+            <td class="first-letter:uppercase">{{ user.group.group }}</td>
+            <td>{{ user.actividad }}</td>
+          </tr>
+          }
+        </tbody>
+      </table>
+      <div class="modal-action">
+        <form method="dialog">
+          <!-- if there is a button, it will close the modal -->
+          <button class="btn">Cerrar</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</dialog>

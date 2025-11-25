@@ -1,70 +1,51 @@
-// En fiber-lengths.service.ts
-import { Injectable } from '@angular/core';
+// fiber-lengths.service.ts
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { Observable, map } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { FiberLength, FiberLengthsResponse } from '../interfaces/fiber-length.interface';
 
 const baseUrl = environment.baseUrl;
 
-interface Options {
-  limit?: number;
-  offset?: number;
-  group?: string;
+interface CreateFiberLengthData {
+  locality_a: string;
+  locality_b: string;
+  section_name: string;
+  stateAId: number;
+  stateBId: number;
+  isActive?: boolean;
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class FiberLengthsService {
-  constructor(private http: HttpClient) { }
+  private http = inject(HttpClient);
 
-  // Método para obtener todos los tramos de fibra (paginado)
-  getFiberLengths(options: Options): Observable<FiberLengthsResponse> {
+  getFiberLengths(options: { limit?: number; offset?: number }): Observable<FiberLengthsResponse> {
     const { limit = 9, offset = 0 } = options;
     return this.http.get<FiberLengthsResponse>(`${baseUrl}/fiber-lengths`, {
       params: { limit, offset }
     });
   }
 
-  // Método para buscar tramos de fibra por término (usa el findOne del backend)
   searchFiberLengths(term: string): Observable<FiberLength[]> {
-    return this.http.get<FiberLength[]>(`${baseUrl}/fiber-lengths/${term}`).pipe(
-      catchError(error => {
-        console.error('Error searching fiber lengths', error);
-        return of([]); // Retorna array vacío en caso de error
-      })
-    );
+    return this.http.get<FiberLength[]>(`${baseUrl}/fiber-lengths/${term}`);
   }
 
-  // Método alternativo si la URL es diferente
-  searchFiberLengthsBySection(section: string): Observable<FiberLength[]> {
-    return this.http.get<FiberLength[]>(`${baseUrl}/fiber-lengths/section/${section}`).pipe(
-      catchError(error => {
-        console.error('Error searching fiber lengths by section', error);
-        return of([]);
-      })
-    );
+  createFiberLength(data: CreateFiberLengthData): Observable<FiberLength> {
+    return this.http.post<FiberLength>(`${baseUrl}/fiber-lengths`, data);
   }
 
-  getFiberLengthsSearch(query: string, options: Options = {}): Observable<FiberLengthsResponse> {
-    const { limit = 9, offset = 0 } = options;
-    return this.http.get<FiberLengthsResponse>(`${baseUrl}/fiber-lengths/${query}`, {
-      params: {
-        limit,
-        offset,
-      },
-    });
+  updateFiberLength(id: number, data: Partial<CreateFiberLengthData>): Observable<FiberLength> {
+    return this.http.patch<FiberLength>(`${baseUrl}/fiber-lengths/${id}`, data);
   }
 
-  // getNetworkElementsSearch(query: string, options: Options = {}): Observable<NetworksElement> {
-  //   const { limit = 9, offset = 0 } = options;
-  //   return this.http.get<NetworksElement>(`${baseUrl}/network-elements/${query}`, {
-  //     params: {
-  //       limit,
-  //       offset,
-  //     },
-  //   });
-  // }
+  deleteFiberLength(id: number): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(`${baseUrl}/fiber-lengths/${id}`);
+  }
+
+  getFiberLengthById(id: number): Observable<FiberLength> {
+    return this.http.get<FiberLength>(`${baseUrl}/fiber-lengths/${id}`);
+  }
 }

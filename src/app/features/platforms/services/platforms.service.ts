@@ -15,4 +15,8 @@ export class PlatformsService {
   getPlatforms(): Observable<Platform[]> {
     return this.http.get<Platform[]>(`${baseUrl}/platforms`);
   }
+
+  getPlatformsByGroup(groupId: number): Observable<Platform[]> {
+    return this.http.get<Platform[]>(`${baseUrl}/platforms/group/${groupId}`);
+  }
 }

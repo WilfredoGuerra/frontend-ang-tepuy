@@ -1,0 +1,396 @@
+<!-- fiber-lengths.component.html -->
+<div class="container mx-auto p-4">
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold">Tramos de Fibra</h1>
+    @if (authService.user()?.roles?.includes('super_user')) {
+      <button class="btn btn-primary" (click)="openCreateModal()">
+        <!-- Icono de agregar -->
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        Nuevo Tramo de fibra
+      </button>
+    }
+  </div>
+
+  <!-- Búsqueda -->
+  <div class="flex gap-4 mb-6">
+    <div class="flex-1">
+      <input
+        type="text"
+        placeholder="Buscar por localidad o nombre de sección..."
+        class="input input-bordered w-full"
+        [value]="searchTerm()"
+        (input)="handleSearchInput($event)"
+        (keyup.enter)="searchFiberLengths()"
+      />
+    </div>
+    <button class="btn btn-outline" (click)="searchFiberLengths()">
+      <!-- Icono de búsqueda -->
+      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+      </svg>
+      Buscar
+    </button>
+    @if (searchTerm()) {
+      <button class="btn btn-ghost" (click)="clearSearch()">
+        <!-- Icono de cerrar -->
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+        Limpiar
+      </button>
+    }
+  </div>
+
+  <!-- Loading -->
+  @if (isLoading) {
+    <div class="flex justify-center my-8">
+      <span class="loading loading-spinner loading-lg"></span>
+    </div>
+  }
+
+  <!-- Error Message -->
+  @if (errorMessage()) {
+    <div class="alert alert-error mb-4">
+      <!-- Icono de advertencia -->
+      <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+      </svg>
+      {{ errorMessage() }}
+    </div>
+  }
+
+  <!-- Tabla -->
+  @if (!isLoading) {
+    <div class="overflow-x-auto">
+      <table class="table table-zebra w-full">
+        <thead>
+          <tr>
+            <th></th>
+            <!-- <th>ID</th> -->
+            <th>Tramo</th>
+            <th>Localidad A</th>
+            <th>Estado A</th>
+            <th>Localidad B</th>
+            <th>Estado B</th>
+            <!-- <th>Estado</th> -->
+            @if (authService.user()?.roles?.includes('super_user')) {
+              <th>Acciones</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (fiberLength of fiberLengths; track fiberLength.id) {
+            <tr [class.active]="selectedFiberLength()?.id === fiberLength.id">
+              <td>
+                <input
+                  type="radio"
+                  name="selectedFiberLength"
+                  [checked]="selectedFiberLength()?.id === fiberLength.id"
+                  (change)="selectFiberLength(fiberLength)"
+                  class="radio radio-xs radio-primary"
+                />
+              </td>
+              <!-- <td>{{ fiberLength.id }}</td> -->
+              <td class="font-semibold uppercase italic text-xs">{{ fiberLength.section_name }}</td>
+              <td class="capitalize">{{ fiberLength.locality_a }}</td>
+              <td>
+                <span class="badge badge-outline capitalize pb-0.5">{{ fiberLength.stateA.state }}</span>
+              </td>
+              <td class="capitalize">{{ fiberLength.locality_b }}</td>
+              <td>
+                <span class="badge badge-outline capitalize pb-0.5">{{ fiberLength.stateB.state }}</span>
+              </td>
+              <!-- <td>
+                @if (fiberLength.isActive) {
+                  <span class="badge badge-success">Activo</span>
+                } @else {
+                  <span class="badge badge-error">Inactivo</span>
+                }
+              </td> -->
+              @if (authService.user()?.roles?.includes('super_user')) {
+                <td>
+                  <div class="flex gap-2">
+                    <button
+                      class="btn btn-sm btn-outline btn-info"
+                      (click)="openEditModal(fiberLength)"
+                      title="Editar"
+                    >
+                      <!-- Icono de editar -->
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                      </svg>
+                    </button>
+                    <button
+                      class="btn btn-sm btn-outline btn-error"
+                      (click)="deleteFiberLength(fiberLength)"
+                      [disabled]="!fiberLength.isActive"
+                      title="Desactivar"
+                    >
+                      <!-- Icono de eliminar -->
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                      </svg>
+                    </button>
+                  </div>
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+
+      <!-- Empty State -->
+      @if (fiberLengths.length === 0) {
+        <div class="text-center py-8">
+          <!-- Icono de carpeta vacía -->
+          <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+          </svg>
+          <p class="text-gray-500">No se encontraron tramos de fibra</p>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Paginación -->
+  @if (totalPages > 1 && !searchTerm()) {
+    <div class="m-4 flex justify-center">
+      <app-pagination
+        [currentPage]="paginationService.currentPage()"
+        [pages]="totalPages"
+      />
+    </div>
+  }
+
+  <!-- Info de paginación -->
+  @if (!searchTerm()) {
+    <div class="text-center mt-4 text-sm text-gray-600">
+      Mostrando {{ fiberLengths.length }} de {{ totalCount }} registros
+    </div>
+  }
+</div>
+
+<!-- Modal Crear -->
+<dialog [class]="['modal', showCreateModal() ? 'modal-open' : '']">
+  <div class="modal-box">
+    <h3 class="font-bold text-lg mb-4">Crear Nuevo Trama de Fibra</h3>
+
+    <form (ngSubmit)="createFiberLength()">
+      <div class="form-control mb-4">
+        <label class="label">
+          <span class="label-text">Nombre de Sección *</span>
+        </label>
+        <input
+          type="text"
+          class="input input-bordered"
+          [value]="newFiberLength().section_name"
+          (input)="handleInputEvent($event, 'section_name')"
+          name="section_name"
+          required
+        />
+      </div>
+
+      <div class="grid grid-cols-2 gap-4 mb-4">
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text">Localidad A *</span>
+          </label>
+          <input
+            type="text"
+            class="input input-bordered"
+            [value]="newFiberLength().locality_a"
+            (input)="handleInputEvent($event, 'locality_a')"
+            name="locality_a"
+            required
+          />
+        </div>
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text">Estado A *</span>
+          </label>
+          <select
+            class="select select-bordered"
+            [value]="newFiberLength().stateAId"
+            (change)="handleSelectEvent($event, 'stateAId')"
+            name="stateAId"
+            required
+          >
+            <option value="0" disabled selected>Seleccione estado</option>
+            @for (state of states(); track state.id) {
+              <option [value]="state.id">{{ state.state }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4 mb-4">
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text">Localidad B *</span>
+          </label>
+          <input
+            type="text"
+            class="input input-bordered"
+            [value]="newFiberLength().locality_b"
+            (input)="handleInputEvent($event, 'locality_b')"
+            name="locality_b"
+            required
+          />
+        </div>
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text">Estado B *</span>
+          </label>
+          <select
+            class="select select-bordered"
+            [value]="newFiberLength().stateBId"
+            (change)="handleSelectEvent($event, 'stateBId')"
+            name="stateBId"
+            required
+          >
+            <option value="0" disabled selected>Seleccione estado</option>
+            @for (state of states(); track state.id) {
+              <option [value]="state.id">{{ state.state }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <div class="form-control mb-6">
+        <label class="cursor-pointer label justify-start">
+          <input
+            type="checkbox"
+            class="checkbox checkbox-primary mr-2"
+            [checked]="newFiberLength().isActive"
+            (change)="handleCheckboxEvent($event, 'isActive')"
+            name="isActive"
+          />
+          <span class="label-text">Activo</span>
+        </label>
+      </div>
+
+      <div class="modal-action">
+        <button type="button" class="btn btn-ghost" (click)="closeCreateModal()">Cancelar</button>
+        <button type="submit" class="btn btn-primary" [disabled]="loading()">
+          @if (loading()) {
+            <span class="loading loading-spinner loading-sm"></span>
+          }
+          Crear
+        </button>
+      </div>
+    </form>
+  </div>
+</dialog>
+
+<!-- Modal Editar -->
+<dialog [class]="['modal', showEditModal() ? 'modal-open' : '']">
+  <div class="modal-box">
+    <h3 class="font-bold text-lg mb-4">Editar Trama de Fibra</h3>
+
+    <form (ngSubmit)="updateFiberLength()">
+      <div class="form-control mb-4">
+        <label class="label">
+          <span class="label-text">Nombre de Sección *</span>
+        </label>
+        <input
+          type="text"
+          class="input input-bordered"
+          [value]="editFiberLength().section_name"
+          (input)="handleEditInputEvent($event, 'section_name')"
+          name="section_name"
+          required
+        />
+      </div>
+
+      <div class="grid grid-cols-2 gap-4 mb-4">
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text">Localidad A *</span>
+          </label>
+          <input
+            type="text"
+            class="input input-bordered"
+            [value]="editFiberLength().locality_a"
+            (input)="handleEditInputEvent($event, 'locality_a')"
+            name="locality_a"
+            required
+          />
+        </div>
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text">Estado A *</span>
+          </label>
+          <select
+            class="select select-bordered"
+            [value]="editFiberLength().stateAId"
+            (change)="handleEditSelectEvent($event, 'stateAId')"
+            name="stateAId"
+            required
+          >
+            @for (state of states(); track state.id) {
+              <option [value]="state.id">{{ state.state }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4 mb-4">
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text">Localidad B *</span>
+          </label>
+          <input
+            type="text"
+            class="input input-bordered"
+            [value]="editFiberLength().locality_b"
+            (input)="handleEditInputEvent($event, 'locality_b')"
+            name="locality_b"
+            required
+          />
+        </div>
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text">Estado B *</span>
+          </label>
+          <select
+            class="select select-bordered"
+            [value]="editFiberLength().stateBId"
+            (change)="handleEditSelectEvent($event, 'stateBId')"
+            name="stateBId"
+            required
+          >
+            @for (state of states(); track state.id) {
+              <option [value]="state.id">{{ state.state }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <div class="form-control mb-6">
+        <label class="cursor-pointer label justify-start">
+          <input
+            type="checkbox"
+            class="checkbox checkbox-primary mr-2"
+            [checked]="editFiberLength().isActive"
+            (change)="handleEditCheckboxEvent($event, 'isActive')"
+            name="isActive"
+          />
+          <span class="label-text">Activo</span>
+        </label>
+      </div>
+
+      <div class="modal-action">
+        <button type="button" class="btn btn-ghost" (click)="closeEditModal()">Cancelar</button>
+        <button type="submit" class="btn btn-primary" [disabled]="loading()">
+          @if (loading()) {
+            <span class="loading loading-spinner loading-sm"></span>
+          }
+          Actualizar
+        </button>
+      </div>
+    </form>
+  </div>
+</dialog>

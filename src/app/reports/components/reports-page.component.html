@@ -1,0 +1,200 @@
+<div class="p-6 bg-base-200 min-h-screen">
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-6">
+    <div class="font-montserrat">
+      <h1 class="text-2xl font-bold text-primary">Reportes de Tickets</h1>
+      <p class="text-base-content/70">Genera reportes personalizados en formato PDF</p>
+    </div>
+  </div>
+
+  <!-- Panel de Filtros -->
+  @if (showFilters) {
+  <div class="bg-base-100 rounded-lg shadow-lg p-4 mb-4 font-montserrat">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-lg font-semibold">Filtros del Reporte</h2>
+      <div class="flex gap-2">
+        <button class="btn btn-outline btn-info btn-xs" (click)="clearFilters()">
+          Limpiar Filtros
+        </button>
+      </div>
+    </div>
+
+    <form [formGroup]="filterForm" (ngSubmit)="generateReport()">
+      <!-- Primera Fila: Fechas y Búsqueda -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <!-- Rango de Fechas -->
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text font-semibold">Fecha Inicio</span>
+          </label>
+          <input type="date" formControlName="createdDateStart" class="input input-bordered">
+        </div>
+
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text font-semibold">Fecha Fin</span>
+          </label>
+          <input type="date" formControlName="createdDateEnd" class="input input-bordered">
+        </div>
+
+        <!-- Búsqueda por texto -->
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text font-semibold">Buscar en problema</span>
+          </label>
+          <input type="text" formControlName="definition_problem" placeholder="Palabra clave..."
+            class="input input-bordered text-gray-400">
+        </div>
+      </div>
+
+      <!-- Segunda Fila: Grupos (Checkboxes) -->
+      <div class="mb-6">
+        <label class="label">
+          <span class="label-text font-semibold mb-2">Grupos</span>
+        </label>
+        <div class="flex flex-wrap gap-2 mb-2">
+          <button type="button" class="btn btn-xs btn-outline btn-accent" (click)="selectAllGroups()">Seleccionar
+            Todos</button>
+          <button type="button" class="btn btn-xs btn-outline btn-success" (click)="clearAllGroups()">Limpiar
+            Todos</button>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-6 gap-1" formArrayName="groupIds">
+          <div *ngFor="let group of filterOptions.groups; let i = index" class="form-control">
+            <label class="label cursor-pointer justify-start gap-2">
+              <input type="checkbox" [formControlName]="i" class="checkbox checkbox-xs">
+              <span class="text-primary">{{ group.name }}</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tercera Fila: Otros Filtros -->
+      <div class="grid grid-cols-1 md:grid-cols-5 gap-2 mb-6">
+        <!-- Severidad -->
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text font-semibold">Severidad</span>
+          </label>
+          <select formControlName="severityId" class="select select-bordered">
+            <option value="">Todas</option>
+            <option *ngFor="let severity of filterOptions.severities" [value]="severity.id">
+              {{ severity.name }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Plataforma -->
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text font-semibold">Plataforma</span>
+          </label>
+          <select formControlName="platformId" class="select select-bordered">
+            <option value="">Todas</option>
+            <option *ngFor="let platform of filterOptions.platforms" [value]="platform.id">
+              {{ platform.name }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Estado -->
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text font-semibold">Estado</span>
+          </label>
+          <select formControlName="statusId" class="select select-bordered">
+            <option value="">Todos</option>
+            <option *ngFor="let status of filterOptions.statuses" [value]="status.id">
+              {{ status.name }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Falla -->
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text font-semibold">Falla</span>
+          </label>
+          <select formControlName="failureId" class="select select-bordered">
+            <option value="">Todos</option>
+            <option *ngFor="let failure of filterOptions.failures" [value]="failure.id">
+              {{ failure.name }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Límite -->
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text font-semibold">Límite de registros</span>
+          </label>
+          <select formControlName="limit" class="select select-bordered">
+            <option *ngFor="let limit of limitOptions" [value]="limit">{{ limit }}</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Botón Generar Reporte -->
+      <div class="flex gap-4">
+        <button type="submit" class="btn btn-primary btn-sm text-xs" [disabled]="isLoading">
+          @if (isLoading) {
+          <span class="loading loading-spinner"></span>
+          Generando Reporte...
+          } @else {
+          <!-- <img src="assets/icons/icon-pdf.svg" class="mr-2"> -->
+          Generar Reporte
+          }
+        </button>
+      </div>
+    </form>
+  </div>
+  }
+
+  <!-- Vista del PDF -->
+  @if (showPdf && pdfUrl) {
+  <div class="bg-base-100 rounded-lg shadow-lg p-6">
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="text-xl font-semibold">Reporte Generado</h2>
+      <div class="flex gap-2">
+        <button class="btn btn-secondary" (click)="downloadPdf()">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          Descargar PDF
+        </button>
+        <button class="btn btn-ghost" (click)="closePdf()">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+          Cerrar
+        </button>
+      </div>
+    </div>
+
+    <!-- Contenedor del PDF -->
+    <div class="border-2 border-base-300 rounded-lg bg-white">
+      <iframe [src]="pdfUrl" class="w-full h-[800px]" frameborder="0" title="Vista previa del reporte PDF">
+      </iframe>
+    </div>
+
+    <!-- Información adicional -->
+    <div role="alert" class="mt-4 p-4 alert alert-success alert-outline">
+      <span>El reporte se ha generado correctamente. Puedes visualizarlo arriba o descargarlo.</span>
+    </div>
+
+  </div>
+  }
+
+  <!-- Loading State -->
+  @if (isLoading) {
+  <div class="fixed inset-0 bg-base-100 bg-opacity-80 flex items-center justify-center z-50">
+    <div class="text-center">
+      <span class="loading loading-spinner loading-lg text-primary"></span>
+      <p class="mt-4 text-lg font-semibold">Generando reporte PDF...</p>
+      <p class="text-base-content/70 mt-2">Esto puede tomar unos segundos</p>
+    </div>
+  </div>
+  }
+</div>

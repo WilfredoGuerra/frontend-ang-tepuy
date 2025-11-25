@@ -11,44 +11,30 @@
         Módulo
         <span class="text-blue-600">| Tepuy</span>
       </a>
-      <div id="nav" class="w-full px-6">
+      <div id="nav" class="w-full px-6 font-thin text-primary">
 
         <ul class="menu bg-base-200 rounded-box w-49">
           <li>
-            <a routerLink="/dashboard" routerLinkActive="text-accent" class="text-md font-bold text-primary">
-              <img class="mt-1"
-                src="assets/icons/{{ currentTheme === 'dark' ? 'ic--twotone-space-dashboard-dark' : 'ic--twotone-space-dashboard-light' }}.svg"
+            <a routerLink="/dashboard" routerLinkActive="text-accent" class="">
+              <img class=""
+                src="assets/icons/graphics.svg"
                 alt="" width=100%>
               Dashboard</a>
           </li>
+
           <li>
-            <a routerLink="/admin/tickets" routerLinkActive="text-accent" class="text-md font-bold text-primary">
-              <img class="mt-1"
-                src="assets/icons/{{ currentTheme === 'dark' ? 'ic--baseline-tickets-dark' : 'ic--baseline-tickets-light' }}.svg"
+            <a routerLink="/admin/tickets" routerLinkActive="text-accent" class="">
+              <img class=""
+                src="assets/icons/tickets.svg"
                 alt="" width=100%>
               Tickets</a>
-            <!-- <ul class="italic">
-              <li><a routerLink="/admin/group/conmutación" routerLinkActive="text-accent">
-                  <p class="first-letter:uppercase">conmutación</p>
-                </a></li>
-              <li><a routerLink="/admin/group/transmisión" routerLinkActive="text-accent">
-                  <p class="first-letter:uppercase">transmisión</p>
-                </a></li>
-              <li><a routerLink="/admin/group/red de datos" routerLinkActive="text-accent">
-                  <p class="first-letter:uppercase">red de datos</p>
-                </a></li>
-              <li><a routerLink="/admin/group/redes ip" routerLinkActive="text-accent">
-                  <p class="first-letter:uppercase">redes ip</p>
-                </a></li>
-              <li><a routerLink="/admin/group/servicios ti" routerLinkActive="text-accent">
-                  <p class="first-letter:uppercase">servicios ti</p>
-                </a></li>
-            </ul> -->
           </li>
-          @if (authService.user()?.roles?.includes('super_user')) {
+
+          <!-- @if (authService.user()?.roles?.includes('super_user')) { -->
+          @if (authService.isAdmin()) {
           <li>
-            <a routerLink="/admin/auth/users" routerLinkActive="text-accent" class="text-md font-bold text-primary">
-              <img class="mt-1" src="assets/icons/{{ currentTheme === 'dark' ? 'user-dark' : 'user-light' }}.svg" alt=""
+            <a routerLink="/admin/auth/users" routerLinkActive="text-accent" class="">
+              <img class="" src="assets/icons/users.svg" alt=""
                 width=100%>
               Usuarios</a>
             <!-- <ul class="italic">
@@ -58,10 +44,11 @@
             </ul> -->
           </li>
           }
-          @if (authService.user()?.roles?.includes('super_user')) {
+          <!-- @if (authService.user()?.roles?.includes('super_user')) { -->
+          @if (authService.isAdmin()) {
           <li>
-            <a routerLink="/admin/network-elements" routerLinkActive="text-accent" class="text-md font-bold text-primary">
-              <img class="mt-1" src="assets/icons/{{ currentTheme === 'dark' ? 'network-element-dark' : 'network-element-light' }}.svg" alt=""
+            <a routerLink="/admin/network-elements" routerLinkActive="text-accent" class="">
+              <img class="" src="assets/icons/network-elements.svg" alt=""
                 width=100%>
               Elementos de red</a>
             <!-- <ul class="italic">
@@ -71,6 +58,39 @@
             </ul> -->
           </li>
           }
+
+          <!-- @if (authService.user()?.roles?.includes('super_user')) { -->
+          @if (authService.isAdmin()) {
+            <li>
+              <a routerLink="/admin/centrals" routerLinkActive="text-accent" class="">
+                <img class="" src="assets/icons/centrals.svg" alt=""
+                width=100%>
+                Centrales
+              </a>
+            </li>
+          }
+
+          <!-- @if (authService.user()?.roles?.includes('super_user') || authService.user()?.roles?.includes('admin')) { -->
+          @if (authService.isAdmin()) {
+            <li>
+              <a routerLink="/admin/tickets/history" routerLinkActive="text-accent" class="">
+                <img class="" src="assets/icons/history.svg" alt=""
+                width=100%>
+                Historial cambios
+              </a>
+            </li>
+          }
+
+          @if (authService.user()?.roles?.includes('super_user') || authService.user()?.roles?.includes('admin')) {
+            <li>
+              <a routerLink="/admin/fiber-lengths" routerLinkActive="text-accent" class="">
+                <img class="" src="assets/icons/fiber-lengths.svg" alt=""
+                width=100%>
+                Tramos de fibra
+              </a>
+            </li>
+          }
+
         </ul>
         <!-- Menu item end -->
 

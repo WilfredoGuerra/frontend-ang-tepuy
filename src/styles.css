@@ -1,9 +1,15 @@
 @import "tailwindcss";
 @plugin "daisyui" {
-  /* themes: light --default, dark --prefersdark, cupcake; */
-  themes: light, night --default, night --prefersdark;
+  themes: nord --default, night --prefersdark;
 }
 
+html {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body {
+  @apply min-h-screen;
+}
 
 @theme {
   --font-montserrat: "Montserrat", "sans-serif";
@@ -15,4 +21,143 @@
     src: url("/assets/fonts/montserrat-alternates/montserratAlternates-medium.ttf")
       format("truetype");
   }
+}
+
+
+/* Asegurar que SweetAlert esté por encima del calendario nativo */
+.sweetalert-high-zindex {
+  z-index: 99999 !important;
+}
+
+/* Opcional: Asegurar que el backdrop también tenga alto z-index */
+.swal2-container {
+  z-index: 99998 !important;
+}
+
+.session-expired-popup {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 8px;
+}
+
+.session-expired-popup .swal2-title {
+  color: #856404;
+}
+
+.session-expired-popup .swal2-content {
+  color: #856404;
+}
+
+.automatic-expiration-popup {
+  background: #fff3cd;
+  border: 2px solid #ffc107;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.automatic-expiration-popup .swal2-title {
+  color: #856404;
+  font-size: 1.5em;
+  font-weight: bold;
+}
+
+.automatic-expiration-popup .swal2-content {
+  color: #856404;
+  font-size: 1.1em;
+}
+
+.automatic-expiration-popup .swal2-confirm {
+  background: #856404;
+  border: none;
+  padding: 10px 30px;
+  font-size: 1.1em;
+}
+
+.automatic-expiration-popup,
+.session-termination-popup {
+  background: #fff3cd;
+  border: 2px solid #ffc107;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  min-width: 450px;
+}
+
+.automatic-expiration-popup .swal2-title,
+.session-termination-popup .swal2-title {
+  color: #856404;
+  font-size: 1.5em;
+  font-weight: bold;
+}
+
+.automatic-expiration-popup .swal2-content,
+.session-termination-popup .swal2-content {
+  color: #856404;
+  font-size: 1.1em;
+  line-height: 1.5;
+}
+
+.automatic-expiration-popup .swal2-confirm,
+.session-termination-popup .swal2-confirm {
+  background: #856404;
+  border: none;
+  padding: 10px 30px;
+  font-size: 1.1em;
+  border-radius: 6px;
+}
+
+.automatic-expiration-popup .swal2-timer-progress-bar,
+.session-termination-popup .swal2-timer-progress-bar {
+  background: #856404;
+}
+
+/* Estilo específico para expiración automática */
+.automatic-expiration-popup {
+  background: #fff3cd;
+  border-color: #dc3545;
+}
+
+.automatic-expiration-popup .swal2-title {
+  color: #dc3545;
+}
+
+/* Estilo específico para terminación de sesión */
+.session-termination-popup {
+  background: #d1ecf1;
+  border-color: #0dcaf0;
+}
+
+.session-termination-popup .swal2-title {
+  color: #0c5460;
+}
+
+.session-termination-popup .swal2-content {
+  color: #0c5460;
+}
+
+.session-termination-popup .swal2-confirm {
+  background: #0c5460;
+}
+
+.capitalize-names {
+  text-transform: capitalize !important;
+}
+
+.inactivity-warning-popup .swal2-popup {
+  border: 2px solid #f59e0b;
+}
+
+.inactivity-logout-popup .swal2-popup {
+  border: 2px solid #3b82f6;
+}
+
+/* Estilos para los contadores */
+#warning-countdown,
+#logout-countdown {
+  font-weight: bold;
+  color: #ef4444;
+}
+
+/* Asegurar que SweetAlert2 esté por encima de todo */
+.swal2-container {
+  z-index: 10000 !important;
 }

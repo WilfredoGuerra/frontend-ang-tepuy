@@ -1,16 +1,17 @@
 <div class="navbar bg-base-100 text-base-content">
   <div class="navbar-start">
     @if (authService.isAdmin()) {
-      <a routerLink="/admin/tickets" class="btn btn-ghost text-xl font-montserrat">Gran Sabana <span class="text-secondary">|
-          Tepuy</span></a>
+    <a routerLink="/admin/tickets" class="btn btn-ghost text-xl font-montserrat">Gran Sabana <span
+        class="text-secondary">|
+        Tepuy</span></a>
     }
     @else {
-      <a routerLink="/tickets" class="btn btn-ghost text-xl font-montserrat">Gran Sabana <span class="text-secondary">|
-          Tepuy</span></a>
+    <a routerLink="/tickets" class="btn btn-ghost text-xl font-montserrat">Gran Sabana <span class="text-secondary">|
+        Tepuy</span></a>
     }
 
   </div>
-  <div class="navbar-end gap-4">
+  <div class="navbar-end gap-1">
 
     @if (authService.isAdmin()) {
     <a routerLink="/admin" class="btn text-accent">Admin Panel</a>
@@ -20,11 +21,31 @@
     <!-- <div class="tooltip" data-tip="Crear reporte">
       <button routerLink="/new-ticket" class="btn btn-soft btn-success">Nuevo ticket</button>
     </div> -->
+    <div class="tooltip tooltip-left" data-tip="Tickets">
+      <button routerLink="/tickets" class="btn btn-circle btn-ghost">
+        <img class="mt-1" src="assets/icons/tickets.svg" alt="" width=70%>
+      </button>
+    </div>
+    <div class="tooltip tooltip-left" data-tip="Tramos de fibra óptica">
+      <button routerLink="/tickets/fiber-lengths" class="btn btn-circle btn-ghost">
+        <img class="mt-1" src="assets/icons/fiber-lengths.svg" alt="" width=70%>
+      </button>
+    </div>
+    <div class="tooltip tooltip-left" data-tip="Elementos de red">
+      <button routerLink="/tickets/network-elements" class="btn btn-circle btn-ghost">
+        <img class="mt-1" src="assets/icons/network-elements.svg" alt="" width=70%>
+      </button>
+    </div>
+    <div class="tooltip tooltip-left" data-tip="Centrales">
+      <button routerLink="/tickets/centrals" class="btn btn-circle btn-ghost">
+        <img class="mt-1" src="assets/icons/centrals.svg" alt="" width=70%>
+      </button>
+    </div>
     <div class="tooltip tooltip-left" data-tip="Dashboard-Estadísticas">
       <button routerLink="/dashboard" class="btn btn-circle btn-ghost">
         <img class="mt-1"
-          src="assets/icons/{{ currentTheme === 'dark' ? 'material-symbols-dark--monitoring' : 'material-symbols-light--monitoring' }}.svg"
-          alt="" width=100%>
+          src="assets/icons/graphics.svg"
+          alt="" width=70%>
       </button>
     </div>
     }
