@@ -295,17 +295,10 @@
 
                   <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
                     @for (item of ticket.images; track $index) {
-                    @let imageUrl = getImageUrl(item);
                     <div class="relative group">
-                      <a [href]="imageUrl" target="_blank" rel="noopener noreferrer" class="block cursor-pointer">
-                        <img [src]="imageUrl" [alt]="'Evidencia ' + ($index + 1)"
-                          class="w-full h-24 object-cover rounded-lg border border-base-300 shadow-sm transition-all duration-300 group-hover:scale-105 group-hover:shadow-md"
-                          loading="lazy" (error)="handleImageError($event)" />
-                      </a>
-                      <div
-                        class="absolute top-1 right-1 bg-primary text-white text-xs rounded-full w-5 h-5 flex items-center justify-center opacity-70 group-hover:opacity-100">
-                        {{ $index + 1 }}
-                      </div>
+                      <img [src]="item | ticketImage" alt="Evidencia del ticket"
+                        class="cursor-pointer transition-transform duration-300 hover:scale-105"
+                        (click)="openImage(item)">
                     </div>
                     }
                   </div>
@@ -513,7 +506,18 @@
           <p class="text-sm font-semibold text-gray-600 mb-3">
             Evidencias visuales ({{ progress.images.length }})
           </p>
-          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+
+
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+            @for (image of progress.images; track $index) {
+            <div class="relative group">
+              <img [src]="image | ticketImage" alt="Evidencia del seguimiento"
+                class="cursor-pointer transition-transform duration-300 hover:scale-105" (click)="openImage(image)">
+            </div>
+            }
+          </div>
+
+          <!-- <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             @for (image of progress.images; track $index) {
             <div class="relative group cursor-pointer" (click)="openImage(image)">
               <img [src]="image" alt="Evidencia de seguimiento"
@@ -533,7 +537,7 @@
               </div>
             </div>
             }
-          </div>
+          </div> -->
         </div>
         }
       </div>
@@ -708,116 +712,116 @@
             <p>Elementos de Red Involucrados</p>
             <p class="text-warning">(Click para expandir)</p>
           </div>
-<div class="collapse-content">
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-    <!-- Elemento Origen -->
-    <div class="bg-base-200 p-3 rounded-lg">
-      <h5 class="font-semibold text-primary mb-2 text-xs">
-        Elemento(s) Origen
-        @if (closure.network_element.length) {
-          <span class="badge badge-primary badge-xs ml-1">{{ closure.network_element.length }}</span>
-        }
-      </h5>
+          <div class="collapse-content">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+              <!-- Elemento Origen -->
+              <div class="bg-base-200 p-3 rounded-lg">
+                <h5 class="font-semibold text-primary mb-2 text-xs">
+                  Elemento(s) Origen
+                  @if (closure.network_element.length) {
+                  <span class="badge badge-primary badge-xs ml-1">{{ closure.network_element.length }}</span>
+                  }
+                </h5>
 
-      @if (closure.network_element.length) {
-        <div class="space-y-3">
-          @for (element of closure.network_element; track element.id; let i = $index) {
-            <div class="bg-base-300 p-2 rounded">
-              <div class="text-xs font-semibold text-primary mb-1">Elemento #{{ i + 1 }}</div>
-              <div class="space-y-1 text-xs">
-                <div class="flex justify-between">
-                  <span class="font-medium">Acrónimo:</span>
-                  <span class="font-mono uppercase">{{ element.acronym || 'N/A' }}</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="font-medium">Descripción:</span>
-                  <span class="capitalize truncate">{{ element.description || 'No especificada' }}</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="font-medium">Modelo:</span>
-                  <span class="capitalize">{{ element.model || 'No especificado' }}</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="font-medium">Proveedor:</span>
-                  <span class="capitalize">{{ element.provider.provider_name || 'No especificado' }}</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="font-medium">Central:</span>
-                  <span class="capitalize">{{ element.central?.central_name || 'No especificada' }}</span>
-                </div>
-                @if (element.management_ip) {
-                  <div class="flex justify-between">
-                    <span class="font-medium">IP Gestión:</span>
-                    <span class="font-mono">{{ element.management_ip }}</span>
+                @if (closure.network_element.length) {
+                <div class="space-y-3">
+                  @for (element of closure.network_element; track element.id; let i = $index) {
+                  <div class="bg-base-300 p-2 rounded">
+                    <div class="text-xs font-semibold text-primary mb-1">Elemento #{{ i + 1 }}</div>
+                    <div class="space-y-1 text-xs">
+                      <div class="flex justify-between">
+                        <span class="font-medium">Acrónimo:</span>
+                        <span class="font-mono uppercase">{{ element.acronym || 'N/A' }}</span>
+                      </div>
+                      <div class="flex justify-between">
+                        <span class="font-medium">Descripción:</span>
+                        <span class="capitalize truncate">{{ element.description || 'No especificada' }}</span>
+                      </div>
+                      <div class="flex justify-between">
+                        <span class="font-medium">Modelo:</span>
+                        <span class="capitalize">{{ element.model || 'No especificado' }}</span>
+                      </div>
+                      <div class="flex justify-between">
+                        <span class="font-medium">Proveedor:</span>
+                        <span class="capitalize">{{ element.provider.provider_name || 'No especificado' }}</span>
+                      </div>
+                      <div class="flex justify-between">
+                        <span class="font-medium">Central:</span>
+                        <span class="capitalize">{{ element.central?.central_name || 'No especificada' }}</span>
+                      </div>
+                      @if (element.management_ip) {
+                      <div class="flex justify-between">
+                        <span class="font-medium">IP Gestión:</span>
+                        <span class="font-mono">{{ element.management_ip }}</span>
+                      </div>
+                      }
+                    </div>
                   </div>
+                  }
+                </div>
+                } @else {
+                <div class="text-center text-gray-500 text-xs py-4">
+                  No hay elementos de origen registrados
+                </div>
                 }
               </div>
-            </div>
-          }
-        </div>
-      } @else {
-        <div class="text-center text-gray-500 text-xs py-4">
-          No hay elementos de origen registrados
-        </div>
-      }
-    </div>
 
-    <!-- Elemento de Cierre -->
-<div class="bg-base-200 p-3 rounded-lg">
-  <h5 class="font-semibold text-primary mb-2 text-xs">
-    Elemento(s) de Cierre
-    @if (closure.network_element_closure.length) {
-      <span class="badge badge-primary badge-xs ml-1">{{ closure.network_element_closure.length }}</span>
-    }
-  </h5>
+              <!-- Elemento de Cierre -->
+              <div class="bg-base-200 p-3 rounded-lg">
+                <h5 class="font-semibold text-primary mb-2 text-xs">
+                  Elemento(s) de Cierre
+                  @if (closure.network_element_closure.length) {
+                  <span class="badge badge-primary badge-xs ml-1">{{ closure.network_element_closure.length }}</span>
+                  }
+                </h5>
 
-  @if (closure.network_element_closure.length) {
-    <div class="space-y-3">
-      @for (element of closure.network_element_closure; track element.id; let i = $index) {
-        <div class="bg-base-300 p-2 rounded">
-          <div class="text-xs font-semibold text-primary mb-1">Elemento #{{ i + 1 }}</div>
-          <div class="space-y-1 text-xs">
-            <div class="flex justify-between">
-              <span class="font-medium">Acrónimo:</span>
-              <span class="font-mono uppercase">{{ element.acronym || 'N/A' }}</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="font-medium">Descripción:</span>
-              <span class="capitalize truncate">{{ element.description || 'No especificada' }}</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="font-medium">Modelo:</span>
-              <span class="capitalize">{{ element.model || 'No especificado' }}</span>
-            </div>
-            <!-- ✅ ESTAS SON LAS LÍNEAS CRÍTICAS -->
-            <div class="flex justify-between">
-              <span class="font-medium">Proveedor:</span>
-              <span class="capitalize">{{ element.provider.provider_name || 'No especificado' }}</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="font-medium">Central:</span>
-              <span class="capitalize">{{ element.central?.central_name || 'No especificada' }}</span>
-            </div>
-            <!-- FIN LÍNEAS CRÍTICAS -->
-            @if (element.management_ip) {
-              <div class="flex justify-between">
-                <span class="font-medium">IP Gestión:</span>
-                <span class="font-mono">{{ element.management_ip }}</span>
+                @if (closure.network_element_closure.length) {
+                <div class="space-y-3">
+                  @for (element of closure.network_element_closure; track element.id; let i = $index) {
+                  <div class="bg-base-300 p-2 rounded">
+                    <div class="text-xs font-semibold text-primary mb-1">Elemento #{{ i + 1 }}</div>
+                    <div class="space-y-1 text-xs">
+                      <div class="flex justify-between">
+                        <span class="font-medium">Acrónimo:</span>
+                        <span class="font-mono uppercase">{{ element.acronym || 'N/A' }}</span>
+                      </div>
+                      <div class="flex justify-between">
+                        <span class="font-medium">Descripción:</span>
+                        <span class="capitalize truncate">{{ element.description || 'No especificada' }}</span>
+                      </div>
+                      <div class="flex justify-between">
+                        <span class="font-medium">Modelo:</span>
+                        <span class="capitalize">{{ element.model || 'No especificado' }}</span>
+                      </div>
+                      <!-- ✅ ESTAS SON LAS LÍNEAS CRÍTICAS -->
+                      <div class="flex justify-between">
+                        <span class="font-medium">Proveedor:</span>
+                        <span class="capitalize">{{ element.provider.provider_name || 'No especificado' }}</span>
+                      </div>
+                      <div class="flex justify-between">
+                        <span class="font-medium">Central:</span>
+                        <span class="capitalize">{{ element.central?.central_name || 'No especificada' }}</span>
+                      </div>
+                      <!-- FIN LÍNEAS CRÍTICAS -->
+                      @if (element.management_ip) {
+                      <div class="flex justify-between">
+                        <span class="font-medium">IP Gestión:</span>
+                        <span class="font-mono">{{ element.management_ip }}</span>
+                      </div>
+                      }
+                    </div>
+                  </div>
+                  }
+                </div>
+                } @else {
+                <div class="text-center text-gray-500 text-xs py-4">
+                  No hay elementos de cierre registrados
+                </div>
+                }
               </div>
-            }
-          </div>
-        </div>
-      }
-    </div>
-  } @else {
-    <div class="text-center text-gray-500 text-xs py-4">
-      No hay elementos de cierre registrados
-    </div>
-  }
-</div>
 
-  </div>
-</div>
+            </div>
+          </div>
         </div>
       </div>
 

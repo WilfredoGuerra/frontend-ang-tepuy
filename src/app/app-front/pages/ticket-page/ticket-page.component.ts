@@ -4,7 +4,7 @@ import {
   Location,
   TitleCasePipe,
 } from '@angular/common';
-import { Component, inject, signal, effect } from '@angular/core';
+import { Component, inject, signal, effect, computed } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import {
   FormBuilder,
@@ -32,10 +32,14 @@ import Swal from 'sweetalert2';
 import { CreateClosureDto } from '@features/closures/interfaces/closure.interface';
 import { IncidentsService } from '@features/incidents/services/incidents.service';
 import { IncidentsDetailsService } from '@features/incidents-details/services/incidents-details.service';
+import { TicketImagePipe } from '@app-front/pipes/ticket-image.pipe';
+import { environment } from 'src/environments/environment';
+
+const baseUrl = environment.baseUrl;
 
 @Component({
   selector: 'app-ticket-page',
-  imports: [DatePipe, ReactiveFormsModule, CommonModule],
+  imports: [DatePipe, ReactiveFormsModule, CommonModule, TicketImagePipe],
   templateUrl: './ticket-page.component.html',
   styles: `
     .ticket-content {
@@ -156,6 +160,12 @@ export class TicketPageComponent {
   selectedClosureNetworkElements = signal<any[]>([]); // Para Elemento Afectado (solo lectura)
   selectedClosureNetworkElementsClosure = signal<any[]>([]); // Para Elemento de Cierre (editable)
 
+  imageUrl = computed(() => {
+    return `http://localhost:3000/api/files/ticket/${
+      this.ticketResource.value()?.images?.[0]
+    }`;
+  });
+
   // Formularios
   progressForm = this.fb.group({
     ticketId: [this.ticketId, Validators.required],
@@ -183,25 +193,25 @@ export class TicketPageComponent {
     observations: ['', [Validators.required, Validators.minLength(10)]],
   });
 
-closureForm = this.fb.group({
-  date_hlls: ['', Validators.required],
-  date_hir: ['', Validators.required],
-  date_hrs: ['', Validators.required],
-  date_hff: ['', Validators.required],
-  impacto_inter_bbip: [0],
-  impacto_abon_voz: [0, [Validators.required, Validators.min(0)]],
-  impacto_ptos_aba: [0, [Validators.required, Validators.min(0)]],
-  impacto_inter_me: [0, [Validators.required, Validators.min(0)]],
-  impacto_circuitos: [0, [Validators.required, Validators.min(0)]],
-  impacto_intercon: [0, [Validators.required, Validators.min(0)]],
-  action_taken: ['', [Validators.required, Validators.minLength(10)]],
-  groupId: [null as number | null, Validators.required],
-  networkElementIds: this.fb.control<number[]>([]), // Para elemento afectado (solo lectura)
-  networkElementClosureIds: this.fb.control<number[]>([]), // Para elemento de cierre (editable)
-  fiberLengthId: [null as number | null],
-  incidentId: [null as number | null, Validators.required],
-  incidentDetailId: [null as number | null, Validators.required],
-});
+  closureForm = this.fb.group({
+    date_hlls: ['', Validators.required],
+    date_hir: ['', Validators.required],
+    date_hrs: ['', Validators.required],
+    date_hff: ['', Validators.required],
+    impacto_inter_bbip: [0],
+    impacto_abon_voz: [0, [Validators.required, Validators.min(0)]],
+    impacto_ptos_aba: [0, [Validators.required, Validators.min(0)]],
+    impacto_inter_me: [0, [Validators.required, Validators.min(0)]],
+    impacto_circuitos: [0, [Validators.required, Validators.min(0)]],
+    impacto_intercon: [0, [Validators.required, Validators.min(0)]],
+    action_taken: ['', [Validators.required, Validators.minLength(10)]],
+    groupId: [null as number | null, Validators.required],
+    networkElementIds: this.fb.control<number[]>([]), // Para elemento afectado (solo lectura)
+    networkElementClosureIds: this.fb.control<number[]>([]), // Para elemento de cierre (editable)
+    fiberLengthId: [null as number | null],
+    incidentId: [null as number | null, Validators.required],
+    incidentDetailId: [null as number | null, Validators.required],
+  });
 
   // Resources principales
   ticketResource = rxResource({
@@ -850,46 +860,48 @@ closureForm = this.fb.group({
         return;
       }
 
-    const hasNetworkElements = formValue.networkElementClosureIds && formValue.networkElementClosureIds.length > 0;
-    const hasFiberElement = !!formValue.fiberLengthId;
+      const hasNetworkElements =
+        formValue.networkElementClosureIds &&
+        formValue.networkElementClosureIds.length > 0;
+      const hasFiberElement = !!formValue.fiberLengthId;
 
-    if (!hasNetworkElements && !hasFiberElement) {
-      this.showErrorAlert(
-        'Debe seleccionar al menos un elemento de red o un tramo de fibra para el cierre'
-      );
-      return;
-    }
+      if (!hasNetworkElements && !hasFiberElement) {
+        this.showErrorAlert(
+          'Debe seleccionar al menos un elemento de red o un tramo de fibra para el cierre'
+        );
+        return;
+      }
 
-const closureData: any = {
-  id_ticket: this.ticketId,
-  date_hlls: new Date(formValue.date_hlls!).toISOString(),
-  date_hir: new Date(formValue.date_hir!).toISOString(),
-  date_hrs: new Date(formValue.date_hrs!).toISOString(),
-  date_hff: new Date(formValue.date_hff!).toISOString(),
-  impacto_inter_bbip: formValue.impacto_inter_bbip!,
-  impacto_abon_voz: formValue.impacto_abon_voz!,
-  impacto_ptos_aba: formValue.impacto_ptos_aba!,
-  impacto_inter_me: formValue.impacto_inter_me!,
-  impacto_circuitos: formValue.impacto_circuitos!,
-  impacto_intercon: formValue.impacto_intercon!,
-  action_taken: formValue.action_taken!,
-  groupId: formValue.groupId,
-  networkElementIds: formValue.networkElementIds || [], // ✅ Para elemento afectado
-  networkElementClosureIds: formValue.networkElementClosureIds || [], // ✅ Para elemento de cierre
-  fiberLengthId: formValue.fiberLengthId || undefined,
-  incidentId: formValue.incidentId,
-  incidentDetailId: formValue.incidentDetailId,
-};
+      const closureData: any = {
+        id_ticket: this.ticketId,
+        date_hlls: new Date(formValue.date_hlls!).toISOString(),
+        date_hir: new Date(formValue.date_hir!).toISOString(),
+        date_hrs: new Date(formValue.date_hrs!).toISOString(),
+        date_hff: new Date(formValue.date_hff!).toISOString(),
+        impacto_inter_bbip: formValue.impacto_inter_bbip!,
+        impacto_abon_voz: formValue.impacto_abon_voz!,
+        impacto_ptos_aba: formValue.impacto_ptos_aba!,
+        impacto_inter_me: formValue.impacto_inter_me!,
+        impacto_circuitos: formValue.impacto_circuitos!,
+        impacto_intercon: formValue.impacto_intercon!,
+        action_taken: formValue.action_taken!,
+        groupId: formValue.groupId,
+        networkElementIds: formValue.networkElementIds || [], // ✅ Para elemento afectado
+        networkElementClosureIds: formValue.networkElementClosureIds || [], // ✅ Para elemento de cierre
+        fiberLengthId: formValue.fiberLengthId || undefined,
+        incidentId: formValue.incidentId,
+        incidentDetailId: formValue.incidentDetailId,
+      };
 
       this.closuresService.createClosure(closureData).subscribe({
         next: () => {
-        this.showSuccessAlert('Ticket cerrado correctamente');
-        this.ticketResource.reload();
-        this.closureForm.reset();
-        this.selectedClosureNetworkElements.set([]);
-        this.selectedClosureNetworkElementsClosure.set([]);
-        this.selectedClosureFiberElement.set(null);
-        this.selectedClosureElementType.set(null);
+          this.showSuccessAlert('Ticket cerrado correctamente');
+          this.ticketResource.reload();
+          this.closureForm.reset();
+          this.selectedClosureNetworkElements.set([]);
+          this.selectedClosureNetworkElementsClosure.set([]);
+          this.selectedClosureFiberElement.set(null);
+          this.selectedClosureElementType.set(null);
         },
         error: (error) => {
           this.handleError('Error al cerrar el ticket', error);
@@ -1132,14 +1144,14 @@ const closureData: any = {
   }
 
   private prefillClosureForm() {
-  if (this.ticketResource.hasValue()) {
-    const ticket = this.ticketResource.value();
-    this.closureForm.patchValue({ groupId: ticket.groupId || null });
+    if (this.ticketResource.hasValue()) {
+      const ticket = this.ticketResource.value();
+      this.closureForm.patchValue({ groupId: ticket.groupId || null });
 
-    // ✅ SOLO llamar al nuevo método - eliminar toda la lógica vieja
-    this.prefillClosureElements();
+      // ✅ SOLO llamar al nuevo método - eliminar toda la lógica vieja
+      this.prefillClosureElements();
+    }
   }
-}
 
   // private prefillClosureForm() {
   //   if (this.ticketResource.hasValue()) {
@@ -1401,9 +1413,15 @@ const closureData: any = {
     this.location.back();
   }
 
-  openImage(imageUrl: string) {
+  openImage(imageName: string) {
+    const imageUrl = `${baseUrl}/files/ticket/${imageName}`;
     window.open(imageUrl, '_blank');
   }
+
+  // openImage2(imageName: string) {
+  //   const imageUrl = `${baseUrl}/files/ticket/${imageName}`;
+  //   window.open(imageUrl, '_blank');
+  // }
 
   handleImageError(event: Event) {
     const imgElement = event.target as HTMLImageElement;
@@ -1544,19 +1562,24 @@ const closureData: any = {
     this.searchFiberClosureQuery.set(''); // Limpiar búsqueda del modal de cierre
   }
 
-selectClosureFiberElement(fiber: any) {
-  const completeFiber = this.fiberLengthsResource.value()?.fiberLengths?.find((f) => f.id === fiber.id) || fiber;
+  selectClosureFiberElement(fiber: any) {
+    const completeFiber =
+      this.fiberLengthsResource
+        .value()
+        ?.fiberLengths?.find((f) => f.id === fiber.id) || fiber;
 
-  this.selectedClosureElementType.set('fiber');
-  this.selectedClosureFiberElement.set(completeFiber);
-  this.selectedClosureNetworkElementsClosure.set([]); // Limpiar elementos de red
-  this.closureForm.patchValue({
-    fiberLengthId: completeFiber.id,
-    networkElementClosureIds: [],
-    networkElementIds: this.selectedClosureNetworkElements().map(el => el.id)
-  });
-  this.closeFiberElementModal();
-}
+    this.selectedClosureElementType.set('fiber');
+    this.selectedClosureFiberElement.set(completeFiber);
+    this.selectedClosureNetworkElementsClosure.set([]); // Limpiar elementos de red
+    this.closureForm.patchValue({
+      fiberLengthId: completeFiber.id,
+      networkElementClosureIds: [],
+      networkElementIds: this.selectedClosureNetworkElements().map(
+        (el) => el.id
+      ),
+    });
+    this.closeFiberElementModal();
+  }
 
   // desde aqui
 
