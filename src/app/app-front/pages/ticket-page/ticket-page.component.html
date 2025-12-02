@@ -50,6 +50,23 @@
                     {{ ticketResource.value().user?.fullName }} {{ ticketResource.value().user?.surnames || '' }}
                   </h3>
                 </div>
+
+                <div>
+                  <button class="btn btn-info" (click)="generateTicketHistoryPdf()" [disabled]="isGeneratingPdf()">
+                    @if (isGeneratingPdf()) {
+                    <span class="loading loading-spinner loading-sm"></span>
+                    Generando PDF...
+                    } @else {
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
+                      stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Ver/Descargar Historial (PDF)
+                    }
+                  </button>
+                </div>
+
               </div>
             </header>
 
@@ -452,6 +469,13 @@
                 <span class="capitalize">({{ progress.personal_region.states[0].state }})</span>
               </p>
               }
+
+              @if (progress.impact) {
+              <div class="flex mt-8 gap-2">
+                <p class="font-semibold text-warning uppercase">Impacto:</p>
+                <p>{{ progress.impact }}</p>
+              </div>
+              }
             </div>
 
           </div>
@@ -464,12 +488,6 @@
             <p class="text-sm text-gray-500">Por:</p>
             <p class="font-medium">{{ progress.user?.fullName }}</p>
 
-            @if (progress.impact) {
-            <div class="flex mt-8 gap-2">
-              <p class="font-semibold text-warning uppercase">Impacto:</p>
-              <p>{{ progress.impact }}</p>
-            </div>
-            }
           </div>
         </div>
 
@@ -1029,7 +1047,7 @@
               @if (selectedClosureNetworkElements().length > 0) {
               <div class="space-y-2">
                 @for (element of selectedClosureNetworkElements(); track element.id; let i = $index) {
-                <div class="bg-warning/20 text-warning-content p-3 rounded-lg">
+                <div class="bg-warning text-warning-content p-3 rounded-lg">
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
                     <div><strong>#{{ i + 1 }} - Acrónimo:</strong> {{ element.acronym }}</div>
                     <div><strong>IP Gestión:</strong> {{ element.management_ip || 'N/A' }}</div>
@@ -1365,12 +1383,32 @@
 </div>
 }
 
-<div class="flex justify-end">
-  <button class="btn btn-secondary my-3" (click)="goBack()">
+<div class="flex justify-between items-center my-4">
+  <!-- <button class="btn btn-info" (click)="generateTicketHistoryPdf()" [disabled]="isGeneratingPdf()">
+    @if (isGeneratingPdf()) {
+    <span class="loading loading-spinner loading-sm"></span>
+    Generando PDF...
+    } @else {
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+        d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+    </svg>
+    Ver Historial del Ticket (PDF)
+    }
+  </button> -->
+
+  <button class="btn btn-secondary" (click)="goBack()">
     <img class="" src="assets/icons/{{ 'material-symbols--keyboard-return' }}.svg">
     Regresar
   </button>
 </div>
+
+<!-- <div class="flex justify-end">
+  <button class="btn btn-secondary my-3" (click)="goBack()">
+    <img class="" src="assets/icons/{{ 'material-symbols--keyboard-return' }}.svg">
+    Regresar
+  </button>
+</div> -->
 
 <!-- Modal para nuevo seguimiento -->
 @if (showModal()) {

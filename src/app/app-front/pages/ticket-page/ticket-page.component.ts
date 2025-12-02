@@ -160,8 +160,10 @@ export class TicketPageComponent {
   selectedClosureNetworkElements = signal<any[]>([]); // Para Elemento Afectado (solo lectura)
   selectedClosureNetworkElementsClosure = signal<any[]>([]); // Para Elemento de Cierre (editable)
 
+  isGeneratingPdf = signal(false);
+
   imageUrl = computed(() => {
-    return `http://localhost:3000/api/files/ticket/${
+    return `${baseUrl}/files/ticket/${
       this.ticketResource.value()?.images?.[0]
     }`;
   });
@@ -1795,4 +1797,103 @@ export class TicketPageComponent {
       ), // Mantener los de solo lectura
     });
   }
+
+generateTicketHistoryPdf() {
+  this.isGeneratingPdf.set(true);
+
+  this.ticketsService.generateTicketHistoryPdf(this.ticketId).subscribe({
+    next: (blob: Blob) => {
+      // 🔥 1. Crear dos URLs de blob diferentes (una para vista, otra para descarga)
+      const viewBlobUrl = URL.createObjectURL(blob);
+      const downloadBlobUrl = URL.createObjectURL(blob);
+
+      // 🔥 2. Primero: Abrir para visualización (ventana que permanece)
+      const pdfWindow = window.open(viewBlobUrl, '_blank');
+
+      // 🔥 3. Configurar mejor la ventana del PDF
+      if (pdfWindow) {
+        // Intentar darle un título descriptivo
+        try {
+          setTimeout(() => {
+            pdfWindow.document.title = `Historial Ticket ${this.ticketId}`;
+          }, 500);
+        } catch (e) {
+          // Ignorar errores de seguridad
+        }
+      }
+
+      // 🔥 4. Segundo: Iniciar descarga automática (pero discreta)
+      setTimeout(() => {
+        this.triggerSilentDownload(downloadBlobUrl, `historial-ticket-${this.ticketId}.pdf`);
+      }, 1000); // Esperar 1 segundo para que cargue la vista
+
+      // 🔥 5. Mostrar notificación informativa
+      this.showInfoAlert(
+        'PDF generado correctamente',
+        'El PDF se ha abierto en una nueva pestaña y se está descargando automáticamente.',
+        3000
+      );
+
+      // 🔥 6. Limpiar URLs después de un tiempo
+      setTimeout(() => {
+        URL.revokeObjectURL(viewBlobUrl);
+        URL.revokeObjectURL(downloadBlobUrl);
+      }, 30000); // 30 segundos
+
+      this.isGeneratingPdf.set(false);
+    },
+    error: (error) => {
+      console.error('Error generating PDF:', error);
+      this.isGeneratingPdf.set(false);
+      this.showErrorAlert('Error al generar el PDF');
+    }
+  });
+}
+
+// 🔥 Método para descarga silenciosa (sin abrir nueva ventana)
+private triggerSilentDownload(blobUrl: string, filename: string) {
+  const link = document.createElement('a');
+  link.href = blobUrl;
+  link.download = filename;
+  link.style.display = 'none';
+
+  document.body.appendChild(link);
+  link.click();
+
+  setTimeout(() => {
+    document.body.removeChild(link);
+  }, 100);
+}
+
+  // generateTicketHistoryPdf() {
+  //   this.isGeneratingPdf.set(true);
+
+  //   this.ticketsService.generateTicketHistoryPdf(this.ticketId).subscribe({
+  //     next: (blob: Blob) => {
+  //       // Crear URL y abrir en nueva pestaña
+  //       const url = window.URL.createObjectURL(blob);
+  //       const newWindow = window.open(url, '_blank');
+
+  //       if (!newWindow) {
+  //         this.showWarningAlert(
+  //           'Por favor permite ventanas emergentes para ver el PDF'
+  //         );
+  //       }
+
+  //       // Limpiar URL después de un tiempo
+  //       setTimeout(() => {
+  //         window.URL.revokeObjectURL(url);
+  //       }, 5000);
+
+  //       this.isGeneratingPdf.set(false);
+  //     },
+  //     error: (error) => {
+  //       console.error('Error generating PDF:', error);
+  //       this.isGeneratingPdf.set(false);
+  //       this.showErrorAlert(
+  //         'Error al generar el historial en PDF. Por favor intenta nuevamente.'
+  //       );
+  //     },
+  //   });
+  // }
 }

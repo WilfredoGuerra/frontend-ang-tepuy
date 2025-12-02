@@ -917,7 +917,7 @@
         formControlName="evidences_problem"
         id="evidencias"
         rows="5"
-        placeholder="Adjunte evidencias del problema..."
+        placeholder="Agregue las evidencias del problema"
         name="evidences_problem"
         required
         [class.border-red-500]="
@@ -937,9 +937,9 @@
       <textarea
         class="textarea textarea-bordered w-full"
         formControlName="hypothesis"
-        id="evidencias"
+        id="hypothesis"
         rows="5"
-        placeholder="Adjunte evidencias del problema..."
+        placeholder="Escriba la hipótesis del problema"
         name="hypothesis"
         required
         [class.border-red-500]="ticketForm.get('hypothesis')?.errors ?? false"
@@ -963,7 +963,7 @@
       <div class="relative">
         <input
           type="text"
-          class="input input-bordered w-full pr-10 cursor-pointer capitalize"
+          class="input input-bordered w-full pr-10 cursor-pointer first-letter:capitalize"
           [value]="getSelectedPersonalText()"
           readonly
           (click)="openPersonalsModal()"

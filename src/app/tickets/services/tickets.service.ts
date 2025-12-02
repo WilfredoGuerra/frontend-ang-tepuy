@@ -188,34 +188,32 @@ export class TicketsService {
     return this.http.patch<Ticket>(`${baseUrl}/tickets/${id}`, safeTicketData);
   }
 
-  uploadImages(images?: FileList): Observable<string[]> {
-    if (!images || images.length === 0) return of([]);
+  uploadImages(fileList: FileList | undefined): Observable<string[]> {
+    if (!fileList || fileList.length === 0) {
+      return of([]);
+    }
 
-    const filesArray = Array.from(images);
-    // console.log('Subiendo archivos:', filesArray.map(f => f.name));
+    const uploadObservables: Observable<string>[] = [];
 
-    // Crear observables para cada upload
-    const uploadObservables = filesArray.map((imageFile) =>
-      this.uploadImage(imageFile).pipe(
-        catchError((error) => {
-          console.error(`Error subiendo ${imageFile.name}:`, error);
-          // En caso de error, devolver un nombre de fallback
-          return of(`error_${Date.now()}_${imageFile.name}`);
-        })
-      )
-    );
+    for (let i = 0; i < fileList.length; i++) {
+      const file = fileList[i];
+      const formData = new FormData();
+      formData.append('file', file);
 
-    return forkJoin(uploadObservables).pipe(
-      tap((imageNames) => {
-        // console.log('Nombres de imágenes subidas:', imageNames);
-        const errors = imageNames.filter((name) => name.startsWith('error_'));
-        if (errors.length > 0) {
-          console.warn(
-            `${errors.length} imágenes no se pudieron subir correctamente`
-          );
-        }
-      })
-    );
+      const upload$ = this.http
+        .post<{ fileName: string }>(`${baseUrl}/files/ticket`, formData)
+        .pipe(
+          map((response) => response.fileName), // ✅ Solo el nombre del archivo
+          catchError((error) => {
+            console.error('Error uploading image:', error);
+            return of(`error_${file.name}`);
+          })
+        );
+
+      uploadObservables.push(upload$);
+    }
+
+    return forkJoin(uploadObservables);
   }
 
   uploadImage(imageFile: File): Observable<string> {
@@ -277,5 +275,11 @@ export class TicketsService {
 
   getFailures(): Observable<Failure[]> {
     return this.http.get<Failure[]>(`${baseUrl}/failures`);
+  }
+
+  generateTicketHistoryPdf(ticketId: number): Observable<Blob> {
+    return this.http.get(`${baseUrl}/tickets/${ticketId}/history-pdf`, {
+      responseType: 'blob',
+    });
   }
 }

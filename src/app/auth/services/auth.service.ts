@@ -86,14 +86,22 @@ export class AuthService {
     }
   }
 
-  login(email: string, password: string): Observable<boolean> {
-    return this.http
-      .post<AuthResponse>(`${baseUrl}/auth/login`, { email, password })
-      .pipe(
-        map((resp) => this.handleAuthSuccess(resp)),
-        catchError((error) => this.handleAuthError(error))
-      );
-  }
+login(email: string, password: string): Observable<boolean> {
+  return this.http
+    .post<AuthResponse>(`${baseUrl}/auth/login`, { email, password })
+    .pipe(
+      map((resp) => this.handleAuthSuccess(resp)),
+      catchError((error) => {
+        // Aquí podríamos manejar el error de login de manera específica
+        console.log('Login error:', error);
+        // Retornar false sin llamar a handleAuthError
+        this._user.set(null);
+        this._token.set(null);
+        this._authStatus.set('not-authenticated');
+        return of(false);
+      })
+    );
+}
 
   checkStatus(): Observable<boolean> {
     const token = localStorage.getItem('token');
@@ -281,22 +289,34 @@ export class AuthService {
     return true;
   }
 
-  private handleAuthError(error: any) {
-    let errorMessage = 'Error de autenticación';
+private handleAuthError(error: any) {
+  // Identificar el tipo de error
+  if (error.status === 401) {
+    // Verificar si es una solicitud de login
+    const isLoginRequest = error.url && error.url.includes('/auth/login');
 
-    // Detectar específicamente token expirado
-    if (error.status === 401) {
-      errorMessage = 'Su sesión ha expirado por inactividad';
+    if (isLoginRequest) {
+      // Error de credenciales inválidas - solo logout sin notificación
+      this.logout();
+      return of(false);
+    } else {
+      // Sesión expirada para otras rutas
+      const errorMessage = 'Su sesión ha expirado por inactividad';
 
-      // Opcional: emitir evento global para que otros componentes sepan
+      // Mostrar notificación inmediatamente o después de un breve delay
       setTimeout(() => {
         this.showSessionExpiredNotification(errorMessage);
-      }, 1000);
-    }
+      }, 100);
 
-    this.logout();
-    return of(false);
+      this.logout();
+      return of(false);
+    }
   }
+
+  // Para otros errores
+  this.logout();
+  return of(false);
+}
 
   private showSessionExpiredNotification(message: string): void {
     // Usar SweetAlert2 para mostrar notificación

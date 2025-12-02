@@ -6,56 +6,6 @@ import { Incident } from "@features/incidents/interfaces/incidents.interface";
 import { NetworkElement } from "@features/network-elements/interfaces/network-element.interface";
 import { Ticket } from "@tickets/interfaces/ticket.interface";
 
-// export interface CreateClosureDto {
-//   id_ticket: number;
-//   date_hlls: string;
-//   date_hir: string;
-//   date_hrs: string;
-//   date_hff: string;
-//   impacto_inter_bbip: number;
-//   impacto_abon_voz: number;
-//   impacto_ptos_aba: number;
-//   impacto_inter_me: number;
-//   impacto_circuitos: number;
-//   impacto_intercon: number;
-//   action_taken: string;
-//   groupId: number;
-//   networkElementId?: number; // Hacer opcional
-//   fiberLengthId?: number; // Agregar este campo
-//   incidentId: number;
-//   incidentDetailId: number;
-//   isActive?: boolean;
-// }
-
-// export interface Closure {
-//   id: number;
-//   id_ticket: number;
-//   date_hlls: Date;
-//   date_hir: Date;
-//   date_hrs: Date;
-//   date_hff: Date;
-//   impacto_inter_bbip: number;
-//   impacto_abon_voz: number;
-//   impacto_ptos_aba: number;
-//   impacto_inter_me: number;
-//   impacto_circuitos: number;
-//   impacto_intercon: number;
-//   action_taken: string;
-//   groupId: number;
-//   networkElementId: number;
-//   incidentId: number;
-//   incidentDetailId: number;
-//   isActive: boolean;
-//   createdDate: Date;
-//   updatedDate: Date;
-//   group?: Group;
-//   network_element?: NetworkElement;
-//   incident?: Incident;
-//   incidentDetail?: IncidentDetails;
-//   user?: User;
-// }
-
-// ✅ NUEVO - CON ARRAYS
 export interface CreateClosureDto {
   id_ticket: number;
   date_hlls: string;

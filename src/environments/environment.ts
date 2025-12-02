@@ -2,8 +2,8 @@ export const environment = {
   production: false,
   baseUrl: 'http://localhost:3000/api',
   wsUrl: 'http://localhost:3000',
-  // baseUrl: 'http://161.196.42.224:3000/api',
   // baseUrl: 'http://161.196.42.67:3000/api',
+  // wsUrl: 'http://161.196.42.67:3000',
   inactivity: {
     // timeout: 30000,       // 30 SEGUNDOS (30000 ms)
     // warningTime: 5000,    // 5 SEGUNDOS (5000 ms)
