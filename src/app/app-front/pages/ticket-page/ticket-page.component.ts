@@ -678,32 +678,83 @@ export class TicketPageComponent {
   }
 
   // Métodos de formulario de seguimiento
-  openModal() {
-    this.showModal.set(true);
-    this.loadAllData();
+openModal() {
+  this.showModal.set(true);
+  this.loadAllData();
 
-    setTimeout(() => {
-      this.prefillFormWithTicketData();
-      this.prefillElementsFromTicket(); // Nuevo método
-    }, 100);
+  setTimeout(() => {
+    this.prefillFormWithTicketData();
+
+    // Solo precargar elementos si NO es la primera documentación
+    if (this.hasProgressTickets) {
+      this.prefillElementsFromLastProgress(); // Nuevo método mejorado
+      // this.debugProgressElements();
+    } else {
+      this.prefillElementsFromTicket(); // Método original para primera documentación
+    }
+  }, 100);
+}
+
+private prefillElementsFromLastProgress() {
+  const lastProgressElements = this.getLastProgressNetworkElements();
+  const lastFiberElement = this.getLastProgressFiberElement();
+
+  if (lastProgressElements.length > 0) {
+    this.selectedNetworkElements.set([...lastProgressElements]);
+    this.selectedElementType.set('network');
+    console.log(
+      'From last progress - network elements:',
+      this.selectedNetworkElements().length,
+      this.selectedNetworkElements()
+    );
   }
+  else if (lastFiberElement) {
+    this.selectedFiberElement.set(lastFiberElement);
+    this.selectedElementType.set('fiber');
+  }
+  else {
+    // Si la última documentación no tiene elementos, cargar del ticket
+    this.prefillElementsFromTicket();
+  }
+
+  this.updateFormWithSelectedElements();
+}
 
   private prefillElementsFromTicket() {
     const ticket = this.ticketResource.value();
 
     console.log('Ticket elements:', ticket?.network_elements); // Debug
 
-    // Cargar elementos de red existentes - ✅ CORREGIR: usar todos los elementos
-    if (ticket?.network_elements?.length) {
+    // PRIMERO: Intentar obtener elementos de la ÚLTIMA documentación
+    const lastProgressElements = this.getLastProgressNetworkElements();
+    const lastFiberElement = this.getLastProgressFiberElement();
+
+    if (lastProgressElements.length > 0) {
+      // Si hay elementos de red en la última documentación
+      this.selectedNetworkElements.set([...lastProgressElements]);
+      this.selectedElementType.set('network');
+      console.log(
+        'Prefilled from last progress - network elements:',
+        this.selectedNetworkElements().length
+      );
+    } else if (lastFiberElement) {
+      // Si hay tramo de fibra en la última documentación
+      this.selectedFiberElement.set(lastFiberElement);
+      this.selectedElementType.set('fiber');
+      console.log(
+        'Prefilled from last progress - fiber element:',
+        lastFiberElement.section_name
+      );
+    }
+    // SEGUNDO: Si no hay documentaciones anteriores, usar elementos del ticket inicial
+    else if (ticket?.network_elements?.length) {
       this.selectedNetworkElements.set([...ticket.network_elements]);
       this.selectedElementType.set('network');
       console.log(
-        'Prefilled network elements:',
+        'Prefilled from ticket - network elements:',
         this.selectedNetworkElements().length
-      ); // Debug
-    }
-    // Cargar tramo de fibra existente
-    else if (ticket?.fiberLengthId && ticket.fiber_length) {
+      );
+    } else if (ticket?.fiberLengthId && ticket.fiber_length) {
       this.selectedFiberElement.set(ticket.fiber_length);
       this.selectedElementType.set('fiber');
     }
@@ -711,6 +762,55 @@ export class TicketPageComponent {
     // Actualizar el formulario con los elementos cargados
     this.updateFormWithSelectedElements();
   }
+
+private getLastProgressFiberElement(): any {
+  if (!this.hasProgressTickets) return null;
+
+  // Buscar en todas las documentaciones (de más reciente a más antigua)
+  for (let i = 0; i < this.progressTickets.length; i++) {
+    const progress = this.progressTickets[i];
+
+    if (progress.fiberLengthId && progress.fiberLength) {
+      return progress.fiberLength;
+    }
+
+    // Si tiene fiberLengthId pero no tiene la relación cargada
+    if (progress.fiberLengthId && !progress.fiberLength) {
+      const fiber = this.fiberLengthsResource
+        .value()
+        ?.fiberLengths?.find((f) => f.id === progress.fiberLengthId);
+      if (fiber) return fiber;
+    }
+  }
+
+  return null;
+}
+
+
+
+  // private prefillElementsFromTicket() {
+  //   const ticket = this.ticketResource.value();
+
+  //   console.log('Ticket elements:', ticket?.network_elements); // Debug
+
+  //   // Cargar elementos de red existentes - ✅ CORREGIR: usar todos los elementos
+  //   if (ticket?.network_elements?.length) {
+  //     this.selectedNetworkElements.set([...ticket.network_elements]);
+  //     this.selectedElementType.set('network');
+  //     console.log(
+  //       'Prefilled network elements:',
+  //       this.selectedNetworkElements().length
+  //     ); // Debug
+  //   }
+  //   // Cargar tramo de fibra existente
+  //   else if (ticket?.fiberLengthId && ticket.fiber_length) {
+  //     this.selectedFiberElement.set(ticket.fiber_length);
+  //     this.selectedElementType.set('fiber');
+  //   }
+
+  //   // Actualizar el formulario con los elementos cargados
+  //   this.updateFormWithSelectedElements();
+  // }
 
   private updateFormWithSelectedElements() {
     const networkIds = this.selectedNetworkElements().map((el) => el.id);
@@ -1705,29 +1805,64 @@ export class TicketPageComponent {
     return [];
   }
 
-  private prefillClosureElements() {
-    if (this.ticketResource.hasValue()) {
-      const ticket = this.ticketResource.value();
+private prefillClosureElements() {
+  if (this.ticketResource.hasValue()) {
+    const ticket = this.ticketResource.value();
 
-      // Obtener elementos de la última documentación
-      const lastProgressElements = this.getLastProgressNetworkElements();
+    // Obtener elementos de la última documentación
+    const lastProgressElements = this.getLastProgressNetworkElements();
+    const lastProgressFiberElement = this.getLastProgressFiberElement();
 
-      if (lastProgressElements.length > 0) {
-        // Tiene elementos de red - establecer tipo y elementos
+    if (lastProgressElements.length > 0) {
+      // Tiene elementos de red - establecer tipo y elementos
+      this.selectedClosureElementType.set('network');
+      this.selectedClosureNetworkElements.set([...lastProgressElements]);
+      this.selectedClosureNetworkElementsClosure.set([
+        ...lastProgressElements,
+      ]);
+
+      // Actualizar formulario con arrays
+      this.closureForm.patchValue({
+        networkElementIds: lastProgressElements.map((el) => el.id),
+        networkElementClosureIds: lastProgressElements.map((el) => el.id),
+        fiberLengthId: null,
+      });
+    }
+    else if (lastProgressFiberElement) {
+      // ✅ CORREGIDO: Usar el tramo de fibra de la última documentación
+      const completeFiber =
+        this.fiberLengthsResource
+          .value()
+          ?.fiberLengths?.find((f) => f.id === lastProgressFiberElement.id) ||
+        lastProgressFiberElement;
+
+      this.selectedClosureElementType.set('fiber');
+      this.selectedClosureFiberElement.set(completeFiber);
+      this.closureForm.patchValue({
+        fiberLengthId: completeFiber.id,
+        networkElementIds: null,
+        networkElementClosureIds: null,
+      });
+    }
+    else {
+      // No tiene elementos en documentaciones - usar elementos del ticket inicial si existen
+      if (ticket.network_elements?.length) {
         this.selectedClosureElementType.set('network');
-        this.selectedClosureNetworkElements.set([...lastProgressElements]);
+        this.selectedClosureNetworkElements.set([...ticket.network_elements]);
         this.selectedClosureNetworkElementsClosure.set([
-          ...lastProgressElements,
+          ...ticket.network_elements,
         ]);
 
-        // Actualizar formulario con arrays
         this.closureForm.patchValue({
-          networkElementIds: lastProgressElements.map((el) => el.id),
-          networkElementClosureIds: lastProgressElements.map((el) => el.id),
+          networkElementIds: ticket.network_elements.map((el) => el.id),
+          networkElementClosureIds: ticket.network_elements.map(
+            (el) => el.id
+          ),
           fiberLengthId: null,
         });
-      } else if (ticket.fiberLengthId && ticket.fiber_length) {
-        // Tiene tramo de fibra
+      }
+      else if (ticket.fiberLengthId && ticket.fiber_length) {
+        // ✅ FALLBACK: Solo si no hay documentaciones, usar el del ticket
         const completeFiber =
           this.fiberLengthsResource
             .value()
@@ -1741,26 +1876,10 @@ export class TicketPageComponent {
           networkElementIds: null,
           networkElementClosureIds: null,
         });
-      } else {
-        // No tiene elementos - usar elementos del ticket inicial si existen
-        if (ticket.network_elements?.length) {
-          this.selectedClosureElementType.set('network');
-          this.selectedClosureNetworkElements.set([...ticket.network_elements]);
-          this.selectedClosureNetworkElementsClosure.set([
-            ...ticket.network_elements,
-          ]);
-
-          this.closureForm.patchValue({
-            networkElementIds: ticket.network_elements.map((el) => el.id),
-            networkElementClosureIds: ticket.network_elements.map(
-              (el) => el.id
-            ),
-            fiberLengthId: null,
-          });
-        }
       }
     }
   }
+}
 
   addClosureNetworkElement(element: any) {
     if (!this.isClosureNetworkElementSelected(element)) {
@@ -1798,72 +1917,75 @@ export class TicketPageComponent {
     });
   }
 
-generateTicketHistoryPdf() {
-  this.isGeneratingPdf.set(true);
+  generateTicketHistoryPdf() {
+    this.isGeneratingPdf.set(true);
 
-  this.ticketsService.generateTicketHistoryPdf(this.ticketId).subscribe({
-    next: (blob: Blob) => {
-      // 🔥 1. Crear dos URLs de blob diferentes (una para vista, otra para descarga)
-      const viewBlobUrl = URL.createObjectURL(blob);
-      const downloadBlobUrl = URL.createObjectURL(blob);
+    this.ticketsService.generateTicketHistoryPdf(this.ticketId).subscribe({
+      next: (blob: Blob) => {
+        // 🔥 1. Crear dos URLs de blob diferentes (una para vista, otra para descarga)
+        const viewBlobUrl = URL.createObjectURL(blob);
+        const downloadBlobUrl = URL.createObjectURL(blob);
 
-      // 🔥 2. Primero: Abrir para visualización (ventana que permanece)
-      const pdfWindow = window.open(viewBlobUrl, '_blank');
+        // 🔥 2. Primero: Abrir para visualización (ventana que permanece)
+        const pdfWindow = window.open(viewBlobUrl, '_blank');
 
-      // 🔥 3. Configurar mejor la ventana del PDF
-      if (pdfWindow) {
-        // Intentar darle un título descriptivo
-        try {
-          setTimeout(() => {
-            pdfWindow.document.title = `Historial Ticket ${this.ticketId}`;
-          }, 500);
-        } catch (e) {
-          // Ignorar errores de seguridad
+        // 🔥 3. Configurar mejor la ventana del PDF
+        if (pdfWindow) {
+          // Intentar darle un título descriptivo
+          try {
+            setTimeout(() => {
+              pdfWindow.document.title = `Historial Ticket ${this.ticketId}`;
+            }, 500);
+          } catch (e) {
+            // Ignorar errores de seguridad
+          }
         }
-      }
 
-      // 🔥 4. Segundo: Iniciar descarga automática (pero discreta)
-      setTimeout(() => {
-        this.triggerSilentDownload(downloadBlobUrl, `historial-ticket-${this.ticketId}.pdf`);
-      }, 1000); // Esperar 1 segundo para que cargue la vista
+        // 🔥 4. Segundo: Iniciar descarga automática (pero discreta)
+        setTimeout(() => {
+          this.triggerSilentDownload(
+            downloadBlobUrl,
+            `historial-ticket-${this.ticketId}.pdf`
+          );
+        }, 1000); // Esperar 1 segundo para que cargue la vista
 
-      // 🔥 5. Mostrar notificación informativa
-      this.showInfoAlert(
-        'PDF generado correctamente',
-        'El PDF se ha abierto en una nueva pestaña y se está descargando automáticamente.',
-        3000
-      );
+        // 🔥 5. Mostrar notificación informativa
+        this.showInfoAlert(
+          'PDF generado correctamente',
+          'El PDF se ha abierto en una nueva pestaña y se está descargando automáticamente.',
+          3000
+        );
 
-      // 🔥 6. Limpiar URLs después de un tiempo
-      setTimeout(() => {
-        URL.revokeObjectURL(viewBlobUrl);
-        URL.revokeObjectURL(downloadBlobUrl);
-      }, 30000); // 30 segundos
+        // 🔥 6. Limpiar URLs después de un tiempo
+        setTimeout(() => {
+          URL.revokeObjectURL(viewBlobUrl);
+          URL.revokeObjectURL(downloadBlobUrl);
+        }, 30000); // 30 segundos
 
-      this.isGeneratingPdf.set(false);
-    },
-    error: (error) => {
-      console.error('Error generating PDF:', error);
-      this.isGeneratingPdf.set(false);
-      this.showErrorAlert('Error al generar el PDF');
-    }
-  });
-}
+        this.isGeneratingPdf.set(false);
+      },
+      error: (error) => {
+        console.error('Error generating PDF:', error);
+        this.isGeneratingPdf.set(false);
+        this.showErrorAlert('Error al generar el PDF');
+      },
+    });
+  }
 
-// 🔥 Método para descarga silenciosa (sin abrir nueva ventana)
-private triggerSilentDownload(blobUrl: string, filename: string) {
-  const link = document.createElement('a');
-  link.href = blobUrl;
-  link.download = filename;
-  link.style.display = 'none';
+  // 🔥 Método para descarga silenciosa (sin abrir nueva ventana)
+  private triggerSilentDownload(blobUrl: string, filename: string) {
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = filename;
+    link.style.display = 'none';
 
-  document.body.appendChild(link);
-  link.click();
+    document.body.appendChild(link);
+    link.click();
 
-  setTimeout(() => {
-    document.body.removeChild(link);
-  }, 100);
-}
+    setTimeout(() => {
+      document.body.removeChild(link);
+    }, 100);
+  }
 
   // generateTicketHistoryPdf() {
   //   this.isGeneratingPdf.set(true);
@@ -1896,4 +2018,27 @@ private triggerSilentDownload(blobUrl: string, filename: string) {
   //     },
   //   });
   // }
+
+//   debugProgressElements() {
+//   console.log('=== DEBUG Progress Elements ===');
+//   console.log('Has progress tickets:', this.hasProgressTickets);
+//   console.log('Progress tickets count:', this.progressTicketsCount);
+
+//   if (this.hasProgressTickets) {
+//     this.progressTickets.forEach((progress, index) => {
+//       console.log(`Progress ${index} (ID: ${progress.id}):`, {
+//         network_elements: progress.network_elements,
+//         network_elements_count: progress.network_elements?.length,
+//         fiber_length: progress.fiberLength,
+//         fiber_length_id: progress.fiberLengthId
+//       });
+//     });
+//   }
+
+//   console.log('Last progress network elements:', this.getLastProgressNetworkElements());
+//   console.log('Last progress fiber element:', this.getLastProgressFiberElement());
+//   console.log('Currently selected network elements:', this.selectedNetworkElements());
+//   console.log('Currently selected fiber element:', this.selectedFiberElement());
+//   console.log('=== END DEBUG ===');
+// }
 }

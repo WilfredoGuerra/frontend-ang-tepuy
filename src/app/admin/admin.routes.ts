@@ -15,6 +15,7 @@ import { NetworkElementsPageComponent } from '@features/network-elements/pages/n
 import { EditElementNetworkComponent } from '@features/network-elements/pages/new-element-network/edit-element-network.component';
 import { FrontLayoutComponent } from '@app-front/layouts/front-layout/front-layout.component';
 import { TeamsPageComponentTs } from '@features/teams/pages/teams-page.component.ts/teams-page.component.ts';
+import { EditUserPageComponent } from '@auth/components/edit-user-page/edit-user-page.component';
 
 export const adminRoutes: Routes = [
   {
@@ -30,6 +31,7 @@ export const adminRoutes: Routes = [
       { path: 'tickets/history', component: TicketHistoryTableComponent },
       { path: 'group/:group', component: GroupPageComponent },
       { path: 'auth/users', component: UsersPageComponent },
+       { path: 'auth/users/edit/:id', component: EditUserPageComponent },
       { path: 'network-elements', component: NetworkElementsPageComponent },
       { path: 'network-elements/new', component: NewElementNetworkComponent },
       { path: 'network-elements/edit/:id', component: EditElementNetworkComponent },

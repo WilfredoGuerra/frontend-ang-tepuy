@@ -51,110 +51,11 @@
                   </h3>
                 </div>
 
-                <div>
-                  <button class="btn btn-info" (click)="generateTicketHistoryPdf()" [disabled]="isGeneratingPdf()">
-                    @if (isGeneratingPdf()) {
-                    <span class="loading loading-spinner loading-sm"></span>
-                    Generando PDF...
-                    } @else {
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
-                      stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    Ver/Descargar Historial (PDF)
-                    }
-                  </button>
-                </div>
-
               </div>
             </header>
 
             <p class="text-secondary font-semibold">Definición del problema:</p>
             <span class="uppercase">{{ ticketResource.value().definition_problem }}</span>
-
-            <!-- Section network element/fiber length -->
-            <!-- <div class="network-section">
-              <div class="text-primary font-mono uppercase ticket-content">
-                @if (ticketResource.value().network_elements?.length) {
-                <div class="field">
-                  <span class="field-name">Modelo:</span>
-                  <span class="field-value">{{ ticketResource.value().network_elements?.[0]?.model }}</span>
-                  <span class="comma-separator">,</span>
-                </div>
-
-                <div class="field">
-                  <span class="field-name">Proveedor:</span>
-                  <span class="field-value">{{ ticketResource.value().network_elements?.[0]?.provider?.provider_name
-                    }}</span>
-                  <span class="comma-separator">,</span>
-                </div>
-
-                <div class="field">
-                  <span class="field-name">Descripción:</span>
-                  <span class="field-value">{{ ticketResource.value().network_elements?.[0]?.description }}</span>
-                  <span class="comma-separator">,</span>
-                </div>
-
-                <div class="field">
-                  <span class="field-name">Acrónimo:</span>
-                  <span class="field-value">{{ ticketResource.value().network_elements?.[0]?.acronym }}</span>
-                  <span class="comma-separator">,</span>
-                </div>
-
-                @if (ticketResource.value().network_elements?.[0]?.management_ip) {
-                <div class="field">
-                  <span class="field-name">IpG:</span>
-                  <span class="field-value">{{ ticketResource.value().network_elements?.[0]?.management_ip }}</span>
-                  <span class="comma-separator">,</span>
-                </div>
-                }
-
-                @if (ticketResource.value().network_elements?.[0]?.service_ip) {
-                <div class="field">
-                  <span class="field-name">IpS:</span>
-                  <span class="field-value">{{ ticketResource.value().network_elements?.[0]?.service_ip }}</span>
-                  <span class="comma-separator">,</span>
-                </div>
-                }
-
-                @if (ticketResource.value().network_elements?.[0]?.adsl_ip) {
-                <div class="field">
-                  <span class="field-name">IpAdsl:</span>
-                  <span class="field-value">{{ ticketResource.value().network_elements?.[0]?.adsl_ip }}</span>
-                  <span class="comma-separator">,</span>
-                </div>
-                }
-
-                <div class="field">
-                  <span class="field-name">Central:</span>
-                  <span class="field-value">{{ ticketResource.value().network_elements?.[0]?.central?.central_name
-                    }}</span>
-                  <span class="comma-separator">,</span>
-                </div>
-
-                <div class="field">
-                  <span class="field-name">Estado:</span>
-                  <span class="field-value">{{ ticketResource.value().network_elements?.[0]?.central?.state?.state
-                    }}</span>
-                  <span class="comma-separator">.</span>
-                </div>
-                } @else if (ticketResource.value().fiberLengthId && ticketResource.value().fiber_length) {
-                <div class="flex mt-2">
-                  <div class="flex flex-row ">
-                    <p>Tramo de fibra óptica:</p>
-                    <div>
-                      {{ ticketResource.value().fiber_length?.section_name }},
-                    </div>
-                  </div>
-                  <span class="font-mono uppercase">
-                    <p>Del estado: {{ ticketResource.value().fiber_length?.stateA?.state }}</p>
-                  </span>
-                </div>
-                }
-              </div>
-            </div> -->
-            <!-- End section network element/fiber length -->
 
             <div class="divider my-1"></div>
 
@@ -1082,17 +983,14 @@
             </label>
 
             <!-- Botones de selección de tipo -->
-            <div class="flex gap-2 mb-3">
+            <!-- se agregan ambos 'fibra' y 'network' para deshabilitar el botón -->
+            <!-- en [disabled]="selectedClosureElementType() === 'fiber' || 'network'"> -->
+            <!-- <div class="flex gap-2 mb-3">
               <button type="button" class="btn btn-sm flex-1"
                 [class.btn-primary]="selectedClosureElementType() === 'network'"
                 [class.btn-outline]="selectedClosureElementType() !== 'network'"
                 [class.btn-disabled]="selectedClosureElementType() === 'fiber'" (click)="openNetworkElementModal()"
-                [disabled]="selectedClosureElementType() === 'fiber'">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24"
-                  stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
+                [disabled]="selectedClosureElementType() === 'fiber' || 'network'">
                 Elemento(s) de Red
                 @if (selectedClosureElementType() === 'fiber') {
                 <span class="badge badge-xs badge-error ml-1">❌</span>
@@ -1102,18 +1000,13 @@
                 [class.btn-primary]="selectedClosureElementType() === 'fiber'"
                 [class.btn-outline]="selectedClosureElementType() !== 'fiber'"
                 [class.btn-disabled]="selectedClosureElementType() === 'network'" (click)="openFiberElementModal()"
-                [disabled]="selectedClosureElementType() === 'network'">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24"
-                  stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
+                [disabled]="selectedClosureElementType() === 'network' || 'fiber'">
                 Tramo de Fibra
                 @if (selectedClosureElementType() === 'network') {
                 <span class="badge badge-xs badge-error ml-1">❌</span>
                 }
               </button>
-            </div>
+            </div> -->
 
             <!-- Información del elemento seleccionado -->
             @if (selectedClosureElementType() === 'network' && selectedClosureNetworkElementsClosure().length > 0) {
@@ -1164,9 +1057,9 @@
                   }
                   <div><strong>Longitud:</strong> {{ selectedClosureFiberElement()!.length_km || 'N/A' }} km</div>
                 </div>
-                <button type="button" class="btn btn-ghost btn-xs ml-2" (click)="clearClosureFiberElement()">
+                <!-- <button type="button" class="btn btn-ghost btn-xs ml-2" (click)="clearClosureFiberElement()">
                   Cambiar
-                </button>
+                </button> -->
               </div>
             </div>
             }
@@ -1184,8 +1077,8 @@
 
         <div class="bg-base-100 p-4 rounded-lg">
           <h4 class="font-semibold text-primary mb-3">⏰ Horas del Cierre</h4>
-          <p class="text-sm text-warning italic">Fecha/Hora de referencia para el cierre (HCT): {{
-            ticketResource.value().date_hct | date : "d/MM/yyyy, hh:mm a" }}</p>
+          <!-- <p class="text-sm text-warning italic">Fecha/Hora de referencia para el cierre (HCT): {{
+            ticketResource.value().date_hct | date : "d/MM/yyyy, hh:mm a" }}</p> -->
           <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
             <!-- Hora llegada sitio (HLLS) -->
             <div class="form-control">
@@ -1362,6 +1255,18 @@
     </div>
     }
   </div>
+
+  <!-- <div class="flex justify-end"> -->
+    <button class="btn btn-ghost text-secondary font-bold" (click)="generateTicketHistoryPdf()" [disabled]="isGeneratingPdf()">
+      @if (isGeneratingPdf()) {
+      <span class="loading loading-spinner loading-sm"></span>
+      Generando PDF...
+      } @else {
+      Ver Historial del Ticket (PDF)
+      }
+    </button>
+  <!-- </div> -->
+
 </div>
 }
 
@@ -1384,19 +1289,6 @@
 }
 
 <div class="flex justify-between items-center my-4">
-  <!-- <button class="btn btn-info" (click)="generateTicketHistoryPdf()" [disabled]="isGeneratingPdf()">
-    @if (isGeneratingPdf()) {
-    <span class="loading loading-spinner loading-sm"></span>
-    Generando PDF...
-    } @else {
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-        d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-    </svg>
-    Ver Historial del Ticket (PDF)
-    }
-  </button> -->
-
   <button class="btn btn-secondary" (click)="goBack()">
     <img class="" src="assets/icons/{{ 'material-symbols--keyboard-return' }}.svg">
     Regresar
@@ -1417,7 +1309,7 @@
     <h3 class="font-bold text-2xl text-primary mb-6 text-center">Seguimiento</h3>
     <form [formGroup]="progressForm" (ngSubmit)="onSubmit()" class="space-y-6">
 
-      <div class="collapse collapse-arrow bg-base-200 border-base-300 border rounded-box">
+      <!-- <div class="collapse collapse-arrow bg-base-200 border-base-300 border rounded-box">
         <input type="checkbox" class="peer" />
         <div class="collapse-title font-medium">
           <span class="flex items-center">
@@ -1445,7 +1337,7 @@
             </div>
           </div>
         </div>
-      </div>
+      </div> -->
 
       <div class="bg-base-200 p-5 rounded-xl">
         <div class="form-control">

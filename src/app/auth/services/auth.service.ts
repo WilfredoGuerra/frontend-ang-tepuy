@@ -146,20 +146,27 @@ login(email: string, password: string): Observable<boolean> {
     // El WebSocketService se desconectará automáticamente
   }
 
-  createUser(
-    userLike: Partial<User>,
-    imageFileList?: FileList
-  ): Observable<User> {
-    return this.uploadUserImages(imageFileList).pipe(
-      map((imageUrls) => ({
+createUser(userLike: Partial<User>, imageFileList?: FileList): Observable<User> {
+  return this.uploadUserImages(imageFileList).pipe(
+    map((imageUrls) => {
+      // Procesar URLs para quedarse solo con nombres de archivo
+      const processedImages = imageUrls.map(url => {
+        if (url.includes('http') || url.includes('/')) {
+          return url.split('/').pop();
+        }
+        return url;
+      });
+
+      return {
         ...userLike,
-        images: [...(userLike.images || []), ...imageUrls],
-      })),
-      switchMap((userData) =>
-        this.http.post<User>(`${baseUrl}/auth/register/`, userData)
-      )
-    );
-  }
+        images: [...(userLike.images || []), ...processedImages],
+      };
+    }),
+    switchMap((userData) =>
+      this.http.post<User>(`${baseUrl}/auth/register/`, userData)
+    )
+  );
+}
 
   getUsers(options: Options): Observable<UserResponse> {
     const { limit = 9, offset = 0, group = '' } = options;
@@ -232,33 +239,38 @@ login(email: string, password: string): Observable<boolean> {
       );
   }
 
-  uploadUserImage(imageFile: File): Observable<string> {
-    const formData = new FormData();
-    formData.append('file', imageFile);
+uploadUserImage(imageFile: File): Observable<string> {
+  const formData = new FormData();
+  formData.append('file', imageFile);
 
-    return this.http.post<any>(`${baseUrl}/files/user`, formData).pipe(
-      map((resp) => {
-        if (resp && resp.secureUrl) {
-          return resp.secureUrl;
-        } else if (typeof resp === 'string') {
-          return resp;
-        } else if (resp && typeof resp === 'object') {
-          return (
-            resp.fileName ||
-            resp.filename ||
-            resp.name ||
-            resp.imageName ||
-            resp.file ||
-            resp.image ||
-            `unknown_${Date.now()}`
-          );
-        } else {
-          return `temp_${Date.now()}_${imageFile.name}`;
+  return this.http.post<any>(`${baseUrl}/files/user`, formData).pipe(
+    map((resp) => {
+      console.log('🔍 Respuesta upload imagen:', resp); // Para debug
+
+      // El backend debería devolver solo el nombre del archivo, no la URL completa
+      if (resp && resp.fileName) {
+        return resp.fileName; // Solo el nombre del archivo
+      } else if (resp && resp.secureUrl) {
+        // Si devuelve URL completa, extraer solo el nombre del archivo
+        const url = resp.secureUrl;
+        const fileName = url.split('/').pop(); // Extraer "0a844366-7218-49af-b57f-90f553e6b16d.png"
+        return fileName || `temp_${Date.now()}_${imageFile.name}`;
+      } else if (typeof resp === 'string') {
+        // Si es string, verificar si es URL o solo nombre
+        if (resp.includes('http') || resp.includes('/')) {
+          return resp.split('/').pop(); // Extraer solo el nombre
         }
-      }),
-      catchError((error) => of(`error_${Date.now()}_${imageFile.name}`))
-    );
-  }
+        return resp; // Ya es solo el nombre
+      }
+      // Fallback
+      return `temp_${Date.now()}_${imageFile.name}`;
+    }),
+    catchError((error) => {
+      console.error('Error subiendo imagen:', error);
+      return of(`error_${Date.now()}_${imageFile.name}`);
+    })
+  );
+}
 
   uploadUserImages(images?: FileList): Observable<string[]> {
     if (!images || images.length === 0) return of([]);
@@ -330,4 +342,88 @@ private handleAuthError(error: any) {
       allowOutsideClick: false,
     });
   }
+
+  // Codigo Nuevo para user
+
+getUserById(id: number): Observable<User> {
+  return this.http.get<any>(`${baseUrl}/auth/${id}`).pipe(
+    map(response => {
+      if (response.users && response.users.length > 0) {
+        const user = response.users[0];
+
+        // Convertir imágenes de objetos a strings si es necesario
+        if (user.images && Array.isArray(user.images)) {
+          user.images = user.images.map((img: any) =>
+            typeof img === 'object' && img.url ? img.url : String(img)
+          );
+        }
+
+        // Asegurar que level_education sea un array de números (IDs)
+        if (user.level_education && Array.isArray(user.level_education)) {
+          user.level_education = user.level_education.map((level: any) => {
+            if (typeof level === 'object' && level.id !== undefined) {
+              return level.id;
+            }
+            return Number(level);
+          });
+        }
+
+        return user;
+      }
+      throw new Error('Usuario no encontrado');
+    }),
+    catchError(error => {
+      console.error('Error al obtener usuario:', error);
+      throw error;
+    })
+  );
+}
+
+updateUser(id: number, updateData: any, imageFileList?: FileList): Observable<any> {
+  return this.uploadUserImages(imageFileList).pipe(
+    switchMap(imageUrls => {
+      console.log('🔍 imageUrls antes de procesar:', imageUrls); // Debug
+
+      // Filtrar solo nombres de archivo (sin URLs completas)
+      const processedImages = imageUrls.map(url => {
+        if (url.includes('http') || url.includes('/')) {
+          // Extraer solo el nombre del archivo
+          const fileName = url.split('/').pop();
+          console.log(`🔍 Procesando URL: ${url} -> ${fileName}`);
+          return fileName;
+        }
+        return url;
+      }).filter(Boolean); // Remover valores nulos/undefined
+
+      console.log('🔍 processedImages:', processedImages); // Debug
+
+      const dataToSend = {
+        ...updateData,
+        // Solo incluir imágenes si hay
+        ...(processedImages.length > 0 && { images: processedImages })
+      };
+
+      console.log('🔍 Data a enviar al backend:', dataToSend); // Debug
+
+      // Si no hay contraseña, no incluirla
+      if (!dataToSend.password || dataToSend.password.trim() === '') {
+        delete dataToSend.password;
+      }
+
+      return this.http.patch<any>(`${baseUrl}/auth/${id}`, dataToSend);
+    })
+  );
+}
+
+// Método para eliminar imagen de usuario
+deleteUserImage(userId: number, imageUrl: string): Observable<any> {
+  return this.http.delete(`${baseUrl}/auth/${userId}/images`, {
+    body: { imageUrl }
+  }).pipe(
+    catchError(error => {
+      console.warn('Error al eliminar imagen, continuando...', error);
+      return of({ success: false, message: 'No se pudo eliminar la imagen' });
+    })
+  );
+}
 }

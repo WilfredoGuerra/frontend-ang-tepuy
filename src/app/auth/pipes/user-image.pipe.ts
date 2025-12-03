@@ -1,26 +1,3 @@
-// import { Pipe, PipeTransform } from '@angular/core';
-// import { environment } from 'src/environments/environment';
-
-// const baseUrl = environment.baseUrl;
-
-// @Pipe({
-//   name: 'userImage'
-// })
-
-// export class UserImagePipe implements PipeTransform {
-//   transform(value: string | string[] | undefined): string {
-//     if(typeof value === 'string') {
-//       return `${baseUrl}/files/user/${value}`
-//     }
-//     const image = value!.at(0);
-
-//     if(!image) {
-//       return './assets/images/personal/not_user.png'
-//     }
-//     return `${baseUrl}/files/user/${image}`;
-//   }
-// }
-
 import { Pipe, PipeTransform } from '@angular/core';
 import { environment } from 'src/environments/environment';
 
