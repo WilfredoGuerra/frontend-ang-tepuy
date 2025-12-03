@@ -81,7 +81,7 @@ getLeadersByPositionAndGroup(): any[] {
     // Agregar la actividad según el grupo
     return {
       ...leader,
-      actividad: this.getActividadByGroup(leader.group.id)
+      actividad: this.getActividadByGroup(leader.group!.id)
     };
   });
 }

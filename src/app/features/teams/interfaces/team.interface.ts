@@ -1,6 +1,4 @@
 import { User } from "@auth/interfaces/user.interface";
-
-
 export interface Team {
   id:             number;
   team_name:      string;

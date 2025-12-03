@@ -1,5 +1,5 @@
 <div class="overflow-x-auto rounded-lg shadow-lg">
-  <table class="table table-zebra">
+  <table class="table table-zebra font-montserrat">
     <!-- head -->
     <thead>
       <tr>
@@ -101,7 +101,7 @@
         <!-- Columna de acciones -->
         <td>
           <div class="flex flex-col gap-2">
-            <a [routerLink]="['/admin/users', user.id]" class="btn btn-outline btn-info btn-xs">
+            <a [routerLink]="['/admin/auth/users', user.id]" class="btn btn-outline btn-info btn-xs">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
                 stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -110,7 +110,7 @@
               Detalles
             </a>
 
-            @if (authService.user()?.roles?.includes('super_user')) {
+            @if (authService.user()?.roles?.includes('super_user') || authService.user()?.roles?.includes('ticket_auditor')) {
             <!-- CORREGIR ESTA RUTA: usar la ruta completa -->
             <a [routerLink]="['/admin/auth/users/edit', user.id]" class="btn btn-outline btn-warning btn-xs">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
