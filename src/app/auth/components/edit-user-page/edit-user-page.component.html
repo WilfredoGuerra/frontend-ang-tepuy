@@ -373,11 +373,11 @@
       }
 
       <!-- Botones de acción -->
-      <div class="flex justify-end gap-4 mt-8">
-        <button type="button" (click)="onCancel()" class="btn btn-error w-32" [disabled]="isUploading()">
+      <div class="flex justify-end gap-4 mt-8 mr-1">
+        <button type="button" (click)="onCancel()" class="btn btn-error w-42" [disabled]="isUploading()">
           Cancelar
         </button>
-        <button type="submit" class="btn btn-success w-32" [disabled]="isUploading() || editForm.invalid">
+        <button type="submit" class="btn btn-success w-42" [disabled]="isUploading() || editForm.invalid">
           @if (isUploading()) {
           <span class="loading loading-spinner loading-sm"></span>
           Guardando...

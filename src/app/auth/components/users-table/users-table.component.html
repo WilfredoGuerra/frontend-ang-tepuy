@@ -110,7 +110,7 @@
               Detalles
             </a>
 
-            @if (authService.user()?.roles?.includes('super_user') || authService.user()?.roles?.includes('ticket_auditor')) {
+            @if (authService.user()?.roles?.includes('super_user') || authService.user()?.roles?.includes('security_admin')) {
             <!-- CORREGIR ESTA RUTA: usar la ruta completa -->
             <a [routerLink]="['/admin/auth/users/edit', user.id]" class="btn btn-outline btn-warning btn-xs">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"

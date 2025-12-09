@@ -314,7 +314,7 @@
         </div>
         @if (authService.authStatus() === 'authenticated') {
         <div class="avatar">
-          <div class="w-10 rounded-full">
+          <div class="w-15 rounded-full">
             @if (authService.user()?.images) {
             <img
               [src]="authService.user()?.images | userImage"

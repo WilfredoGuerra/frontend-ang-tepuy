@@ -825,51 +825,80 @@ export class NewTicketComponent implements OnInit {
     this.searchSubject.next(value);
   }
 
-toggleNetworkElementSelection(element: NetworkElement): void {
-  const currentSelection = this.selectedNetworkElements();
-  const index = currentSelection.findIndex((el) => el.id === element.id);
+  toggleNetworkElementSelection(element: NetworkElement): void {
+    const currentSelection = this.selectedNetworkElements();
+    const index = currentSelection.findIndex((el) => el.id === element.id);
 
-  if (index > -1) {
-    // Deseleccionar elemento
-    this.selectedNetworkElements.set(
-      currentSelection.filter((el) => el.id !== element.id)
-    );
-  } else {
-    // Seleccionar elemento
-    this.selectedNetworkElements.set([...currentSelection, element]);
-  }
+    if (index > -1) {
+      // Deseleccionar elemento
+      this.selectedNetworkElements.set(
+        currentSelection.filter((el) => el.id !== element.id)
+      );
+    } else {
+      // Seleccionar elemento
+      this.selectedNetworkElements.set([...currentSelection, element]);
+    }
 
-  // ✅ NUEVO: Siempre autocompletar después de cualquier cambio en la selección
-  if (this.selectionType() === 'network') {
-    this.autocompleteWithNetworkElement();
+    // ✅ NUEVO: Siempre autocompletar después de cualquier cambio en la selección
+    if (this.selectionType() === 'network') {
+      this.autocompleteWithNetworkElement();
+    }
   }
-}
 
   isElementSelected(element: NetworkElement): boolean {
     return this.selectedNetworkElements().some((el) => el.id === element.id);
   }
 
-saveNetworkElementsSelection(): void {
-  const selectedIds = this.selectedNetworkElements().map((el) => el.id);
-  this.ticketForm.patchValue({
-    elementNetworkId: selectedIds,
-  });
+  saveNetworkElementsSelection(): void {
+    const selectedIds = this.selectedNetworkElements().map((el) => el.id);
+    this.ticketForm.patchValue({
+      elementNetworkId: selectedIds,
+    });
 
-  // ✅ NUEVO: El autocompletado ya se ejecutó durante la selección/deselección
-  // pero lo mantenemos por si acaso hay algún caso edge
-  if (this.selectionType() === 'network' && selectedIds.length > 0) {
-    this.autocompleteWithNetworkElement();
+    // ✅ NUEVO: El autocompletado ya se ejecutó durante la selección/deselección
+    // pero lo mantenemos por si acaso hay algún caso edge
+    if (this.selectionType() === 'network' && selectedIds.length > 0) {
+      this.autocompleteWithNetworkElement();
+    }
+
+    this.closeNetworkElementsModal();
   }
 
-  this.closeNetworkElementsModal();
-}
+  // getSelectedNetworkElementsText(): string {
+  //   const selected = this.selectedNetworkElements();
+  //   if (selected.length === 0) {
+  //     return 'Seleccione elementos de red';
+  //   }
+  //   return selected.map((el) => el.acronym).join(', ');
+  // }
 
   getSelectedNetworkElementsText(): string {
     const selected = this.selectedNetworkElements();
     if (selected.length === 0) {
       return 'Seleccione elementos de red';
     }
-    return selected.map((el) => el.acronym).join(', ');
+
+    // Resumen: cantidad de elementos seleccionados
+    return `${selected.length} elemento(s) seleccionado(s)`;
+  }
+
+  getSelectedNetworkElementsTooltip(): string {
+    const selected = this.selectedNetworkElements();
+    if (selected.length === 0) {
+      return '';
+    }
+
+    // Formato para tooltip: cada elemento en una línea
+    return selected
+      .map(
+        (element) =>
+          `${element.acronym}, ${element.model}, ${element.description}`
+      )
+      .join('\n');
+  }
+
+  getFormattedNetworkElement(element: NetworkElement): string {
+    return `${element.acronym}, ${element.model}, ${element.description}`;
   }
 
   getPaginationRange(): (number | string)[] {
@@ -1466,36 +1495,60 @@ saveNetworkElementsSelection(): void {
 
   // Ultimos
 
-private autocompleteWithNetworkElement(): void {
-  const selectedElements = this.selectedNetworkElements();
+  private autocompleteWithNetworkElement(): void {
+    const selectedElements = this.selectedNetworkElements();
 
-  if (selectedElements.length === 0) {
-    this.clearDefinitionProblem();
-    return;
+    if (selectedElements.length === 0) {
+      this.clearDefinitionProblem();
+      return;
+    }
+
+    let definitionText = '';
+
+    if (selectedElements.length === 1) {
+      // Un solo elemento - formato en línea
+      const element = selectedElements[0];
+      const { ip, type } = this.getPriorityIpInfo(element);
+
+      definitionText =
+        `${element.model || 'N/A'}, ` +
+        `${element.central?.central_name || 'N/A'}, ` +
+        `${element.acronym || 'N/A'}, ` +
+        `IP ${type.toUpperCase()}: ${ip}, ` +
+        `Edo.${element.central?.state?.state || 'N/A'}`;
+    } else {
+      // Múltiples elementos - con saltos de línea
+      definitionText = selectedElements
+        .map((element, index) => {
+          const { ip, type } = this.getPriorityIpInfo(element);
+
+          return `• ${element.model || 'N/A'}, ${
+            element.central?.central_name || 'N/A'
+          }, ${
+            element.acronym || 'N/A'
+          }, IP ${type.toUpperCase()}: ${ip}, Edo. ${
+            element.central?.state?.state || 'N/A'
+          }`;
+        })
+        .join('\n');
+    }
+
+    this.ticketForm.patchValue({
+      definition_problem: definitionText,
+    });
   }
 
-  let definitionText = '';
-
-  if (selectedElements.length === 1) {
-    // Un solo elemento - formato en línea
-    const element = selectedElements[0];
-    definitionText =
-      `${element.model || 'N/A'}, ` +
-      `${element.central?.central_name || 'N/A'}, ` +
-      `${element.acronym || 'N/A'}, ` +
-      `${element.service_ip || 'N/A'}, ` +
-      `Edo.${element.central?.state?.state || 'N/A'}`;
-  } else {
-    // Múltiples elementos - con saltos de línea
-    definitionText = selectedElements.map((element, index) =>
-      `• ${element.model || 'N/A'}, ${element.central?.central_name || 'N/A'}, ${element.acronym || 'N/A'}, ${element.service_ip || 'N/A'}, Edo. ${element.central?.state?.state || 'N/A'}`
-    ).join('\n');
+  private getPriorityIpInfo(element: any): { ip: string; type: string } {
+    if (element.service_ip) {
+      return { ip: element.service_ip, type: 'SERVICIO' };
+    } else if (element.management_ip) {
+      return { ip: element.management_ip, type: 'GESTIÓN' };
+    } else if (element.adsl_ip) {
+      return { ip: element.adsl_ip, type: 'ADSL' };
+    } else {
+      return { ip: 'N/A', type: 'NO DISPONIBLE' };
+    }
   }
-
-  this.ticketForm.patchValue({
-    definition_problem: definitionText
-  });
-}
 
   private autocompleteWithFiberLength(): void {
     const selectedFiber = this.selectedFiberLength();
@@ -1521,16 +1574,16 @@ private autocompleteWithNetworkElement(): void {
     });
   }
 
-removeNetworkElementFromSelection(element: NetworkElement): void {
-  this.selectedNetworkElements.set(
-    this.selectedNetworkElements().filter((el) => el.id !== element.id)
-  );
+  removeNetworkElementFromSelection(element: NetworkElement): void {
+    this.selectedNetworkElements.set(
+      this.selectedNetworkElements().filter((el) => el.id !== element.id)
+    );
 
-  // ✅ NUEVO: Actualizar la definición después de remover
-  if (this.selectionType() === 'network') {
-    this.autocompleteWithNetworkElement();
+    // ✅ NUEVO: Actualizar la definición después de remover
+    if (this.selectionType() === 'network') {
+      this.autocompleteWithNetworkElement();
+    }
   }
-}
 
   private autocompleteWithMultipleNetworkElements(): void {
     const selectedElements = this.selectedNetworkElements();
