@@ -27,14 +27,14 @@
           <label class="label">
             <span class="label-text font-semibold">Fecha Inicio</span>
           </label>
-          <input type="date" formControlName="createdDateStart" class="input input-bordered">
+          <input type="date" formControlName="createdDateStart" class="input input-bordered w-full">
         </div>
 
         <div class="form-control">
           <label class="label">
             <span class="label-text font-semibold">Fecha Fin</span>
           </label>
-          <input type="date" formControlName="createdDateEnd" class="input input-bordered">
+          <input type="date" formControlName="createdDateEnd" class="input input-bordered w-full">
         </div>
 
         <!-- Búsqueda por texto -->
@@ -43,7 +43,7 @@
             <span class="label-text font-semibold">Buscar en problema</span>
           </label>
           <input type="text" formControlName="definition_problem" placeholder="Palabra clave..."
-            class="input input-bordered text-gray-400">
+            class="input input-bordered w-full text-gray-400">
         </div>
       </div>
 
@@ -68,14 +68,39 @@
         </div>
       </div>
 
-      <!-- Tercera Fila: Otros Filtros -->
-      <div class="grid grid-cols-1 md:grid-cols-5 gap-2 mb-6">
+      <!-- Tercera Fila: Filtros principales -->
+      <div class="grid grid-cols-1 md:grid-cols-6 gap-4 mb-6">
+        <!-- Estado -->
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text font-semibold">Estado</span>
+          </label>
+          <select formControlName="stateId" class="select select-bordered w-full">
+            <option value="">Todos</option>
+            <option *ngFor="let state of filterOptions.states" [value]="state.id">
+              {{ state.name | titlecase }}
+            </option>
+          </select>
+          <!-- Indicador de filtro activo -->
+          @if (filterForm.get('stateId')?.value) {
+          <div class="mt-1">
+            <span class="badge badge-info badge-sm">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1 inline" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              Filtro activo
+            </span>
+          </div>
+          }
+        </div>
+
         <!-- Severidad -->
         <div class="form-control">
           <label class="label">
             <span class="label-text font-semibold">Severidad</span>
           </label>
-          <select formControlName="severityId" class="select select-bordered">
+          <select formControlName="severityId" class="select select-bordered w-full">
             <option value="">Todas</option>
             <option *ngFor="let severity of filterOptions.severities" [value]="severity.id">
               {{ severity.name }}
@@ -88,7 +113,7 @@
           <label class="label">
             <span class="label-text font-semibold">Plataforma</span>
           </label>
-          <select formControlName="platformId" class="select select-bordered">
+          <select formControlName="platformId" class="select select-bordered w-full">
             <option value="">Todas</option>
             <option *ngFor="let platform of filterOptions.platforms" [value]="platform.id">
               {{ platform.name }}
@@ -101,7 +126,7 @@
           <label class="label">
             <span class="label-text font-semibold">Estatus</span>
           </label>
-          <select formControlName="statusId" class="select select-bordered">
+          <select formControlName="statusId" class="select select-bordered w-full">
             <option value="">Todos</option>
             <option *ngFor="let status of filterOptions.statuses" [value]="status.id">
               {{ status.name }}
@@ -114,7 +139,7 @@
           <label class="label">
             <span class="label-text font-semibold">Falla</span>
           </label>
-          <select formControlName="failureId" class="select select-bordered">
+          <select formControlName="failureId" class="select select-bordered w-full">
             <option value="">Todos</option>
             <option *ngFor="let failure of filterOptions.failures" [value]="failure.id">
               {{ failure.name }}
@@ -127,7 +152,7 @@
           <label class="label">
             <span class="label-text font-semibold">Límite de registros</span>
           </label>
-          <select formControlName="limit" class="select select-bordered">
+          <select formControlName="limit" class="select select-bordered w-full">
             <option *ngFor="let limit of limitOptions" [value]="limit">{{ limit }}</option>
           </select>
         </div>
@@ -140,7 +165,6 @@
           <span class="loading loading-spinner"></span>
           Generando Reporte...
           } @else {
-          <!-- <img src="assets/icons/icon-pdf.svg" class="mr-2"> -->
           Generar Reporte
           }
         </button>

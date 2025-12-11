@@ -1,6 +1,12 @@
 import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, FormArray, FormControl } from '@angular/forms';
+import {
+  ReactiveFormsModule,
+  FormBuilder,
+  FormGroup,
+  FormArray,
+  FormControl,
+} from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ReportsService, ReportFilter } from '../services/reports.service';
 
@@ -8,7 +14,7 @@ import { ReportsService, ReportFilter } from '../services/reports.service';
   selector: 'app-reports-page',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
-  templateUrl: './reports-page.component.html'
+  templateUrl: './reports-page.component.html',
 })
 export class ReportsPageComponent implements OnInit, OnDestroy {
   private reportsService = inject(ReportsService);
@@ -33,22 +39,37 @@ export class ReportsPageComponent implements OnInit, OnDestroy {
       createdDateStart: [''],
       createdDateEnd: [''],
       groupIds: this.fb.array([]),
+      stateId: [''],
       severityId: [''],
       platformId: [''],
       statusId: [''],
       failureId: [''],
       definition_problem: [''],
-      limit: [100]
+      limit: [100],
     });
 
     this.initializeGroupCheckboxes();
   }
 
-  ngOnInit() {}
+  ngOnInit() {
+    this.loadStates();
+  }
 
   ngOnDestroy() {
     // Limpiar recursos cuando se destruye el componente
     this.cleanupPdfResources();
+  }
+
+  private loadStates(): void {
+    this.reportsService.loadStates().subscribe({
+      next: (states) => {
+        console.log('Estados cargados:', states);
+      },
+      error: (error) => {
+        console.error('Error cargando estados:', error);
+        // Mostrar mensaje de error opcional
+      },
+    });
   }
 
   private initializeGroupCheckboxes(): void {
@@ -64,8 +85,10 @@ export class ReportsPageComponent implements OnInit, OnDestroy {
 
   getSelectedGroupIds(): number[] {
     return this.groupIdsArray.controls
-      .map((control, index) => control.value ? this.filterOptions.groups[index].id : null)
-      .filter(id => id !== null) as number[];
+      .map((control, index) =>
+        control.value ? this.filterOptions.groups[index].id : null
+      )
+      .filter((id) => id !== null) as number[];
   }
 
   generateReport(): void {
@@ -82,7 +105,8 @@ export class ReportsPageComponent implements OnInit, OnDestroy {
       statusId: formValue.statusId,
       failureId: formValue.failureId,
       definition_problem: formValue.definition_problem,
-      limit: formValue.limit
+      stateId: formValue.stateId ? formValue.stateId : undefined,
+      limit: formValue.limit,
     };
 
     const selectedGroupIds = this.getSelectedGroupIds();
@@ -106,7 +130,7 @@ export class ReportsPageComponent implements OnInit, OnDestroy {
         console.error('Error generando reporte:', error);
         this.isLoading = false;
         alert('Error al generar el reporte. Por favor, intenta nuevamente.');
-      }
+      },
     });
   }
 
@@ -154,8 +178,10 @@ export class ReportsPageComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         console.error('Error regenerando PDF para descarga:', error);
-        alert('Error al descargar el PDF. Por favor, intenta generar el reporte nuevamente.');
-      }
+        alert(
+          'Error al descargar el PDF. Por favor, intenta generar el reporte nuevamente.'
+        );
+      },
     });
   }
 
@@ -170,18 +196,19 @@ export class ReportsPageComponent implements OnInit, OnDestroy {
   clearFilters(): void {
     this.filterForm.reset({
       groupIds: this.groupIdsArray.controls.map(() => false),
-      limit: 100
+      stateId: '',
+      limit: 100,
     });
   }
 
   selectAllGroups(): void {
-    this.groupIdsArray.controls.forEach(control => {
+    this.groupIdsArray.controls.forEach((control) => {
       control.setValue(true);
     });
   }
 
   clearAllGroups(): void {
-    this.groupIdsArray.controls.forEach(control => {
+    this.groupIdsArray.controls.forEach((control) => {
       control.setValue(false);
     });
   }

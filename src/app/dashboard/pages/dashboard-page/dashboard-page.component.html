@@ -119,17 +119,9 @@
         </div>
       </div>
     </div>
-
-    <!-- Cuarta fila - Gráfico de Cortes de Fibra -->
-    <!-- <div class="bg-base-100 p-6 rounded-lg shadow hover:shadow-lg transition-shadow">
-      <h3 class="text-lg font-semibold mb-4 text-center">Cortes de Fibra por Estado</h3>
-      <div class="h-80">
-        <canvas id="fiberCutChart"></canvas>
-      </div>
-    </div> -->
     <!-- Cuarta fila - Gráfico de Cortes de Fibra DIVIDIDO CON LEYENDA -->
 <div class="bg-base-100 p-6 rounded-lg shadow hover:shadow-lg transition-shadow">
-  <h3 class="text-lg font-semibold mb-4 text-center">Cortes de Fibra por Estado</h3>
+  <h3 class="text-lg font-semibold mb-4 text-center">Primeros 5 estados con cortes de fibra óptica</h3>
 
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
@@ -156,10 +148,6 @@
             </span>
           </div>
         </div>
-        <!-- <div class="mt-3 pt-3 border-t border-base-300 text-center">
-          <span class="text-sm font-semibold text-base-700">Total: </span>
-          <span class="text-sm font-bold text-primary">{{totalFiberCuts}} cortes</span>
-        </div> -->
       </div>
     </div>
 
@@ -169,7 +157,7 @@
         <table class="table table-zebra table-sm w-full">
           <thead>
             <tr class="bg-base-300">
-              <th class="font-bold text-sm">Estado/Provincia</th>
+              <th class="font-bold text-sm">Estado</th>
               <th class="font-bold text-sm text-center">Cortes de Fibra</th>
             </tr>
           </thead>
@@ -184,24 +172,8 @@
               </td>
             </tr>
           </tbody>
-          <tfoot>
-            <tr class="bg-base-300 font-bold">
-              <td class="text-sm">Total</td>
-              <td class="text-center text-sm">{{totalFiberCuts}}</td>
-            </tr>
-          </tfoot>
         </table>
       </div>
-
-      <!-- Información adicional -->
-      <!-- <div class="">
-        <div class="flex items-center text-info">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <span class="text-sm font-medium">Total de tickets con corte de fibra: {{totalFiberCuts}}</span>
-        </div>
-      </div> -->
     </div>
   </div>
 </div>

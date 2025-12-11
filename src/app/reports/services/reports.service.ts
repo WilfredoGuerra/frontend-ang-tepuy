@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { map, Observable, of, tap } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
 export interface ReportFilter {
@@ -13,11 +13,28 @@ export interface ReportFilter {
   failureId?: number;
   definition_problem?: string;
   limit?: number;
+  stateId?: number | number[];
 }
 
 export interface FilterOption {
   id: number;
   name: string;
+}
+
+export interface State {
+  id: number;
+  state: string;
+  isActive: boolean;
+  createdDate: string;
+  updatedDate: string;
+  regionId: number;
+  region: {
+    id: number;
+    region: string;
+    isActive: boolean;
+    createdDate: string;
+    updatedDate: string;
+  };
 }
 
 @Injectable({
@@ -102,11 +119,37 @@ export class ReportsService {
       { id: 33, name: 'falsa alarma' },
       { id: 34, name: 'fan cooler' },
     ],
+    states: [] as FilterOption[],
   };
+
+  private statesLoaded = false;
 
   getFilterOptions(): any {
     return this.filterOptions;
   }
+
+loadStates(): Observable<FilterOption[]> {
+  if (this.statesLoaded && this.filterOptions.states.length > 0) {
+    return of(this.filterOptions.states);
+  }
+
+  // Usa la interfaz correcta para la respuesta del API
+  return this.http.get<any[]>(`${environment.baseUrl}/states`).pipe(
+    tap((states: any[]) => {
+      // Transformar la respuesta a FilterOption[]
+      this.filterOptions.states = states
+        .filter(state => state.isActive)
+        .map(state => ({
+          id: state.id,
+          name: state.state // ✅ "state" es el campo que viene del API
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+
+      this.statesLoaded = true;
+    }),
+    map(() => this.filterOptions.states) // Retorna FilterOption[]
+  );
+}
 
   generatePdfReport(filters: ReportFilter): Observable<Blob> {
     const options = {
@@ -155,6 +198,16 @@ export class ReportsService {
       params = params.set('limit', filters.limit.toString());
     }
 
+    if (filters.stateId) {
+      if (Array.isArray(filters.stateId)) {
+        filters.stateId.forEach((id) => {
+          params = params.append('stateId', id.toString());
+        });
+      } else {
+        params = params.set('stateId', filters.stateId.toString());
+      }
+    }
+
     return { params };
   }
 
@@ -165,7 +218,8 @@ export class ReportsService {
 
     const dateStr = new Date().toISOString().split('T')[0];
     const groupStr = filters.groupId ? `-grupo-${filters.groupId}` : '';
-    a.download = `reporte-tickets-${dateStr}${groupStr}.pdf`;
+    const stateStr = filters.stateId ? `-estado-${filters.stateId}` : '';
+    a.download = `reporte-tickets-${dateStr}${groupStr}${stateStr}.pdf`;
 
     document.body.appendChild(a);
     a.click();
