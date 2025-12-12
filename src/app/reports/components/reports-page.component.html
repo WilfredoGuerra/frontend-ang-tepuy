@@ -2,14 +2,14 @@
   <!-- Header -->
   <div class="flex justify-between items-center mb-6">
     <div class="font-montserrat">
-      <h1 class="text-2xl font-bold text-primary">Reportes de Tickets</h1>
-      <p class="text-base-content/70">Genera reportes personalizados en formato PDF</p>
+      <h1 class="font-bold text-accent text-xl">Reportes de Tickets</h1>
+      <p class="text-base-content/70 text-lg">Genera reportes personalizados en formato PDF</p>
     </div>
   </div>
 
   <!-- Panel de Filtros -->
   @if (showFilters) {
-  <div class="bg-base-100 rounded-lg shadow-lg p-4 mb-4 font-montserrat">
+  <div class="bg-base-100 rounded-lg shadow-lg p-4 mb-4">
     <div class="flex justify-between items-center mb-4">
       <h2 class="text-lg font-semibold">Filtros del Reporte</h2>
       <div class="flex gap-2">
@@ -160,7 +160,7 @@
 
       <!-- Botón Generar Reporte -->
       <div class="flex gap-4">
-        <button type="submit" class="btn btn-primary btn-sm text-xs" [disabled]="isLoading">
+        <button type="submit" class="btn btn-primary btn-sm text-xs font-semibold" [disabled]="isLoading">
           @if (isLoading) {
           <span class="loading loading-spinner"></span>
           Generando Reporte...
@@ -177,7 +177,7 @@
   @if (showPdf && pdfUrl) {
   <div class="bg-base-100 rounded-lg shadow-lg p-6">
     <div class="flex justify-between items-center mb-6">
-      <h2 class="text-xl font-semibold">Reporte Generado</h2>
+      <h2 class="text-xl font-semibold text-accent font-montserrat">Reporte Generado</h2>
       <div class="flex gap-2">
         <button class="btn btn-secondary" (click)="downloadPdf()">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"

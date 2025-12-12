@@ -1,8 +1,8 @@
 <!-- fiber-lengths.component.html -->
-<div class="container mx-auto p-4 font-montserrat">
+<div class="container mx-auto p-4">
   <!-- Header -->
   <div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-bold text-primary">Tramos de Fibra</h1>
+    <h1 class="text-xl font-bold text-accent font-montserrat">Tramos de Fibra</h1>
     @if (authService.user()?.roles?.includes('super_user')) {
     <button class="btn btn-primary" (click)="openCreateModal()">
       Nuevo Tramo de fibra

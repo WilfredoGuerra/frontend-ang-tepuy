@@ -3,12 +3,12 @@
   <!-- Header -->
   <div class="flex justify-between items-center mb-4">
     <div class="text-center">
-      <p class="text-secondary mt-1 font-montserrat font-semibold">Estadísticas y métricas del módulo de tickets</p>
+      <p class="text-accent mt-1 font-montserrat font-semibold">Estadísticas y métricas del módulo de tickets</p>
     </div>
   </div>
 
   <!-- Cards de Estadísticas -->
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 font-montserrat">
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
     <div class="stats shadow bg-base-100 hover:shadow-md transition-shadow">
       <div class="stat">
         <div class="stat-figure text-primary">
@@ -18,7 +18,7 @@
           </svg>
         </div>
         <div class="stat-title">Total Tickets</div>
-        <div class="stat-value text-primary">{{stats.totalTickets || 0}}</div>
+        <div class="stat-value text-primary font-semibold">{{stats.totalTickets || 0}}</div>
         <div class="stat-desc">Todos los tickets</div>
       </div>
     </div>
@@ -32,7 +32,7 @@
           </svg>
         </div>
         <div class="stat-title">Tickets En proceso</div>
-        <div class="stat-value text-warning">{{ticketsByStatus['en proceso'] || 0}}</div>
+        <div class="stat-value text-warning font-semibold">{{ticketsByStatus['en proceso'] || 0}}</div>
         <div class="stat-desc">{{stats.openPercentage || 0}}% del total</div>
       </div>
     </div>
@@ -46,7 +46,7 @@
           </svg>
         </div>
         <div class="stat-title">Tickets Resueltos</div>
-        <div class="stat-value text-success">{{stats.resolvedTickets || 0}}</div>
+        <div class="stat-value text-success font-semibold">{{stats.resolvedTickets || 0}}</div>
         <div class="stat-desc">{{stats.resolvedPercentage || 0}}% del total</div>
       </div>
     </div>
@@ -59,14 +59,14 @@
           </svg>
         </div>
         <div class="stat-title">Tickets cancelados</div>
-        <div class="stat-value text-error">{{ticketsByStatus['cancelado'] || 0}}</div>
+        <div class="stat-value text-error font-semibold">{{ticketsByStatus['cancelado'] || 0}}</div>
         <div class="stat-desc">% del total</div>
       </div>
     </div>
   </div>
 
   <!-- Sección de Gráficos -->
-  <div class="mb-6 font-montserrat">
+  <div class="mb-6">
     <h2 class="text-2xl font-bold mb-6 text-center font-montserrat">Métricas Principales</h2>
 
     <!-- Primera fila de gráficos -->

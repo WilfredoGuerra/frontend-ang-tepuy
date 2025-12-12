@@ -1,8 +1,8 @@
-<div class="overflow-x-auto my-4 font-montserrat">
+<div class="overflow-x-auto my-4">
   <table class="table table-zebra">
     <!-- head -->
     <thead>
-      <tr class="">
+      <tr class="text-primary">
         <!-- <th>
           <label>
             <input type="checkbox" class="checkbox" />
@@ -27,7 +27,7 @@
         <td>
           <div class="flex items-center gap-3">
             <div>
-              <a class="font-bold uppercase">{{ tick.nro_ticket }}</a>
+              <a class="font-bold uppercase" [routerLink]="['/tickets/tickets/by/', tick.id_ticket]">{{ tick.nro_ticket }}</a>
               <div class="text-sm opacity-50">{{ tick.form_open_date | date : "d/M/yyyy, hh:mm a"}} </div>
             </div>
           </div>

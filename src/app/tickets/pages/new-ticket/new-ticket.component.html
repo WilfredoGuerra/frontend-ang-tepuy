@@ -1,9 +1,9 @@
-<div class="flex items-center gap-2 ml-8 font-montserrat mb-4">
-  <h3 class="text-lg font-semibold">Crear nuevo reporte:</h3>
+<div class="flex items-center gap-2 ml-8 mb-4">
+  <h3 class="text-xl font-semibold font-montserrat text-accent">Crear nuevo reporte:</h3>
   @if (generatedTicketNumber()) {
   <p class="text-accent font-bold text-xl">{{ generatedTicketNumber() }}</p>
   } @else {
-  <p class="text-gray-500">Número se generará automáticamente</p>
+  <p class="text-gray-500">Número de ticket se genera automáticamente</p>
   }
 </div>
 
