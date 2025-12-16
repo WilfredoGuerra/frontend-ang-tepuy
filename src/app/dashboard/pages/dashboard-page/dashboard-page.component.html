@@ -60,7 +60,7 @@
         </div>
         <div class="stat-title">Tickets cancelados</div>
         <div class="stat-value text-error font-semibold">{{ticketsByStatus['cancelado'] || 0}}</div>
-        <div class="stat-desc">% del total</div>
+        <div class="stat-desc">{{stats.canceledPercentage || 0}}% del total</div>
       </div>
     </div>
   </div>
@@ -69,36 +69,116 @@
   <div class="mb-6">
     <h2 class="text-2xl font-bold mb-6 text-center font-montserrat">Métricas Principales</h2>
 
-    <!-- Primera fila de gráficos -->
+    <!-- Primera fila de gráficos - CON TÍTULOS Y VALORES -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
       <div class="bg-base-100 p-6 rounded-lg shadow hover:shadow-lg transition-shadow">
-        <!-- <h3 class="text-lg font-semibold mb-4 text-center">Tickets por Grupo</h3> -->
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-semibold">Tickets por Grupo</h3>
+          <div class="badge badge-primary badge-lg font-bold">
+            {{getTotalValue(ticketsByGroup)}} total
+          </div>
+        </div>
         <div class="h-80">
           <canvas id="groupChart"></canvas>
+        </div>
+        <!-- Leyenda con valores -->
+        <div class="mt-4 grid grid-cols-2 gap-2">
+          <div *ngFor="let group of getKeys(ticketsByGroup) | slice:0:6"
+            class="flex items-center justify-between p-2 bg-base-200 rounded">
+            <div class="flex items-center">
+              <div class="w-3 h-3 rounded-full mr-2" [style.background-color]="getChartColorForGroup(group)"></div>
+              <span class="text-sm truncate">{{group || 'Sin grupo'}}</span>
+            </div>
+            <span class="font-bold text-primary ml-2">{{ticketsByGroup[group] || 0}}</span>
+          </div>
         </div>
       </div>
 
       <div class="bg-base-100 p-6 rounded-lg shadow hover:shadow-lg transition-shadow">
-        <!-- <h3 class="text-lg font-semibold mb-4 text-center">Tickets por Plataforma</h3> -->
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-semibold">Tickets por Plataforma</h3>
+          <div class="badge badge-secondary badge-lg font-bold">
+            {{getTotalValue(ticketsByPlatform)}} total
+          </div>
+        </div>
         <div class="h-80">
           <canvas id="platformChart"></canvas>
+        </div>
+        <!-- Leyenda con valores -->
+        <div class="mt-4 grid grid-cols-2 gap-2">
+          <div *ngFor="let platform of getKeys(ticketsByPlatform) | slice:0:6"
+            class="flex items-center justify-between p-2 bg-base-200 rounded">
+            <div class="flex items-center">
+              <div class="w-3 h-3 rounded-full mr-2" [style.background-color]="getChartColorForPlatform(platform)">
+              </div>
+              <span class="text-sm truncate">{{platform || 'Sin plataforma'}}</span>
+            </div>
+            <span class="font-bold text-secondary ml-2">{{ticketsByPlatform[platform] || 0}}</span>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Segunda fila de gráficos -->
+    <!-- Segunda fila de gráficos - CON MEJORAS VISUALES -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
       <div class="bg-base-100 p-6 rounded-lg shadow hover:shadow-lg transition-shadow">
-        <h3 class="text-lg font-semibold mb-4 text-center">Tickets por Severidad</h3>
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-semibold">Tickets por Severidad</h3>
+          <div class="badge badge-warning badge-lg font-bold">
+            {{getTotalValue(ticketsBySeverity)}} total
+          </div>
+        </div>
         <div class="h-80">
           <canvas id="severityChart"></canvas>
+        </div>
+        <!-- Leyenda de severidad con colores temáticos -->
+        <div class="mt-4 flex flex-wrap gap-2 justify-center">
+          <div *ngFor="let severity of getKeys(ticketsBySeverity)" class="flex items-center px-3 py-1 rounded-full"
+            [ngClass]="{
+                 'bg-red-100 text-red-800 border border-red-200': severity.toLowerCase().includes('alta'),
+                 'bg-orange-100 text-orange-800 border border-orange-200': severity.toLowerCase().includes('media'),
+                 'bg-yellow-100 text-yellow-800 border border-yellow-200': severity.toLowerCase().includes('baja'),
+                 '': !severity.toLowerCase().includes('alta') && !severity.toLowerCase().includes('media') && !severity.toLowerCase().includes('baja')
+               }">
+            <div class="w-3 h-3 rounded-full mr-2" [style.background-color]="getSeverityColor(severity)"></div>
+            <span class="text-sm font-medium">{{severity}}</span>
+            <span class="ml-2 font-bold">{{ticketsBySeverity[severity] || 0}}</span>
+          </div>
         </div>
       </div>
 
       <div class="bg-base-100 p-6 rounded-lg shadow hover:shadow-lg transition-shadow">
-        <h3 class="text-lg font-semibold mb-4 text-center">Tickets por Estatus</h3>
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-semibold">Tickets por Estatus</h3>
+          <div class="badge badge-info badge-lg font-bold">
+            {{getTotalValue(ticketsByStatus)}} total
+          </div>
+        </div>
         <div class="h-80">
           <canvas id="statusChart"></canvas>
+        </div>
+        <!-- Leyenda de estatus con iconos -->
+        <div class="mt-4 grid grid-cols-2 gap-2">
+          <div *ngFor="let status of getKeys(ticketsByStatus)" class="flex items-center justify-between p-2 rounded"
+            [ngClass]="{
+                 '': status.toLowerCase().includes('resuelto'),
+                 '': status.toLowerCase().includes('proceso'),
+                 '': status.toLowerCase().includes('cancelado'),
+                 'bg-gray-50 border border-gray-200': !status.toLowerCase().includes('resuelto') && !status.toLowerCase().includes('proceso') && !status.toLowerCase().includes('cancelado')
+               }">
+            <div class="flex items-center">
+              <div class="w-3 h-3 rounded-full mr-2" [style.background-color]="getStatusColor(status)"></div>
+              <span class="text-sm font-medium capitalize">{{status}}</span>
+            </div>
+            <span class="font-bold" [ngClass]="{
+                    'text-green-600': status.toLowerCase().includes('resuelto'),
+                    'text-blue-600': status.toLowerCase().includes('proceso'),
+                    'text-red-600': status.toLowerCase().includes('cancelado'),
+                    'text-gray-600': !status.toLowerCase().includes('resuelto') && !status.toLowerCase().includes('proceso') && !status.toLowerCase().includes('cancelado')
+                  }">
+              {{ticketsByStatus[status] || 0}}
+            </span>
+          </div>
         </div>
       </div>
     </div>
@@ -106,77 +186,180 @@
     <!-- Tercera fila de gráficos -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
       <div class="bg-base-100 p-6 rounded-lg shadow hover:shadow-lg transition-shadow">
-        <!-- <h3 class="text-lg font-semibold mb-4 text-center">Tickets por Origen</h3> -->
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-semibold">Tickets por Origen</h3>
+          <div class="badge badge-success badge-lg font-bold">
+            {{getTotalValue(ticketsByOrigin)}} total
+          </div>
+        </div>
         <div class="h-80">
           <canvas id="originChart"></canvas>
+        </div>
+        <!-- Mini tabla de valores -->
+        <div class="mt-4">
+          <div class="overflow-x-auto">
+            <table class="table table-xs table-zebra">
+              <tbody>
+                <tr *ngFor="let origin of getKeys(ticketsByOrigin)">
+                  <td class="font-medium">{{origin || 'Sin origen'}}</td>
+                  <td class="text-right font-bold">{{ticketsByOrigin[origin] || 0}}</td>
+                  <td class="text-right text-sm">
+                    {{getPercentage(ticketsByOrigin[origin], getTotalValue(ticketsByOrigin))}}%
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
       <div class="bg-base-100 p-6 rounded-lg shadow hover:shadow-lg transition-shadow">
-        <!-- <h3 class="text-lg font-semibold mb-4 text-center">Tickets por Tipo de Falla</h3> -->
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-semibold">Tickets por Tipo de Falla (Top 5)</h3>
+          <div class="flex items-center space-x-2">
+            <div class="badge badge-error badge-lg font-bold">
+              {{getTotalValue(ticketsByFailure)}} total
+            </div>
+            <div class="badge badge-outline badge-error">
+              {{getKeys(ticketsByFailure).length}} tipos
+            </div>
+          </div>
+        </div>
         <div class="h-80">
           <canvas id="failureChart"></canvas>
         </div>
-      </div>
-    </div>
-    <!-- Cuarta fila - Gráfico de Cortes de Fibra DIVIDIDO CON LEYENDA -->
-<div class="bg-base-100 p-6 rounded-lg shadow hover:shadow-lg transition-shadow">
-  <h3 class="text-lg font-semibold mb-4 text-center">Primeros 5 estados con cortes de fibra óptica</h3>
 
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Top 5 Fallas con barra de progreso -->
+        <div class="mt-6 space-y-3">
+          <div *ngFor="let failure of getKeys(getTopEntries(ticketsByFailure, 5)); let i = index" class="space-y-1">
+            <div class="flex justify-between items-center">
+              <div class="flex items-center">
+                <div class="w-3 h-3 rounded-full mr-2" [style.background-color]="getChartColor(i)"></div>
+                <span class="font-medium text-sm">{{failure || 'Sin tipo'}}</span>
+              </div>
+              <div class="flex items-center space-x-3">
+                <span class="font-bold text-error">{{ticketsByFailure[failure] || 0}}</span>
+                <span class="text-xs text-base-500">
+                  ({{getPercentage(ticketsByFailure[failure], getTotalValue(ticketsByFailure))}}%)
+                </span>
+              </div>
+            </div>
+            <div class="w-full bg-base-300 rounded-full h-2">
+              <div class="bg-error h-2 rounded-full transition-all duration-500"
+                [style.width]="getPercentage(ticketsByFailure[failure], getTotalValue(ticketsByFailure)) + '%'">
+              </div>
+            </div>
+          </div>
+        </div>
 
-    <!-- Lado izquierdo: Gráfica con leyenda -->
-    <div class="flex flex-col">
-      <!-- Gráfico (un poco más pequeño para dar espacio a la leyenda) -->
-      <div class="h-72">
-        <canvas id="fiberCutChart"></canvas>
-      </div>
-
-      <!-- Leyenda personalizada -->
-      <div class="mt-4 p-4 bg-base-200 rounded-lg border border-base-300">
-        <!-- <h4 class="text-sm font-semibold mb-3 text-center text-base-700">Estados - Cortes de Fibra</h4> -->
-        <div class="flex flex-wrap justify-center gap-3">
-          <div *ngFor="let state of fiberCutStates; let i = index"
-               class="flex items-center bg-base-100 px-3 py-2 rounded-lg shadow-sm border border-base-300">
-            <div class="w-3 h-3 rounded-full mr-2 border border-white shadow"
-                 [style.background-color]="getChartColor(i)"></div>
-            <span class="text-xs font-medium capitalize text-base-700">
-              {{state.state}}
-            </span>
-            <span class="text-xs font-bold text-primary ml-2">
-              ({{state.count}})
+        <!-- Resumen de otros tipos -->
+        <div *ngIf="getKeys(ticketsByFailure).length > 5" class="mt-4 p-3 bg-base-200 rounded-lg">
+          <div class="flex justify-between items-center">
+            <span class="text-sm font-medium">Otros {{getKeys(ticketsByFailure).length - 5}} tipos</span>
+            <span class="text-sm font-bold text-error">
+              {{getTotalValue(ticketsByFailure) - getTotalValue(getTopEntries(ticketsByFailure, 5))}} tickets
             </span>
           </div>
         </div>
       </div>
+
+      <!-- <div class="bg-base-100 p-6 rounded-lg shadow hover:shadow-lg transition-shadow">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-semibold">Tickets por Tipo de Falla</h3>
+          <div class="badge badge-error badge-lg font-bold">
+            {{getTotalValue(ticketsByFailure)}} total
+          </div>
+        </div>
+        <div class="h-80">
+          <canvas id="failureChart"></canvas>
+        </div>
+
+        <div class="mt-4 space-y-2">
+          <div *ngFor="let failure of getKeys(ticketsByFailure)" class="space-y-1">
+            <div class="flex justify-between text-sm">
+              <span class="truncate font-medium">{{failure || 'Sin tipo'}}</span>
+              <span class="font-bold">{{ticketsByFailure[failure] || 0}}</span>
+            </div>
+            <div class="w-full bg-base-300 rounded-full h-2">
+              <div class="bg-primary h-2 rounded-full"
+                [style.width]="getPercentage(ticketsByFailure[failure], getTotalValue(ticketsByFailure)) + '%'">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div> -->
     </div>
 
-    <!-- Lado derecho: Tabla -->
-    <div class="flex flex-col">
-      <div class="overflow-x-auto flex-1 mt-15">
-        <table class="table table-zebra table-sm w-full">
-          <thead>
-            <tr class="bg-base-300">
-              <th class="font-bold text-sm">Estado</th>
-              <th class="font-bold text-sm text-center">Cortes de Fibra</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let state of fiberCutStates" class="hover:bg-base-200 transition-colors">
-              <td class="font-medium capitalize">{{state.state}}</td>
-              <td class="text-center font-semibold">{{state.count}}</td>
-            </tr>
-            <tr *ngIf="fiberCutStates.length === 0">
-              <td colspan="2" class="text-center text-gray-500 py-4">
-                No hay datos de cortes de fibra
-              </td>
-            </tr>
-          </tbody>
-        </table>
+    <!-- Cuarta fila - Gráfico de Cortes de Fibra (MANTENIDO) -->
+    <div class="bg-base-100 p-6 rounded-lg shadow hover:shadow-lg transition-shadow">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold">Primeros 5 estados con cortes de fibra óptica</h3>
+        <div class="badge badge-accent badge-lg font-bold">
+          {{totalFiberCuts}} total
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Lado izquierdo: Gráfica con leyenda -->
+        <div class="flex flex-col">
+          <div class="h-72">
+            <canvas id="fiberCutChart"></canvas>
+          </div>
+
+          <!-- Leyenda personalizada mejorada -->
+          <div *ngFor="let state of fiberCutStates; let i = index"
+            class="flex items-center bg-base-100 px-3 py-2 rounded-lg shadow-sm border border-base-300 hover:shadow transition-shadow">
+            <div class="w-3 h-3 rounded-full mr-2 border border-white shadow"
+              [style.background-color]="getChartColor(i)"></div>
+            <span class="text-xs font-medium capitalize text-base-700 truncate max-w-[100px]">
+              {{state.state}}
+            </span>
+            <span class="text-xs font-bold text-primary ml-2">
+              {{state.count}}
+            </span>
+            <span class="text-xs text-base-500 ml-1">
+              ({{getPercentage(state.count, totalFiberCuts)}}%)
+            </span>
+          </div>
+        </div>
+
+        <!-- Lado derecho: Tabla mejorada -->
+        <div class="flex flex-col">
+          <div class="overflow-x-auto flex-1">
+            <table class="table table-zebra w-full">
+              <thead>
+                <tr class="bg-base-300">
+                  <th class="font-bold">Estado</th>
+                  <th class="font-bold text-center">Cortes</th>
+                  <th class="font-bold text-center">% Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let state of fiberCutStates; let i = index" class="hover:bg-base-200 transition-colors">
+                  <td class="font-medium capitalize">
+                    <div class="flex items-center">
+                      <div class="w-2 h-2 rounded-full mr-2" [style.background-color]="getChartColor(i)"></div>
+                      {{state.state}}
+                    </div>
+                  </td>
+                  <td class="text-center font-bold text-lg">{{state.count}}</td>
+                  <td class="text-center">
+                    <div class="badge badge-outline badge-accent font-bold">
+                      {{getPercentage(state.count, totalFiberCuts)}}%
+                    </div>
+                  </td>
+                </tr>
+                <tr *ngIf="fiberCutStates.length === 0">
+                  <td colspan="3" class="text-center text-gray-500 py-4">
+                    No hay datos de cortes de fibra
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-</div>
   </div>
 </div>
 
