@@ -39,18 +39,31 @@ export class ProgressTicketService {
       );
   }
 
+  // getProgressTicketsByTicketId(ticketId: number): Observable<ProgressTicket[]> {
+  //   return this.http
+  //     .get<ProgressTicket[]>(`${baseUrl}/progress-ticket/ticket/${ticketId}`, {
+  //       params: { include: 'user,assignedUser,personal_region' } // Incluir relaciones
+  //     })
+  //     .pipe(
+  //       catchError((error) => {
+  //         console.error('Error searching progress tickets by ticketId', error);
+  //         return of([] as ProgressTicket[]);
+  //       })
+  //     );
+  // }
+
   getProgressTicketsByTicketId(ticketId: number): Observable<ProgressTicket[]> {
-    return this.http
-      .get<ProgressTicket[]>(`${baseUrl}/progress-ticket/ticket/${ticketId}`, {
-        params: { include: 'user,assignedUser,personal_region' } // Incluir relaciones
+  return this.http
+    .get<ProgressTicket[]>(`${baseUrl}/progress-ticket/ticket/${ticketId}`, {
+      params: { include: 'basic' } // 🔥 NUEVO: Especificar que queremos la versión básica
+    })
+    .pipe(
+      catchError((error) => {
+        console.error('Error searching progress tickets by ticketId', error);
+        return of([] as ProgressTicket[]);
       })
-      .pipe(
-        catchError((error) => {
-          console.error('Error searching progress tickets by ticketId', error);
-          return of([] as ProgressTicket[]);
-        })
-      );
-  }
+    );
+}
 
   createProgressTicket(progressLike: Partial<ProgressTicket>, imageFileList?: FileList): Observable<ProgressTicket> {
     return this.uploadImages(imageFileList).pipe(

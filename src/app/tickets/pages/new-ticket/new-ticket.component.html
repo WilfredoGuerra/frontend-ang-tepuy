@@ -613,9 +613,10 @@
 
         <!-- Contenedor principal de la tabla -->
         <div class="border border-base-300 rounded-lg overflow-hidden">
-          <!-- Encabezado de tabla fijo -->
-          <div class="overflow-x-auto">
-            <table class="table table-sm w-full mb-0">
+          <!-- Contenedor único con scroll -->
+          <div class="overflow-x-auto overflow-y-auto max-h-96">
+            <table class="table table-zebra table-sm w-full table-pin-rows">
+              <!-- El encabezado ahora está dentro de la misma tabla -->
               <thead class="bg-base-200">
                 <tr>
                   <th class="w-12">Sel.</th>
@@ -626,32 +627,25 @@
                   <th>Estado B</th>
                 </tr>
               </thead>
+              <tbody>
+                @for (fiber of allFiberLengths(); track fiber.id) {
+                <tr class="cursor-pointer hover:bg-base-200" (click)="selectFiberLength(fiber)">
+                  <th class="w-12"> <!-- Cambiado a 'th' para mantener consistencia con el encabezado de DaisyUI -->
+                    <input type="radio" name="fiberLength" class="radio radio-primary radio-sm"
+                      [checked]="isFiberLengthSelected(fiber)" (change)="selectFiberLength(fiber)" />
+                  </th>
+                  <td class="capitalize">{{ fiber.section_name }}</td>
+                  <td class="capitalize">{{ fiber.locality_a }}</td>
+                  <td class="capitalize">{{ fiber.locality_b }}</td>
+                  <td class="capitalize">{{ fiber.stateA.state }}</td>
+                  <td class="capitalize">{{ fiber.stateB.state }}</td>
+                </tr>
+                }
+              </tbody>
             </table>
           </div>
-
-          <!-- Cuerpo de tabla con scroll -->
-          <div class="overflow-y-auto max-h-96">
-            <div class="overflow-x-auto">
-              <table class="table table-zebra table-sm w-full">
-                <tbody>
-                  @for (fiber of allFiberLengths(); track fiber.id) {
-                  <tr class="cursor-pointer hover:bg-base-200" (click)="selectFiberLength(fiber)">
-                    <td class="w-12">
-                      <input type="radio" name="fiberLength" class="radio radio-primary radio-sm"
-                        [checked]="isFiberLengthSelected(fiber)" (change)="selectFiberLength(fiber)" />
-                    </td>
-                    <td class="capitalize">{{ fiber.section_name }}</td>
-                    <td class="capitalize">{{ fiber.locality_a }}</td>
-                    <td class="capitalize">{{ fiber.locality_b }}</td>
-                    <td class="capitalize">{{ fiber.stateA.state }}</td>
-                    <td class="capitalize">{{ fiber.stateB.state }}</td>
-                  </tr>
-                  }
-                </tbody>
-              </table>
-            </div>
-          </div>
         </div>
+
 
         <!-- Paginación solo para modo "all" -->
         @if (fiberSearchMode() === 'all' && fiberTotalPages() > 1) {
