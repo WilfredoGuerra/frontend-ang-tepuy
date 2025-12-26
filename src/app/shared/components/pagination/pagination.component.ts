@@ -1,4 +1,11 @@
-import { Component, computed, input, linkedSignal, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  input,
+  linkedSignal,
+  signal,
+  output,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 @Component({
@@ -9,8 +16,14 @@ import { RouterLink } from '@angular/router';
 export class PaginationComponent {
   pages = input(0);
   currentPage = input<number>(1);
+  pageChange = output<number>();
 
   activePage = linkedSignal(this.currentPage);
+
+  private emitPageChange(page: number): void {
+    this.activePage.set(page);
+    this.pageChange.emit(page);
+  }
 
   // Determina si mostrar puntos suspensivos iniciales
   showInitialEllipsis = computed(() => {

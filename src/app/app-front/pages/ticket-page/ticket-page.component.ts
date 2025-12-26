@@ -2,9 +2,8 @@ import {
   CommonModule,
   DatePipe,
   Location,
-  TitleCasePipe,
 } from '@angular/common';
-import { Component, inject, signal, effect, computed } from '@angular/core';
+import { Component, inject, signal, effect, computed, OnDestroy } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import {
   FormBuilder,
@@ -29,7 +28,6 @@ import { SeveritiesService } from '@features/severities/services/severities.serv
 import { Ticket } from '@tickets/interfaces/ticket.interface';
 import { TicketsService } from '@tickets/services/tickets.service';
 import Swal from 'sweetalert2';
-import { CreateClosureDto } from '@features/closures/interfaces/closure.interface';
 import { IncidentsService } from '@features/incidents/services/incidents.service';
 import { IncidentsDetailsService } from '@features/incidents-details/services/incidents-details.service';
 import { TicketImagePipe } from '@app-front/pipes/ticket-image.pipe';
@@ -37,12 +35,19 @@ import { environment } from 'src/environments/environment';
 import { StatesService } from '@features/states/services/states.service';
 import { GroupsEscalatoryService } from '@features/group-escalatory/services/groups-escalatory.service';
 import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
+import { ProgressPaginationComponent } from '@shared/components/progress-pagination/progress-pagination.component';
 
 const baseUrl = environment.baseUrl;
 
 @Component({
   selector: 'app-ticket-page',
-  imports: [DatePipe, ReactiveFormsModule, CommonModule, TicketImagePipe],
+  imports: [
+    DatePipe,
+    ReactiveFormsModule,
+    CommonModule,
+    TicketImagePipe,
+    ProgressPaginationComponent,
+  ],
   templateUrl: './ticket-page.component.html',
   styles: `
     .ticket-content {
@@ -89,24 +94,23 @@ const baseUrl = environment.baseUrl;
       padding: 0.25rem 0.5rem;
     }
 
-      @keyframes fade-in-up {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
+    @keyframes fade-in-up {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
 
-  .animate-fade-in-up {
-    animation: fade-in-up 0.3s ease-out;
-  }
+    .animate-fade-in-up {
+      animation: fade-in-up 0.3s ease-out;
+    }
   `,
 })
-export class TicketPageComponent {
-  // Servicios
+export class TicketPageComponent implements OnDestroy {
   private activatedRoute = inject(ActivatedRoute);
   private ticketsService = inject(TicketsService);
   private progressTicketService = inject(ProgressTicketService);
@@ -114,7 +118,6 @@ export class TicketPageComponent {
   private fb = inject(FormBuilder);
   private location = inject(Location);
 
-  // Servicios de datos
   private groupsService = inject(GroupsService);
   private originsService = inject(OriginsService);
   private severitiesService = inject(SeveritiesService);
@@ -129,16 +132,13 @@ export class TicketPageComponent {
   private statesService = inject(StatesService);
   private groupsEscalatoryService = inject(GroupsEscalatoryService);
 
-  // IDs y estados
   ticketId = +this.activatedRoute.snapshot.params['id'];
   showModal = signal(false);
   isSubmitting = signal(false);
   isSubmittingClosure = signal(false);
   selectedFiles = signal<File[]>([]);
   selectedElementType = signal<'network' | 'fiber'>('network');
-  // selectedElement = signal<any>(null);
   showNetworkElementModal = signal(false);
-  selectedClosureNetworkElement = signal<any>(null);
   selectedClosureElementType = signal<'network' | 'fiber' | null>(null);
   selectedClosureFiberElement = signal<any>(null);
   showFiberElementModal = signal(false);
@@ -147,7 +147,6 @@ export class TicketPageComponent {
   dateTimeAlertMessage = signal('');
   private alertTimeout: any = null;
 
-  // Búsqueda y datos
   searchNetworkQuery = signal('');
   searchFiberQuery = signal('');
   searchUserQuery = signal('');
@@ -161,15 +160,15 @@ export class TicketPageComponent {
   selectedNetworkElements = signal<any[]>([]);
   selectedFiberElement = signal<any>(null);
 
-  searchFiberModalQuery = signal(''); // Para modal de nueva documentación
-  searchFiberClosureQuery = signal(''); // Para modal de cierre
+  searchFiberModalQuery = signal('');
+  searchFiberClosureQuery = signal('');
 
-  selectedClosureNetworkElements = signal<any[]>([]); // Para Elemento Afectado (solo lectura)
-  selectedClosureNetworkElementsClosure = signal<any[]>([]); // Para Elemento de Cierre (editable)
+  selectedClosureNetworkElements = signal<any[]>([]);
+  selectedClosureNetworkElementsClosure = signal<any[]>([]);
 
   isGeneratingPdf = signal(false);
+  currentPage = signal(1);
 
-  // Señales para el modal de selección de responsables
   showPersonalsModal = signal(false);
   selectedPersonal = signal<any>(null);
   personalsSearch = signal('');
@@ -184,7 +183,6 @@ export class TicketPageComponent {
   nameSearch = signal('');
   surnameSearch = signal('');
 
-  // Listas para filtros
   statesList: any[] = [];
   groupsList: any[] = [];
 
@@ -194,7 +192,6 @@ export class TicketPageComponent {
     }`;
   });
 
-  // Formularios
   progressForm = this.fb.group({
     ticketId: [this.ticketId, Validators.required],
     statusId: [null as number | null, [Validators.required, Validators.min(1)]],
@@ -234,26 +231,31 @@ export class TicketPageComponent {
     impacto_intercon: [0, [Validators.required, Validators.min(0)]],
     action_taken: ['', [Validators.required, Validators.minLength(10)]],
     groupId: [null as number | null, Validators.required],
-    networkElementIds: this.fb.control<number[]>([]), // Para elemento afectado (solo lectura)
-    networkElementClosureIds: this.fb.control<number[]>([]), // Para elemento de cierre (editable)
+    networkElementIds: this.fb.control<number[]>([]),
+    networkElementClosureIds: this.fb.control<number[]>([]),
     fiberLengthId: [null as number | null],
     incidentId: [null as number | null, Validators.required],
     incidentDetailId: [null as number | null, Validators.required],
   });
 
-  // Resources principales
   ticketResource = rxResource({
     params: () => ({ id: this.ticketId }),
     stream: ({ params }) => this.ticketsService.getTicketById(params.id),
   });
 
   progressTicketsResource = rxResource({
-    params: () => ({ ticketId: this.ticketId }),
+    params: () => ({
+      ticketId: this.ticketId,
+      page: this.currentPage(),
+      limit: 3,
+    }),
     stream: ({ params }) =>
-      this.progressTicketService.getProgressTicketsByTicketId(params.ticketId),
+      this.progressTicketService.getProgressTicketsByTicketId(
+        params.ticketId,
+        { page: params.page, limit: params.limit }
+      ),
   });
 
-  // Resources para datos de selección
   groupsResource = rxResource({ stream: () => this.groupsService.getGroups() });
   originsResource = rxResource({
     stream: () => this.originsService.getOrigins(),
@@ -287,6 +289,11 @@ export class TicketPageComponent {
   incidentDetailsResource = rxResource({
     stream: () => this.incidentDetailsService.getIncidentsDetails(),
   });
+
+  changeProgressPage(page: number): void {
+    this.currentPage.set(page);
+    this.progressTicketsResource.reload();
+  }
 
   constructor() {
     effect(() => {
@@ -351,34 +358,19 @@ export class TicketPageComponent {
   }
 
   ngOnDestroy() {
-    // Limpiar el timeout del alert
     if (this.alertTimeout) {
       clearTimeout(this.alertTimeout);
     }
   }
 
-  // onGroupChangeInProgressForm(groupId: number | null): void {
-  //   if (!groupId || groupId === 0) {
-  //     // Si no hay grupo seleccionado, mostrar todas las plataformas
-  //     const allPlatforms = this.platformsResource.value() || [];
-  //     this.filteredPlatforms.set(allPlatforms);
-  //     return;
-  //   }
-
-  //   // Filtrar plataformas para el grupo seleccionado
-  //   this.filterPlatformsByGroup(groupId);
-  // }
-
   onGroupChangeInProgressForm(groupId: number | null): void {
     if (!groupId || groupId === 0) {
-      // Si no hay grupo seleccionado, mostrar todas las plataformas y fallas
       const allPlatforms = this.platformsResource.value() || [];
       this.filteredPlatforms.set(allPlatforms);
 
       const allFailures = this.failuresResource.value() || [];
       this.filteredFailures.set(allFailures);
 
-      // ✅ NUEVO: Resetear los selects de plataforma y falla
       this.progressForm.patchValue({
         platformId: null,
         failureId: null,
@@ -386,13 +378,9 @@ export class TicketPageComponent {
       return;
     }
 
-    // Filtrar plataformas para el grupo seleccionado
     this.filterPlatformsByGroup(groupId);
-
-    // Filtrar fallas por grupo
     this.loadFailuresByGroup(groupId);
 
-    // ✅ NUEVO: Resetear los selects de plataforma y falla cuando se cambia de grupo
     this.progressForm.patchValue({
       platformId: null,
       failureId: null,
@@ -404,7 +392,6 @@ export class TicketPageComponent {
       next: (failures) => {
         this.filteredFailures.set(failures || []);
 
-        // Resetear la falla seleccionada si no está en las nuevas opciones
         const currentFailureId = this.progressForm.get('failureId')?.value;
         if (currentFailureId && currentFailureId !== 0) {
           const currentFailureValid = failures?.some(
@@ -453,7 +440,6 @@ export class TicketPageComponent {
   }
 
   private showDateTimeError(message: string): void {
-    // Limpiar timeout anterior si existe
     if (this.alertTimeout) {
       clearTimeout(this.alertTimeout);
     }
@@ -461,7 +447,6 @@ export class TicketPageComponent {
     this.dateTimeAlertMessage.set(message);
     this.showDateTimeAlert.set(true);
 
-    // Ocultar automáticamente después de 3 segundos
     this.alertTimeout = setTimeout(() => {
       this.showDateTimeAlert.set(false);
     }, 5000);
@@ -481,7 +466,6 @@ export class TicketPageComponent {
     const dateHrsValue = this.closureForm.get('date_hrs')?.value;
     const dateHffValue = this.closureForm.get('date_hff')?.value;
 
-    // ✅ VERIFICAR QUE LOS CAMPOS NO ESTÉN VACÍOS
     if (!dateHllsValue || !dateHirValue || !dateHrsValue || !dateHffValue) {
       this.showDateTimeError('Todos los campos de fecha/hora son requeridos');
       return false;
@@ -493,7 +477,6 @@ export class TicketPageComponent {
     const dateHrs = new Date(dateHrsValue);
     const dateHff = new Date(dateHffValue);
 
-    // Validación 1: HLLS debe ser mayor o igual a HCT
     if (dateHlls && dateHlls < dateHct) {
       this.showDateTimeError(
         'La hora de llegada al sitio no puede ser anterior a la hora de contacto técnico'
@@ -501,7 +484,6 @@ export class TicketPageComponent {
       return false;
     }
 
-    // Validación 2: HIR debe ser mayor o igual a HLLS
     if (dateHir && dateHlls && dateHir < dateHlls) {
       this.showDateTimeError(
         'La hora de inicio de reparación no puede ser anterior a la hora de llegada al sitio'
@@ -509,7 +491,6 @@ export class TicketPageComponent {
       return false;
     }
 
-    // Validación 3: HRS debe ser mayor o igual a HIR
     if (dateHrs && dateHir && dateHrs < dateHir) {
       this.showDateTimeError(
         'La hora de restablecimiento de servicio no puede ser anterior a la hora de inicio de reparación'
@@ -517,7 +498,6 @@ export class TicketPageComponent {
       return false;
     }
 
-    // Validación 4: HFF debe ser mayor o igual a HRS
     if (dateHff && dateHrs && dateHff < dateHrs) {
       this.showDateTimeError(
         'La hora de fin de falla no puede ser anterior a la hora de restablecimiento de servicio'
@@ -640,18 +620,9 @@ export class TicketPageComponent {
     return selectedDate < restablecimientoDate;
   }
 
-  // Getters computados
   get progressTickets(): ProgressTicket[] {
-    const tickets = this.progressTicketsResource.value() || [];
-
-    // tickets.forEach((progress, index) => {
-    //   console.log(`Progress ${index} (ID: ${progress.id}):`, {
-    //     networkElements: progress.network_elements,
-    //     networkElementsCount: progress.network_elements?.length,
-    //     fiberLength: progress.fiberLength,
-    //     elementNetworkIds: (progress as any).elementNetworkId,
-    //   });
-    // });
+    const response = this.progressTicketsResource.value();
+    const tickets = response?.data || [];
 
     const users = this.usersResource.value()?.users || [];
     const regions =
@@ -676,11 +647,16 @@ export class TicketPageComponent {
   }
 
   get progressTicketsCount(): number {
-    return this.progressTickets.length;
+    return this.progressTicketsResource.value()?.count || 0;
+  }
+
+  get progressTicketsPages(): number {
+    return this.progressTicketsResource.value()?.pages || 0;
   }
 
   get hasProgressTickets(): boolean {
-    return this.progressTicketsCount > 0;
+    const response = this.progressTicketsResource.value();
+    return (response?.data?.length || 0) > 0;
   }
 
   get networkSearchResults() {
@@ -752,20 +728,6 @@ export class TicketPageComponent {
     );
   }
 
-  get closureElementButtonText(): string {
-    const elementType = this.selectedClosureElementType();
-
-    if (elementType === 'network' && this.selectedClosureNetworkElement()) {
-      const element = this.selectedClosureNetworkElement();
-      return `RED: ${element.acronym} - ${element.description}`;
-    } else if (elementType === 'fiber' && this.selectedClosureFiberElement()) {
-      const fiber = this.selectedClosureFiberElement();
-      return `FIBRA: ${fiber.section_name}`;
-    } else {
-      return 'Seleccionar Elemento (Red o Fibra)';
-    }
-  }
-
   filteredIncidentDetails() {
     const incidentId = this.closureForm.get('incidentId')?.value;
     const allDetails = this.incidentDetailsResource.value() || [];
@@ -799,29 +761,10 @@ export class TicketPageComponent {
     this.searchFiberClosureQuery.set(value);
   }
 
-  // Métodos principales
   canCreateNewProgress(): boolean {
     const ticket = this.ticketResource.value();
     return !!ticket && !ticket?.closure && ticket?.statusId !== 2;
   }
-
-  // Métodos de formulario de seguimiento
-  // openModal() {
-  //   this.showModal.set(true);
-  //   this.loadAllData();
-
-  //   setTimeout(() => {
-  //     this.prefillFormWithTicketData();
-
-  //     // Solo precargar elementos si NO es la primera documentación
-  //     if (this.hasProgressTickets) {
-  //       this.prefillElementsFromLastProgress(); // Nuevo método mejorado
-  //       // this.debugProgressElements();
-  //     } else {
-  //       this.prefillElementsFromTicket(); // Método original para primera documentación
-  //     }
-  //   }, 100);
-  // }
 
   openModal() {
     this.showModal.set(true);
@@ -830,14 +773,12 @@ export class TicketPageComponent {
     setTimeout(() => {
       this.prefillFormWithTicketData();
 
-      // Solo precargar elementos si NO es la primera documentación
       if (this.hasProgressTickets) {
         this.prefillElementsFromLastProgress();
       } else {
         this.prefillElementsFromTicket();
       }
 
-      // ✅ NUEVO: Asegurar que las plataformas se filtren inicialmente
       const groupId = this.progressForm.get('groupId')?.value;
       this.filterPlatformsByGroup(groupId || null);
     }, 100);
@@ -850,16 +791,10 @@ export class TicketPageComponent {
     if (lastProgressElements.length > 0) {
       this.selectedNetworkElements.set([...lastProgressElements]);
       this.selectedElementType.set('network');
-      console.log(
-        'From last progress - network elements:',
-        this.selectedNetworkElements().length,
-        this.selectedNetworkElements()
-      );
     } else if (lastFiberElement) {
       this.selectedFiberElement.set(lastFiberElement);
       this.selectedElementType.set('fiber');
     } else {
-      // Si la última documentación no tiene elementos, cargar del ticket
       this.prefillElementsFromTicket();
     }
 
@@ -868,51 +803,30 @@ export class TicketPageComponent {
 
   private prefillElementsFromTicket() {
     const ticket = this.ticketResource.value();
-
-    console.log('Ticket elements:', ticket?.network_elements); // Debug
-
-    // PRIMERO: Intentar obtener elementos de la ÚLTIMA documentación
     const lastProgressElements = this.getLastProgressNetworkElements();
     const lastFiberElement = this.getLastProgressFiberElement();
 
     if (lastProgressElements.length > 0) {
-      // Si hay elementos de red en la última documentación
       this.selectedNetworkElements.set([...lastProgressElements]);
       this.selectedElementType.set('network');
-      console.log(
-        'Prefilled from last progress - network elements:',
-        this.selectedNetworkElements().length
-      );
     } else if (lastFiberElement) {
-      // Si hay tramo de fibra en la última documentación
       this.selectedFiberElement.set(lastFiberElement);
       this.selectedElementType.set('fiber');
-      console.log(
-        'Prefilled from last progress - fiber element:',
-        lastFiberElement.section_name
-      );
     }
-    // SEGUNDO: Si no hay documentaciones anteriores, usar elementos del ticket inicial
     else if (ticket?.network_elements?.length) {
       this.selectedNetworkElements.set([...ticket.network_elements]);
       this.selectedElementType.set('network');
-      console.log(
-        'Prefilled from ticket - network elements:',
-        this.selectedNetworkElements().length
-      );
     } else if (ticket?.fiberLengthId && ticket.fiber_length) {
       this.selectedFiberElement.set(ticket.fiber_length);
       this.selectedElementType.set('fiber');
     }
 
-    // Actualizar el formulario con los elementos cargados
     this.updateFormWithSelectedElements();
   }
 
   private getLastProgressFiberElement(): any {
     if (!this.hasProgressTickets) return null;
 
-    // Buscar en todas las documentaciones (de más reciente a más antigua)
     for (let i = 0; i < this.progressTickets.length; i++) {
       const progress = this.progressTickets[i];
 
@@ -920,7 +834,6 @@ export class TicketPageComponent {
         return progress.fiberLength;
       }
 
-      // Si tiene fiberLengthId pero no tiene la relación cargada
       if (progress.fiberLengthId && !progress.fiberLength) {
         const fiber = this.fiberLengthsResource
           .value()
@@ -932,30 +845,6 @@ export class TicketPageComponent {
     return null;
   }
 
-  // private prefillElementsFromTicket() {
-  //   const ticket = this.ticketResource.value();
-
-  //   console.log('Ticket elements:', ticket?.network_elements); // Debug
-
-  //   // Cargar elementos de red existentes - ✅ CORREGIR: usar todos los elementos
-  //   if (ticket?.network_elements?.length) {
-  //     this.selectedNetworkElements.set([...ticket.network_elements]);
-  //     this.selectedElementType.set('network');
-  //     console.log(
-  //       'Prefilled network elements:',
-  //       this.selectedNetworkElements().length
-  //     ); // Debug
-  //   }
-  //   // Cargar tramo de fibra existente
-  //   else if (ticket?.fiberLengthId && ticket.fiber_length) {
-  //     this.selectedFiberElement.set(ticket.fiber_length);
-  //     this.selectedElementType.set('fiber');
-  //   }
-
-  //   // Actualizar el formulario con los elementos cargados
-  //   this.updateFormWithSelectedElements();
-  // }
-
   private updateFormWithSelectedElements() {
     const networkIds = this.selectedNetworkElements().map((el) => el.id);
     const fiberId = this.selectedFiberElement()?.id || null;
@@ -964,36 +853,7 @@ export class TicketPageComponent {
       elementNetworkId: networkIds,
       fiberLengthId: fiberId,
     });
-
-    console.log('Form updated:', { networkIds, fiberId }); // Para debug
   }
-
-  // closeModal() {
-  //   this.showModal.set(false);
-  //   this.selectedFiles.set([]);
-  //   this.selectedNetworkElements.set([]);
-  //   this.selectedFiberElement.set(null);
-  //   // this.selectedElement.set(null);
-  //   this.selectedElementType.set('network');
-  //   this.searchFiberModalQuery.set(''); // Limpiar búsqueda del modal
-  //   this.searchNetworkQuery.set('');
-  //   this.progressForm.reset({
-  //     ticketId: this.ticketId,
-  //     statusId: null,
-  //     groupId: null,
-  //     severityId: null,
-  //     platformId: null,
-  //     originId: null,
-  //     failureId: null,
-  //     impact: '',
-  //     assignedUserId: null,
-  //     personalRegionId: null,
-  //     elementNetworkId: [],
-  //     fiberLengthId: null,
-  //     progress: '',
-  //     observations: '',
-  //   });
-  // }
 
   closeModal() {
     this.showModal.set(false);
@@ -1003,15 +863,9 @@ export class TicketPageComponent {
     this.selectedElementType.set('network');
     this.searchFiberModalQuery.set('');
     this.searchNetworkQuery.set('');
-
-    // ✅ NUEVO: Limpiar selección de responsable
     this.selectedPersonal.set(null);
-
-    // Resetear plataformas y fallas filtradas
     this.filteredPlatforms.set([]);
     this.filteredFailures.set([]);
-
-    // Cerrar modal de responsables si está abierto
     this.closePersonalsModal();
 
     this.progressForm.reset({
@@ -1064,17 +918,6 @@ export class TicketPageComponent {
         isActive: true,
       };
 
-      // if (
-      //   this.selectedElementType() === 'network' &&
-      //   formValue.elementNetworkId?.length
-      // ) {
-      //   progressData.elementNetworkId = formValue.elementNetworkId;
-      // } else if (
-      //   this.selectedElementType() === 'fiber' &&
-      //   formValue.fiberLengthId
-      // ) {
-      //   progressData.fiberLengthId = formValue.fiberLengthId;
-      // }
       if (
         this.selectedElementType() === 'network' &&
         this.selectedNetworkElements().length > 0
@@ -1101,6 +944,7 @@ export class TicketPageComponent {
         .subscribe({
           next: () => {
             this.closeModal();
+            this.currentPage.set(1);
             this.progressTicketsResource.reload();
             this.ticketResource.reload();
             this.showSuccessAlert('El seguimiento se creó correctamente');
@@ -1118,7 +962,6 @@ export class TicketPageComponent {
     }
   }
 
-  // Métodos de formulario de cierre
   async onSubmitClosure() {
     if (this.closureForm.invalid) {
       this.markFormGroupTouchedClosure(this.closureForm);
@@ -1169,8 +1012,8 @@ export class TicketPageComponent {
         impacto_intercon: formValue.impacto_intercon!,
         action_taken: formValue.action_taken!,
         groupId: formValue.groupId,
-        networkElementIds: formValue.networkElementIds || [], // ✅ Para elemento afectado
-        networkElementClosureIds: formValue.networkElementClosureIds || [], // ✅ Para elemento de cierre
+        networkElementIds: formValue.networkElementIds || [],
+        networkElementClosureIds: formValue.networkElementClosureIds || [],
         fiberLengthId: formValue.fiberLengthId || undefined,
         incidentId: formValue.incidentId,
         incidentDetailId: formValue.incidentDetailId,
@@ -1219,7 +1062,7 @@ export class TicketPageComponent {
       icon: 'question',
       input: 'textarea',
       inputLabel: 'Motivo requerido',
-      inputPlaceholder: 'Describa el motivo de la cancelación...',
+      inputPlaceholder: 'Describa el motivo de cancelación...',
       inputAttributes: { 'aria-label': 'Ingrese el motivo de cancelación' },
       inputValidator: (value) => {
         if (!value) return 'Debe ingresar un motivo para cancelar el ticket';
@@ -1238,7 +1081,6 @@ export class TicketPageComponent {
     }
   }
 
-  // Métodos de utilidad
   private processTicketCancellation(cancellationNote: string) {
     this.isSubmittingClosure.set(true);
 
@@ -1253,8 +1095,8 @@ export class TicketPageComponent {
     const updateData = {
       statusId: 2,
       cancellation_note: cancellationNote.trim(),
-      cancelledById: user.id, // ✅ NUEVO: Usuario que cancela
-      cancelledAt: new Date().toISOString(), // ✅ NUEVO: Timestamp de cancelación
+      cancelledById: user.id,
+      cancelledAt: new Date().toISOString(),
     };
 
     this.ticketsService.updateTicket(this.ticketId, updateData).subscribe({
@@ -1271,9 +1113,7 @@ export class TicketPageComponent {
     });
   }
 
-  // Métodos de selección de elementos
   selectNetworkElement(element: any) {
-    // this.selectedElement.set(element);
     this.selectedElementType.set('network');
     this.progressForm.patchValue({
       elementNetworkId: [element.id],
@@ -1283,9 +1123,9 @@ export class TicketPageComponent {
 
   selectFiberLength(fiber: any) {
     this.selectedFiberElement.set(fiber);
-    this.selectedNetworkElements.set([]); // Limpiar elementos de red
+    this.selectedNetworkElements.set([]);
     this.selectedElementType.set('fiber');
-    this.updateFormWithSelectedElements(); // ✅ AGREGAR ESTA LÍNEA
+    this.updateFormWithSelectedElements();
   }
 
   selectUser(user: any) {
@@ -1293,7 +1133,6 @@ export class TicketPageComponent {
     this.searchUserQuery.set('');
   }
 
-  // Métodos para elementos de red en cierre
   openNetworkElementModal() {
     this.showNetworkElementModal.set(true);
   }
@@ -1303,26 +1142,9 @@ export class TicketPageComponent {
     this.closureNetworkSearchQuery.set('');
   }
 
-  // selectClosureNetworkElement(element: any) {
-  //   this.selectedClosureElementType.set('network');
-  //   this.selectedClosureNetworkElement.set(element);
-  //   this.selectedClosureFiberElement.set(null);
-  //   this.closureForm.patchValue({
-  //     networkElementId: element.id,
-  //     fiberLengthId: null,
-  //   });
-  //   this.closeNetworkElementModal();
-  // }
-
   selectClosureNetworkElement(element: any) {
     this.addClosureNetworkElement(element);
   }
-
-  // clearClosureNetworkElement() {
-  //   this.selectedClosureNetworkElement.set(null);
-  //   this.selectedClosureElementType.set(null);
-  //   this.closureForm.patchValue({ networkElementId: null });
-  // }
 
   clearClosureNetworkElement() {
     this.selectedClosureNetworkElementsClosure.set([]);
@@ -1341,7 +1163,6 @@ export class TicketPageComponent {
     this.closureForm.patchValue({ fiberLengthId: null });
   }
 
-  // Métodos de manejo de archivos
   onFileSelected(event: any) {
     const files: FileList = event.target.files;
     if (files.length > 0) {
@@ -1388,7 +1209,6 @@ export class TicketPageComponent {
     this.selectedFiles.set([...files]);
   }
 
-  // Métodos de ayuda
   private loadAllData() {
     this.networkElementsService.getNetworkElements({ limit: 10000 }).subscribe({
       next: (response) =>
@@ -1408,29 +1228,10 @@ export class TicketPageComponent {
     });
   }
 
-  // private prefillFormWithTicketData() {
-  //   if (this.ticketResource.hasValue()) {
-  //     const ticket = this.ticketResource.value();
-
-  //     this.progressForm.patchValue({
-  //       statusId: ticket.statusId || null,
-  //       groupId: ticket.groupId || null,
-  //       severityId: ticket.severityId || null,
-  //       platformId: ticket.platformId || null,
-  //       originId: ticket.originId || null,
-  //       failureId: ticket.failureId || null,
-  //       impact: ticket.impact,
-  //       personalRegionId: ticket.personalRegionId || null,
-  //       assignedUserId: null,
-  //     });
-  //   }
-  // }
-
   private prefillFormWithTicketData() {
     if (this.ticketResource.hasValue()) {
       const ticket = this.ticketResource.value();
 
-      // Precargar datos básicos
       this.progressForm.patchValue({
         statusId: ticket.statusId || null,
         groupId: ticket.groupId || null,
@@ -1443,9 +1244,7 @@ export class TicketPageComponent {
         assignedUserId: null,
       });
 
-      // ✅ NUEVO: Precargar el responsable seleccionado si existe
       if (ticket.personalRegionId && ticket.personal_region) {
-        // Buscar el personal en la lista de responsables
         const allPersonals =
           this.personalsRegionResource.value()?.personalsRegions || [];
         const foundPersonal = allPersonals.find(
@@ -1456,10 +1255,8 @@ export class TicketPageComponent {
         }
       }
 
-      // Luego filtrar las plataformas basado en el grupo
       this.filterPlatformsByGroup(ticket.groupId || null);
 
-      // Filtrar fallas por grupo si existe
       if (ticket.groupId) {
         this.loadFailuresByGroup(ticket.groupId);
       }
@@ -1468,469 +1265,31 @@ export class TicketPageComponent {
 
   private filterPlatformsByGroup(groupId: number | null): void {
     if (!groupId || groupId === 0) {
-      // Si no hay grupo seleccionado, mostrar todas las plataformas
       const allPlatforms = this.platformsResource.value() || [];
       this.filteredPlatforms.set(allPlatforms);
       return;
     }
 
-    // Filtrar plataformas que pertenecen al grupo seleccionado
     const allPlatforms = this.platformsResource.value() || [];
     const platformsForGroup = allPlatforms.filter((platform) =>
       platform.groups?.some((group: any) => group.id === groupId)
     );
 
     this.filteredPlatforms.set(platformsForGroup);
-
-    // ✅ NOTA: Ya no necesitamos verificar si la plataforma actual es válida
-    // porque siempre la resetearemos al cambiar de grupo
   }
 
   private prefillClosureForm() {
     if (this.ticketResource.hasValue()) {
       const ticket = this.ticketResource.value();
       this.closureForm.patchValue({ groupId: ticket.groupId || null });
-
-      // ✅ SOLO llamar al nuevo método - eliminar toda la lógica vieja
       this.prefillClosureElements();
     }
   }
 
-  // private prefillClosureForm() {
-  //   if (this.ticketResource.hasValue()) {
-  //     const ticket = this.ticketResource.value();
-  //     this.closureForm.patchValue({ groupId: ticket.groupId || null });
-  //     this.prefillClosureElements();
-
-  //     const lastProgressElement = this.getLastProgressElement();
-
-  //     // Establecer el tipo basado en el elemento de la última documentación
-  //     if (lastProgressElement) {
-  //       this.selectedClosureElementType.set(lastProgressElement.type);
-  //     }
-
-  //     const lastElement = this.getLastElementFromProgressTickets();
-
-  //     if (lastElement.type === 'network' && lastElement.element) {
-  //       this.selectedClosureElementType.set('network');
-  //       this.selectedClosureNetworkElement.set(lastElement.element);
-  //       this.closureForm.patchValue({
-  //         networkElementId: lastElement.element.id,
-  //         fiberLengthId: null,
-  //       });
-  //     } else if (lastElement.type === 'fiber' && lastElement.element) {
-  //       const completeFiber =
-  //         this.fiberLengthsResource
-  //           .value()
-  //           ?.fiberLengths?.find((f) => f.id === lastElement.element.id) ||
-  //         lastElement.element;
-
-  //       this.selectedClosureElementType.set('fiber');
-  //       this.selectedClosureFiberElement.set(completeFiber);
-  //       this.closureForm.patchValue({
-  //         fiberLengthId: completeFiber.id,
-  //         networkElementId: null,
-  //       });
-  //     } else {
-  //       if (ticket.network_elements?.length) {
-  //         this.selectedClosureElementType.set('network');
-  //         this.selectedClosureNetworkElement.set(ticket.network_elements[0]);
-  //         this.closureForm.patchValue({
-  //           networkElementId: ticket.network_elements[0].id,
-  //           fiberLengthId: null,
-  //         });
-  //       } else if (ticket.fiberLengthId && ticket.fiber_length) {
-  //         const completeFiber =
-  //           this.fiberLengthsResource
-  //             .value()
-  //             ?.fiberLengths?.find((f) => f.id === ticket.fiberLengthId) ||
-  //           ticket.fiber_length;
-
-  //         this.selectedClosureElementType.set('fiber');
-  //         this.selectedClosureFiberElement.set(completeFiber);
-  //         this.closureForm.patchValue({
-  //           fiberLengthId: ticket.fiberLengthId,
-  //           networkElementId: null,
-  //         });
-  //       }
-  //     }
-  //   }
-  // }
-
-  debugSelectedFiber() {
-    console.log('=== DEBUG Selected Fiber ===');
-    console.log('Fiber object:', this.selectedClosureFiberElement());
-    console.log('StateA:', this.selectedClosureFiberElement()?.stateA);
-    console.log('StateB:', this.selectedClosureFiberElement()?.stateB);
-    console.log(
-      'StateA type:',
-      typeof this.selectedClosureFiberElement()?.stateA
-    );
-    console.log(
-      'StateB type:',
-      typeof this.selectedClosureFiberElement()?.stateB
-    );
-    console.log('=== END DEBUG ===');
-  }
-
-  // private prefillNewProgressWithLastElement() {
-  //   const lastElement = this.getLastElementFromProgressTickets();
-  //   const ticket = this.ticketResource.value();
-
-  //   if (lastElement.type === 'network' && lastElement.element) {
-  //     this.selectedElementType.set('network');
-  //     this.selectedElementType.set(lastElement.element);
-  //     this.progressForm.patchValue({
-  //       elementNetworkId: [lastElement.element.id],
-  //       fiberLengthId: null,
-  //     });
-  //   } else if (lastElement.type === 'fiber' && lastElement.element) {
-  //     this.selectedElementType.set('fiber');
-  //     this.selectedElementType.set(lastElement.element);
-  //     this.progressForm.patchValue({
-  //       fiberLengthId: lastElement.element.id,
-  //       elementNetworkId: [],
-  //     });
-  //   } else {
-  //     if (ticket?.network_elements?.length) {
-  //       this.selectedElementType.set('network');
-  //       // this.selectedElement.set(ticket.network_elements[0]);]
-  //       this.progressForm.patchValue({
-  //         elementNetworkId: [ticket.network_elements[0].id],
-  //         fiberLengthId: null,
-  //       });
-  //     } else if (ticket?.fiberLengthId && ticket.fiber_length) {
-  //       this.selectedElementType.set('fiber');
-  //       // this.selectedElement.set(ticket.fiber_length);
-  //       this.progressForm.patchValue({
-  //         fiberLengthId: ticket.fiberLengthId,
-  //         elementNetworkId: [],
-  //       });
-  //     }
-  //   }
-  // }
-
-  getLastElementFromProgressTickets(): {
-    type: 'network' | 'fiber' | null;
-    element: any;
-  } {
-    if (!this.hasProgressTickets) {
-      return { type: null, element: null };
-    }
-
-    // El array está ordenado de MÁS RECIENTE (índice 0) a MÁS ANTIGUO (último índice)
-    for (let i = 0; i < this.progressTickets.length; i++) {
-      const progress = this.progressTickets[i];
-
-      // Verificar si tiene elementos de red
-      if (progress.network_elements && progress.network_elements.length > 0) {
-        return {
-          type: 'network',
-          element: progress.network_elements[0],
-        };
-      }
-
-      // Verificar si tiene tramo de fibra
-      if (progress.fiberLengthId && progress.fiberLength) {
-        return {
-          type: 'fiber',
-          element: progress.fiberLength,
-        };
-      }
-
-      // Verificar si tiene fiberLengthId aunque no tenga la relación cargada
-      if (progress.fiberLengthId && !progress.fiberLength) {
-        const fiber = this.fiberLengthsResource
-          .value()
-          ?.fiberLengths?.find((f) => f.id === progress.fiberLengthId);
-        if (fiber) {
-          return {
-            type: 'fiber',
-            element: fiber,
-          };
-        }
-      }
-    }
-
-    return { type: null, element: null };
-  }
-
-  // Handlers de eventos
-  onIncidentChange(event: any) {
-    const incidentId = event.target.value;
-    this.closureForm.patchValue({ incidentDetailId: null });
-  }
-
-  onNetworkSearchChange(event: Event) {
-    this.searchNetworkQuery.set((event.target as HTMLInputElement).value);
-  }
-
-  onFiberSearchChange(event: Event) {
-    const value = (event.target as HTMLInputElement).value;
-    this.fiberSearchQuery.set(value);
-  }
-
-  onElementTypeChange(type: 'network' | 'fiber') {
-    this.selectedElementType.set(type);
-    if (type === 'network') {
-      this.searchFiberModalQuery.set('');
-    } else {
-      this.searchNetworkQuery.set('');
-    }
-  }
-
-  onUserSearchChange(event: Event) {
-    this.searchUserQuery.set((event.target as HTMLInputElement).value);
-  }
-
-  onClosureNetworkSearchChange(event: Event) {
-    this.closureNetworkSearchQuery.set(
-      (event.target as HTMLInputElement).value
-    );
-  }
-
-  // Utilidades de formulario
-  private markFormGroupTouched() {
-    Object.keys(this.progressForm.controls).forEach((key) => {
-      this.progressForm.get(key)?.markAsTouched();
-    });
-  }
-
-  private markFormGroupTouchedClosure(formGroup: FormGroup) {
-    Object.keys(formGroup.controls).forEach((key) => {
-      formGroup.get(key)?.markAsTouched();
-    });
-  }
-
-  private createFileList(files: File[]): FileList {
-    const dataTransfer = new DataTransfer();
-    files.forEach((file) => dataTransfer.items.add(file));
-    return dataTransfer.files;
-  }
-
-  // Alertas y notificaciones
-  private showSuccessAlert(message: string) {
-    Swal.fire({
-      title: '✅ Éxito',
-      text: message,
-      icon: 'success',
-      showConfirmButton: false,
-      timer: 1500,
-    });
-  }
-
-  private showErrorAlert(message: string) {
-    Swal.fire({
-      title: '❌ Error',
-      text: message,
-      icon: 'error',
-      confirmButtonText: 'Aceptar',
-    });
-  }
-
-  private showWarningAlert(message: string) {
-    Swal.fire({
-      title: 'Advertencia',
-      text: message,
-      icon: 'warning',
-      confirmButtonText: 'Aceptar',
-    });
-  }
-
-  private showInfoAlert(title: string, text: string, timer?: number) {
-    Swal.fire({ title, text, icon: 'info', showConfirmButton: false, timer });
-  }
-
-  private handleError(context: string, error: any) {
-    let errorMessage = context;
-    if (error.error?.message) {
-      errorMessage = Array.isArray(error.error.message)
-        ? error.error.message.join(', ')
-        : error.error.message;
-    }
-    this.showErrorAlert(errorMessage);
-  }
-
-  // Métodos de navegación y utilidades UI
-  goBack() {
-    this.location.back();
-  }
-
-  openImage(imageName: string) {
-    const imageUrl = `${baseUrl}/files/ticket/${imageName}`;
-    window.open(imageUrl, '_blank');
-  }
-
-  // openImage2(imageName: string) {
-  //   const imageUrl = `${baseUrl}/files/ticket/${imageName}`;
-  //   window.open(imageUrl, '_blank');
-  // }
-
-  handleImageError(event: Event) {
-    const imgElement = event.target as HTMLImageElement;
-    imgElement.style.display = 'none';
-
-    const parent = imgElement.parentElement;
-    if (parent) {
-      const placeholder = document.createElement('div');
-      placeholder.className =
-        'w-full h-24 bg-gray-200 rounded-lg flex items-center justify-center';
-      placeholder.innerHTML = `
-        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-        </svg>
-      `;
-      parent.appendChild(placeholder);
-    }
-  }
-
-  getImageUrl(item: any): string {
-    if (typeof item === 'string') return item;
-    return item?.url || item?.secureUrl || item?.imageUrl || item?.path || item;
-  }
-
-  // formatVenezuelaTime(
-  //   dateString: string | Date | undefined | null,
-  //   format: string = 'h:mm a'
-  // ): string {
-  //   if (!dateString) return 'Fecha no disponible';
-
-  //   const date = dateString instanceof Date ? dateString : new Date(dateString);
-  //   if (isNaN(date.getTime())) return 'Fecha inválida';
-
-  //   const localDate = date;
-
-  //   if (format === 'dd/MM/yyyy h:mm a') {
-  //     const day = localDate.getDate().toString().padStart(2, '0');
-  //     const month = (localDate.getMonth() + 1).toString().padStart(2, '0');
-  //     const year = localDate.getFullYear();
-
-  //     let hours = localDate.getHours();
-  //     const minutes = localDate.getMinutes().toString().padStart(2, '0');
-  //     const ampm = hours >= 12 ? 'PM' : 'AM';
-
-  //     hours = hours % 12;
-  //     hours = hours ? hours : 12;
-
-  //     return `${day}/${month}/${year} ${hours}:${minutes} ${ampm}`;
-  //   }
-
-  //   const datePipe = new DatePipe('en-US');
-  //   return datePipe.transform(localDate, format) || 'Formato inválido';
-  // }
-
-  formatVenezuelaTime(
-    dateString: string | Date | undefined | null,
-    format: string = 'h:mm a'
-  ): string {
-    if (!dateString) return 'Fecha no disponible';
-
-    try {
-      const date =
-        dateString instanceof Date ? dateString : new Date(dateString);
-      if (isNaN(date.getTime())) return 'Fecha inválida';
-
-      // Ajustar a zona horaria de Venezuela (UTC-4)
-      const venezuelaOffset = -4 * 60; // -4 horas en minutos
-      const localTime = new Date(date.getTime() + venezuelaOffset * 60 * 1000);
-
-      // Para debugging (puedes eliminar esto después)
-      // console.log('Original:', date, 'Venezuela:', localTime);
-
-      if (format === 'dd/MM/yyyy, h:mm a') {
-        const day = localTime.getDate().toString().padStart(2, '0');
-        const month = (localTime.getMonth() + 1).toString().padStart(2, '0');
-        const year = localTime.getFullYear();
-
-        let hours = localTime.getHours();
-        const minutes = localTime.getMinutes().toString().padStart(2, '0');
-        const ampm = hours >= 12 ? 'PM' : 'AM';
-
-        hours = hours % 12;
-        hours = hours ? hours : 12;
-
-        return `${day}/${month}/${year}, ${hours}:${minutes} ${ampm}`;
-      }
-
-      // Para otros formatos, usar DatePipe con la fecha ajustada
-      const datePipe = new DatePipe('en-US');
-      return datePipe.transform(localTime, format) || 'Formato inválido';
-    } catch (error) {
-      // console.error('Error formateando fecha:', error);
-      return 'Error en fecha';
-    }
-  }
-
-  calcularTiempoResolucion(
-    fechaInicio: Date | string,
-    fechaFin: Date | string
-  ): string {
-    if (!fechaInicio || !fechaFin) return 'No disponible';
-
-    try {
-      const inicio =
-        fechaInicio instanceof Date ? fechaInicio : new Date(fechaInicio);
-      const fin = fechaFin instanceof Date ? fechaFin : new Date(fechaFin);
-
-      if (isNaN(inicio.getTime()) || isNaN(fin.getTime())) {
-        return 'Fechas inválidas';
-      }
-
-      const diffMs = fin.getTime() - inicio.getTime();
-      if (diffMs < 0) return 'Fechas inconsistentes';
-
-      const diffHoras = Math.floor(diffMs / (1000 * 60 * 60));
-      const diffMinutos = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-
-      if (diffHoras > 24) {
-        const diffDias = Math.floor(diffHoras / 24);
-        const horasRestantes = diffHoras % 24;
-        return `${diffDias}d ${horasRestantes}h ${diffMinutos}m`;
-      } else if (diffHoras > 0) {
-        return `${diffHoras}h ${diffMinutos}m`;
-      } else {
-        return `${diffMinutos}m`;
-      }
-    } catch (error) {
-      return 'Error en cálculo';
-    }
-  }
-
-  openFiberElementModal() {
-    this.showFiberElementModal.set(true);
-  }
-
-  closeFiberElementModal() {
-    this.showFiberElementModal.set(false);
-    this.searchFiberClosureQuery.set(''); // Limpiar búsqueda del modal de cierre
-  }
-
-  selectClosureFiberElement(fiber: any) {
-    const completeFiber =
-      this.fiberLengthsResource
-        .value()
-        ?.fiberLengths?.find((f) => f.id === fiber.id) || fiber;
-
-    this.selectedClosureElementType.set('fiber');
-    this.selectedClosureFiberElement.set(completeFiber);
-    this.selectedClosureNetworkElementsClosure.set([]); // Limpiar elementos de red
-    this.closureForm.patchValue({
-      fiberLengthId: completeFiber.id,
-      networkElementClosureIds: [],
-      networkElementIds: this.selectedClosureNetworkElements().map(
-        (el) => el.id
-      ),
-    });
-    this.closeFiberElementModal();
-  }
-
-  // desde aqui
-
-  // Métodos para manejar elementos de red
   addNetworkElement(element: any) {
     if (!this.isNetworkElementSelected(element)) {
       this.selectedNetworkElements.update((elements) => [...elements, element]);
-      this.updateFormWithSelectedElements(); // ✅ AGREGAR
+      this.updateFormWithSelectedElements();
     }
   }
 
@@ -1938,25 +1297,17 @@ export class TicketPageComponent {
     this.selectedNetworkElements.update((elements) =>
       elements.filter((e) => e.id !== element.id)
     );
-    this.updateFormWithSelectedElements(); // ✅ AGREGAR
+    this.updateFormWithSelectedElements();
   }
 
   isNetworkElementSelected(element: any): boolean {
     return this.selectedNetworkElements().some((e) => e.id === element.id);
   }
 
-  // Método para seleccionar tramo de fibra (solo uno)
-  // selectFiberLength(fiber: any) {
-  //   this.selectedFiberElement.set(fiber);
-  //   this.selectedNetworkElements.set([]); // Limpiar elementos de red
-  // }
-
-  // Método para limpiar selección de fibra
   clearFiberSelection() {
     this.selectedFiberElement.set(null);
   }
 
-  // Método para obtener fiber length completo con estados
   getCompleteFiberLength(fiberLengthId: number): any {
     if (!fiberLengthId) return null;
 
@@ -1966,7 +1317,6 @@ export class TicketPageComponent {
     return completeFiber || null;
   }
 
-  // Método para usar en el HTML (versión segura)
   getFiberDisplayInfo(progress: any): {
     section_name: string;
     stateA: string;
@@ -1996,14 +1346,13 @@ export class TicketPageComponent {
   getLastProgressElement(): any {
     if (!this.hasProgressTickets) return null;
 
-    // El primer elemento del array es el más reciente (orden descendente)
     const lastProgress = this.progressTickets[0];
 
     if (lastProgress.network_elements?.length) {
       return {
         type: 'network',
-        element: lastProgress.network_elements[0], // Solo mostramos el primero para visualización
-        allElements: lastProgress.network_elements, // Guardamos todos para referencia
+        element: lastProgress.network_elements[0],
+        allElements: lastProgress.network_elements,
       };
     } else if (lastProgress.fiberLengthId && lastProgress.fiberLength) {
       return {
@@ -2034,7 +1383,6 @@ export class TicketPageComponent {
   private getLastProgressNetworkElements(): any[] {
     if (!this.hasProgressTickets) return [];
 
-    // Buscar en todas las documentaciones (de más reciente a más antigua)
     for (let i = 0; i < this.progressTickets.length; i++) {
       const progress = this.progressTickets[i];
 
@@ -2050,26 +1398,22 @@ export class TicketPageComponent {
     if (this.ticketResource.hasValue()) {
       const ticket = this.ticketResource.value();
 
-      // Obtener elementos de la última documentación
       const lastProgressElements = this.getLastProgressNetworkElements();
       const lastProgressFiberElement = this.getLastProgressFiberElement();
 
       if (lastProgressElements.length > 0) {
-        // Tiene elementos de red - establecer tipo y elementos
         this.selectedClosureElementType.set('network');
         this.selectedClosureNetworkElements.set([...lastProgressElements]);
         this.selectedClosureNetworkElementsClosure.set([
           ...lastProgressElements,
         ]);
 
-        // Actualizar formulario con arrays
         this.closureForm.patchValue({
           networkElementIds: lastProgressElements.map((el) => el.id),
           networkElementClosureIds: lastProgressElements.map((el) => el.id),
           fiberLengthId: null,
         });
       } else if (lastProgressFiberElement) {
-        // ✅ CORREGIDO: Usar el tramo de fibra de la última documentación
         const completeFiber =
           this.fiberLengthsResource
             .value()
@@ -2084,7 +1428,6 @@ export class TicketPageComponent {
           networkElementClosureIds: null,
         });
       } else {
-        // No tiene elementos en documentaciones - usar elementos del ticket inicial si existen
         if (ticket.network_elements?.length) {
           this.selectedClosureElementType.set('network');
           this.selectedClosureNetworkElements.set([...ticket.network_elements]);
@@ -2100,7 +1443,6 @@ export class TicketPageComponent {
             fiberLengthId: null,
           });
         } else if (ticket.fiberLengthId && ticket.fiber_length) {
-          // ✅ FALLBACK: Solo si no hay documentaciones, usar el del ticket
           const completeFiber =
             this.fiberLengthsResource
               .value()
@@ -2151,7 +1493,7 @@ export class TicketPageComponent {
       networkElementClosureIds: networkIds,
       networkElementIds: this.selectedClosureNetworkElements().map(
         (el) => el.id
-      ), // Mantener los de solo lectura
+      ),
     });
   }
 
@@ -2160,45 +1502,36 @@ export class TicketPageComponent {
 
     this.ticketsService.generateTicketHistoryPdf(this.ticketId).subscribe({
       next: (blob: Blob) => {
-        // 🔥 1. Crear dos URLs de blob diferentes (una para vista, otra para descarga)
         const viewBlobUrl = URL.createObjectURL(blob);
         const downloadBlobUrl = URL.createObjectURL(blob);
 
-        // 🔥 2. Primero: Abrir para visualización (ventana que permanece)
         const pdfWindow = window.open(viewBlobUrl, '_blank');
 
-        // 🔥 3. Configurar mejor la ventana del PDF
         if (pdfWindow) {
-          // Intentar darle un título descriptivo
           try {
             setTimeout(() => {
               pdfWindow.document.title = `Historial Ticket ${this.ticketId}`;
             }, 500);
-          } catch (e) {
-            // Ignorar errores de seguridad
-          }
+          } catch (e) {}
         }
 
-        // 🔥 4. Segundo: Iniciar descarga automática (pero discreta)
         setTimeout(() => {
           this.triggerSilentDownload(
             downloadBlobUrl,
             `historial-ticket-${this.ticketId}.pdf`
           );
-        }, 1000); // Esperar 1 segundo para que cargue la vista
+        }, 1000);
 
-        // 🔥 5. Mostrar notificación informativa
         this.showInfoAlert(
           'PDF generado correctamente',
           'El PDF se ha abierto en una nueva pestaña y se está descargando automáticamente.',
           3000
         );
 
-        // 🔥 6. Limpiar URLs después de un tiempo
         setTimeout(() => {
           URL.revokeObjectURL(viewBlobUrl);
           URL.revokeObjectURL(downloadBlobUrl);
-        }, 30000); // 30 segundos
+        }, 30000);
 
         this.isGeneratingPdf.set(false);
       },
@@ -2210,7 +1543,6 @@ export class TicketPageComponent {
     });
   }
 
-  // 🔥 Método para descarga silenciosa (sin abrir nueva ventana)
   private triggerSilentDownload(blobUrl: string, filename: string) {
     const link = document.createElement('a');
     link.href = blobUrl;
@@ -2225,62 +1557,230 @@ export class TicketPageComponent {
     }, 100);
   }
 
-  // generateTicketHistoryPdf() {
-  //   this.isGeneratingPdf.set(true);
+  onIncidentChange(event: any) {
+    const incidentId = event.target.value;
+    this.closureForm.patchValue({ incidentDetailId: null });
+  }
 
-  //   this.ticketsService.generateTicketHistoryPdf(this.ticketId).subscribe({
-  //     next: (blob: Blob) => {
-  //       // Crear URL y abrir en nueva pestaña
-  //       const url = window.URL.createObjectURL(blob);
-  //       const newWindow = window.open(url, '_blank');
+  onNetworkSearchChange(event: Event) {
+    this.searchNetworkQuery.set((event.target as HTMLInputElement).value);
+  }
 
-  //       if (!newWindow) {
-  //         this.showWarningAlert(
-  //           'Por favor permite ventanas emergentes para ver el PDF'
-  //         );
-  //       }
+  onFiberSearchChange(event: Event) {
+    const value = (event.target as HTMLInputElement).value;
+    this.fiberSearchQuery.set(value);
+  }
 
-  //       // Limpiar URL después de un tiempo
-  //       setTimeout(() => {
-  //         window.URL.revokeObjectURL(url);
-  //       }, 5000);
+  onElementTypeChange(type: 'network' | 'fiber') {
+    this.selectedElementType.set(type);
+    if (type === 'network') {
+      this.searchFiberModalQuery.set('');
+    } else {
+      this.searchNetworkQuery.set('');
+    }
+  }
 
-  //       this.isGeneratingPdf.set(false);
-  //     },
-  //     error: (error) => {
-  //       console.error('Error generating PDF:', error);
-  //       this.isGeneratingPdf.set(false);
-  //       this.showErrorAlert(
-  //         'Error al generar el historial en PDF. Por favor intenta nuevamente.'
-  //       );
-  //     },
-  //   });
-  // }
+  onUserSearchChange(event: Event) {
+    this.searchUserQuery.set((event.target as HTMLInputElement).value);
+  }
 
-  //   debugProgressElements() {
-  //   console.log('=== DEBUG Progress Elements ===');
-  //   console.log('Has progress tickets:', this.hasProgressTickets);
-  //   console.log('Progress tickets count:', this.progressTicketsCount);
+  onClosureNetworkSearchChange(event: Event) {
+    this.closureNetworkSearchQuery.set(
+      (event.target as HTMLInputElement).value
+    );
+  }
 
-  //   if (this.hasProgressTickets) {
-  //     this.progressTickets.forEach((progress, index) => {
-  //       console.log(`Progress ${index} (ID: ${progress.id}):`, {
-  //         network_elements: progress.network_elements,
-  //         network_elements_count: progress.network_elements?.length,
-  //         fiber_length: progress.fiberLength,
-  //         fiber_length_id: progress.fiberLengthId
-  //       });
-  //     });
-  //   }
+  private markFormGroupTouched() {
+    Object.keys(this.progressForm.controls).forEach((key) => {
+      this.progressForm.get(key)?.markAsTouched();
+    });
+  }
 
-  //   console.log('Last progress network elements:', this.getLastProgressNetworkElements());
-  //   console.log('Last progress fiber element:', this.getLastProgressFiberElement());
-  //   console.log('Currently selected network elements:', this.selectedNetworkElements());
-  //   console.log('Currently selected fiber element:', this.selectedFiberElement());
-  //   console.log('=== END DEBUG ===');
-  // }
+  private markFormGroupTouchedClosure(formGroup: FormGroup) {
+    Object.keys(formGroup.controls).forEach((key) => {
+      formGroup.get(key)?.markAsTouched();
+    });
+  }
 
-  // Métodos para el modal de responsables
+  private createFileList(files: File[]): FileList {
+    const dataTransfer = new DataTransfer();
+    files.forEach((file) => dataTransfer.items.add(file));
+    return dataTransfer.files;
+  }
+
+  private showSuccessAlert(message: string) {
+    Swal.fire({
+      title: '✅ Éxito',
+      text: message,
+      icon: 'success',
+      showConfirmButton: false,
+      timer: 1500,
+    });
+  }
+
+  private showErrorAlert(message: string) {
+    Swal.fire({
+      title: '❌ Error',
+      text: message,
+      icon: 'error',
+      confirmButtonText: 'Aceptar',
+    });
+  }
+
+  private showWarningAlert(message: string) {
+    Swal.fire({
+      title: 'Advertencia',
+      text: message,
+      icon: 'warning',
+      confirmButtonText: 'Aceptar',
+    });
+  }
+
+  private showInfoAlert(title: string, text: string, timer?: number) {
+    Swal.fire({ title, text, icon: 'info', showConfirmButton: false, timer });
+  }
+
+  private handleError(context: string, error: any) {
+    let errorMessage = context;
+    if (error.error?.message) {
+      errorMessage = Array.isArray(error.error.message)
+        ? error.error.message.join(', ')
+        : error.error.message;
+    }
+    this.showErrorAlert(errorMessage);
+  }
+
+  goBack() {
+    this.location.back();
+  }
+
+  openImage(imageName: string) {
+    const imageUrl = `${baseUrl}/files/ticket/${imageName}`;
+    window.open(imageUrl, '_blank');
+  }
+
+  handleImageError(event: Event) {
+    const imgElement = event.target as HTMLImageElement;
+    imgElement.style.display = 'none';
+
+    const parent = imgElement.parentElement;
+    if (parent) {
+      const placeholder = document.createElement('div');
+      placeholder.className =
+        'w-full h-24 bg-gray-200 rounded-lg flex items-center justify-center';
+      placeholder.innerHTML = `
+        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        </svg>
+      `;
+      parent.appendChild(placeholder);
+    }
+  }
+
+  getImageUrl(item: any): string {
+    if (typeof item === 'string') return item;
+    return item?.url || item?.secureUrl || item?.imageUrl || item?.path || item;
+  }
+
+  formatVenezuelaTime(
+    dateString: string | Date | undefined | null,
+    format: string = 'h:mm a'
+  ): string {
+    if (!dateString) return 'Fecha no disponible';
+
+    try {
+      const date =
+        dateString instanceof Date ? dateString : new Date(dateString);
+      if (isNaN(date.getTime())) return 'Fecha inválida';
+
+      const venezuelaOffset = -4 * 60;
+      const localTime = new Date(date.getTime() + venezuelaOffset * 60 * 1000);
+
+      if (format === 'dd/MM/yyyy, h:mm a') {
+        const day = localTime.getDate().toString().padStart(2, '0');
+        const month = (localTime.getMonth() + 1).toString().padStart(2, '0');
+        const year = localTime.getFullYear();
+
+        let hours = localTime.getHours();
+        const minutes = localTime.getMinutes().toString().padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+
+        hours = hours % 12;
+        hours = hours ? hours : 12;
+
+        return `${day}/${month}/${year}, ${hours}:${minutes} ${ampm}`;
+      }
+
+      const datePipe = new DatePipe('en-US');
+      return datePipe.transform(localTime, format) || 'Formato inválido';
+    } catch (error) {
+      return 'Error en fecha';
+    }
+  }
+
+  calcularTiempoResolucion(
+    fechaInicio: Date | string,
+    fechaFin: Date | string
+  ): string {
+    if (!fechaInicio || !fechaFin) return 'No disponible';
+
+    try {
+      const inicio =
+        fechaInicio instanceof Date ? fechaInicio : new Date(fechaInicio);
+      const fin = fechaFin instanceof Date ? fechaFin : new Date(fechaFin);
+
+      if (isNaN(inicio.getTime()) || isNaN(fin.getTime())) {
+        return 'Fechas inválidas';
+      }
+
+      const diffMs = fin.getTime() - inicio.getTime();
+      if (diffMs < 0) return 'Fechas inconsistentes';
+
+      const diffHoras = Math.floor(diffMs / (1000 * 60 * 60));
+      const diffMinutos = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+      if (diffHoras > 24) {
+        const diffDias = Math.floor(diffHoras / 24);
+        const horasRestantes = diffHoras % 24;
+        return `${diffDias}d ${horasRestantes}h ${diffMinutos}m`;
+      } else if (diffHoras > 0) {
+        return `${diffHoras}h ${diffMinutos}m`;
+      } else {
+        return `${diffMinutos}m`;
+      }
+    } catch (error) {
+      return 'Error en cálculo';
+    }
+  }
+
+  openFiberElementModal() {
+    this.showFiberElementModal.set(true);
+  }
+
+  closeFiberElementModal() {
+    this.showFiberElementModal.set(false);
+    this.searchFiberClosureQuery.set('');
+  }
+
+  selectClosureFiberElement(fiber: any) {
+    const completeFiber =
+      this.fiberLengthsResource
+        .value()
+        ?.fiberLengths?.find((f) => f.id === fiber.id) || fiber;
+
+    this.selectedClosureElementType.set('fiber');
+    this.selectedClosureFiberElement.set(completeFiber);
+    this.selectedClosureNetworkElementsClosure.set([]);
+    this.closureForm.patchValue({
+      fiberLengthId: completeFiber.id,
+      networkElementClosureIds: [],
+      networkElementIds: this.selectedClosureNetworkElements().map(
+        (el) => el.id
+      ),
+    });
+    this.closeFiberElementModal();
+  }
+
   openPersonalsModal(): void {
     this.showPersonalsModal.set(true);
     this.loadPersonals();
@@ -2459,5 +1959,15 @@ export class TicketPageComponent {
       this.personalCurrentPage.set(page);
       this.loadPersonals();
     }
+  }
+
+  getDocumentNumber(indexInPage: number): number {
+    const currentPage = this.currentPage();
+    const itemsPerPage = 3;
+
+    return (
+      this.progressTicketsCount -
+      ((currentPage - 1) * itemsPerPage + indexInPage)
+    );
   }
 }

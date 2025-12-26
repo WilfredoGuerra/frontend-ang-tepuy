@@ -1,6 +1,14 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { catchError, forkJoin, map, Observable, of, switchMap, tap } from 'rxjs';
+import {
+  catchError,
+  forkJoin,
+  map,
+  Observable,
+  of,
+  switchMap,
+  tap,
+} from 'rxjs';
 import { environment } from 'src/environments/environment';
 import {
   ProgressTicket,
@@ -52,27 +60,70 @@ export class ProgressTicketService {
   //     );
   // }
 
-  getProgressTicketsByTicketId(ticketId: number): Observable<ProgressTicket[]> {
-  return this.http
-    .get<ProgressTicket[]>(`${baseUrl}/progress-ticket/ticket/${ticketId}`, {
-      params: { include: 'basic' } // 🔥 NUEVO: Especificar que queremos la versión básica
-    })
-    .pipe(
-      catchError((error) => {
-        console.error('Error searching progress tickets by ticketId', error);
-        return of([] as ProgressTicket[]);
-      })
-    );
-}
+  // getProgressTicketsByTicketId(ticketId: number): Observable<ProgressTicket[]> {
+  //   return this.http
+  //     .get<ProgressTicket[]>(`${baseUrl}/progress-ticket/ticket/${ticketId}`, {
+  //       params: { include: 'basic' }, // 🔥 NUEVO: Especificar que queremos la versión básica
+  //     })
+  //     .pipe(
+  //       catchError((error) => {
+  //         console.error('Error searching progress tickets by ticketId', error);
+  //         return of([] as ProgressTicket[]);
+  //       })
+  //     );
+  // }
 
-  createProgressTicket(progressLike: Partial<ProgressTicket>, imageFileList?: FileList): Observable<ProgressTicket> {
+  getProgressTicketsByTicketId(
+    ticketId: number,
+    options?: { limit?: number; offset?: number; page?: number }
+  ): Observable<ProgressTicketResponse> {
+    let offset = options?.offset || 0;
+    const limit = options?.limit || 3;
+
+    if (options?.page && options.page > 1) {
+      offset = (options.page - 1) * limit;
+    }
+
+    return this.http
+      .get<ProgressTicketResponse>(
+        `${baseUrl}/progress-ticket/ticket/${ticketId}`,
+        {
+          params: {
+            limit: limit.toString(),
+            offset: offset.toString(),
+            // include: 'basic',
+          },
+        }
+      )
+      .pipe(
+        catchError((error) => {
+          console.error('Error searching progress tickets by ticketId', error);
+          // ✅ CORREGIR: Retornar estructura compatible
+          return of({
+            data: [],
+            count: 0,
+            pages: 0,
+            limit: limit,
+            offset: offset,
+          } as ProgressTicketResponse);
+        })
+      );
+  }
+
+  createProgressTicket(
+    progressLike: Partial<ProgressTicket>,
+    imageFileList?: FileList
+  ): Observable<ProgressTicket> {
     return this.uploadImages(imageFileList).pipe(
-      map(imageUrls => ({
+      map((imageUrls) => ({
         ...progressLike,
-        images: [...(progressLike.images || []), ...imageUrls]
+        images: [...(progressLike.images || []), ...imageUrls],
       })),
-      switchMap(progressData =>
-        this.http.post<ProgressTicket>(`${baseUrl}/progress-ticket`, progressData)
+      switchMap((progressData) =>
+        this.http.post<ProgressTicket>(
+          `${baseUrl}/progress-ticket`,
+          progressData
+        )
       )
     );
   }
@@ -93,27 +144,34 @@ export class ProgressTicketService {
     const formData = new FormData();
     formData.append('file', imageFile);
 
-    return this.http
-      .post<any>(`${baseUrl}/files/ticket`, formData)
-      .pipe(
-        map((resp) => {
-          // El backend devuelve { secureUrl: string }
-          if (resp && resp.secureUrl) {
-            return resp.secureUrl;
-          } else if (typeof resp === 'string') {
-            return resp;
-          } else if (resp && typeof resp === 'object') {
-            return resp.fileName || resp.filename || resp.name || resp.imageName ||
-                   resp.file || resp.image || `unknown_${Date.now()}`;
-          } else {
-            console.warn('Formato de respuesta inesperado, usando nombre temporal');
-            return `temp_${Date.now()}_${imageFile.name}`;
-          }
-        }),
-        catchError(error => {
-          console.error('Error en uploadImage:', error);
-          return of(`error_${Date.now()}_${imageFile.name}`);
-        })
-      );
+    return this.http.post<any>(`${baseUrl}/files/ticket`, formData).pipe(
+      map((resp) => {
+        // El backend devuelve { secureUrl: string }
+        if (resp && resp.secureUrl) {
+          return resp.secureUrl;
+        } else if (typeof resp === 'string') {
+          return resp;
+        } else if (resp && typeof resp === 'object') {
+          return (
+            resp.fileName ||
+            resp.filename ||
+            resp.name ||
+            resp.imageName ||
+            resp.file ||
+            resp.image ||
+            `unknown_${Date.now()}`
+          );
+        } else {
+          console.warn(
+            'Formato de respuesta inesperado, usando nombre temporal'
+          );
+          return `temp_${Date.now()}_${imageFile.name}`;
+        }
+      }),
+      catchError((error) => {
+        console.error('Error en uploadImage:', error);
+        return of(`error_${Date.now()}_${imageFile.name}`);
+      })
+    );
   }
 }

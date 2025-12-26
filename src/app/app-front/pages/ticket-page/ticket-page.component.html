@@ -20,7 +20,6 @@
   <div class="tab-content bg-base-100 border-base-300 p-6">
     <div class="bg-base-300 min-h-screen p-4 md:p-6">
       <div class="max-w-6xl mx-auto">
-        <!-- Header -->
         <div class="grid grid-cols-1 lg:grid-cols-1 gap-3 mb-2">
           <div class="bg-base-100 rounded-xl shadow-sm p-6 card-hover">
             <header class="mb-2">
@@ -32,15 +31,13 @@
                 <div class="flex space-x-2">
                   <span class="uppercase font-bold">
                     @if ( ticketResource.value().statusId === 1 ) {
-                    <span class="badge bg-warning/20 text-warning badge-md p-4">{{ ticketResource.value().status
-                      }}</span>
+                    <span class="badge bg-warning/20 text-warning badge-md p-4">{{ ticketResource.value().status }}</span>
                     }
                     @else if (ticketResource.value().statusId === 2) {
                     <span class="badge bg-error/20 text-error badge-md p-4">{{ ticketResource.value().status }}</span>
                     }
                     @else {
-                    <span class="badge bg-success/20 text-success badge-md p-4">{{ ticketResource.value().status
-                      }}</span>
+                    <span class="badge bg-success/20 text-success badge-md p-4">{{ ticketResource.value().status }}</span>
                     }
                   </span>
                 </div>
@@ -50,7 +47,6 @@
                     {{ ticketResource.value().user?.fullName }} {{ ticketResource.value().user?.surnames || '' }}
                   </h3>
                 </div>
-
               </div>
             </header>
 
@@ -62,7 +58,6 @@
             <div class="flex flex-row justify-between">
               <div>
                 <p class="text-secondary font-semibold">Hora creación del ticket</p>
-                <!-- <p class="">{{ ticketResource.value().createdDate | date : "d/MM/yyyy, hh:mm a" }}</p> -->
                 <p class="">{{ formatVenezuelaTime(ticketResource.value().createdDate, 'dd/MM/yyyy, h:mm a') }}</p>
               </div>
               <div>
@@ -99,8 +94,7 @@
                 <p class="first-letter:capitalize">
                   <span class="uppercase">
                     @if ( ticketResource.value().statusId === 1 ) {
-                    <span class="badge bg-warning/20 text-warning badge-md pb-1">{{ ticketResource.value().status
-                      }}</span>
+                    <span class="badge bg-warning/20 text-warning badge-md pb-1">{{ ticketResource.value().status }}</span>
                     }
                     @else if (ticketResource.value().statusId === 2) {
                     <span class="badge bg-red-600 badge-sm font-bold">{{ ticketResource.value().status }}</span>
@@ -129,7 +123,6 @@
                 <p class="">{{ ticketResource.value().impact }}.</p>
               </div>
             </div>
-
           </div>
         </div>
 
@@ -230,7 +223,6 @@
     </div>
   </div>
 
-  <!-- Pestaña de Seguimiento -->
   <input type="radio" name="my_tabs_3" class="tab text-yellow-500 font-bold" aria-label="Documentaciones" />
   <div class="tab-content bg-base-100 border-base-300 p-6">
     <div class="flex justify-between items-center mb-6">
@@ -271,7 +263,8 @@
     @if (hasProgressTickets) {
     <div class="space-y-6">
       <p class="text-sm text-gray-500 mb-4">
-        Mostrando {{ progressTicketsCount }} registro(s) de documentaciones
+        Mostrando {{ progressTickets.length }} de {{ progressTicketsCount }} registro(s) de documentaciones
+        - Página {{ currentPage() }} de {{ progressTicketsPages }}
       </p>
 
       @for (progress of progressTickets; track progress.id; let i = $index) {
@@ -280,29 +273,9 @@
           <div class="flex-1">
             <h3 class="text-md font-semibold text-primary mb-2">Descripción:</h3>
             <div class="flex items-center gap-4 mb-4">
-              <span class="badge badge-primary badge-lg">#{{ progressTicketsCount - i }}</span>
+              <span class="badge badge-primary badge-lg">#{{ getDocumentNumber(i) }}</span>
               <div class="flex flex-col justify-between text-sm font-mono">
                 <div class="text-primary">
-
-                  <!-- @if (ticketResource.value().network_elements?.length) {
-                  <div class="space-y-2 mb-4">
-                    <span class="font-semibold text-primary text-sm">Elementos de Red de inicio del ticket:</span>
-                    <div class="flex flex-wrap gap-2">
-                      @for (element of ticketResource.value().network_elements; track element.id; let i = $index) {
-                      <div class="px-3 py-2 rounded-lg">
-                        <span class="font-mono uppercase text-sm">
-                          <span class="font-bold">#{{ i + 1 }}:</span>
-                          {{ element.acronym }}
-                          @if (element.management_ip) {
-                          ({{ element.management_ip }})
-                          }
-                        </span>
-                      </div>
-                      }
-                    </div>
-                  </div>
-                  } -->
-
                   @if (progress.network_elements?.length) {
                   <div class="space-y-2 mt-3">
                     <span class="font-semibold text-warning text-sm">Elementos de Red:</span>
@@ -334,7 +307,6 @@
                     </div>
                   </div>
                   }
-
                 </div>
                 <div>
                   {{ progress.progress }}
@@ -388,7 +360,6 @@
 
             <p class="text-sm text-gray-500">Por:</p>
             <p class="font-medium">{{ progress.user?.fullName }}</p>
-
           </div>
         </div>
 
@@ -426,7 +397,6 @@
             Evidencias visuales ({{ progress.images.length }})
           </p>
 
-
           <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
             @for (image of progress.images; track $index) {
             <div class="relative group">
@@ -435,28 +405,6 @@
             </div>
             }
           </div>
-
-          <!-- <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            @for (image of progress.images; track $index) {
-            <div class="relative group cursor-pointer" (click)="openImage(image)">
-              <img [src]="image" alt="Evidencia de seguimiento"
-                class="rounded-lg object-cover h-48 w-full transition-transform duration-300 group-hover:scale-105"
-                (error)="handleImageError($event)">
-              <div
-                class="absolute inset-0 bg-opacity-0 group-hover:bg-opacity-20 transition-opacity duration-300 rounded-lg flex items-center justify-center">
-                <svg class="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" fill="none"
-                  stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3-3H7"></path>
-                </svg>
-              </div>
-              <div
-                class="absolute top-2 right-2 bg-primary text-white text-xs rounded-full w-6 h-6 flex items-center justify-center">
-                {{ $index + 1 }}
-              </div>
-            </div>
-            }
-          </div> -->
         </div>
         }
       </div>
@@ -474,9 +422,15 @@
         técnico actualizará esta sección conforme avance el proceso.</p>
     </div>
     }
+
+    @if (progressTicketsPages > 1) {
+    <div class="mt-8 flex justify-center">
+      <app-progress-pagination [currentPage]="currentPage()" [pages]="progressTicketsPages"
+        (pageChange)="changeProgressPage($event)" />
+    </div>
+    }
   </div>
 
-  <!-- Pestaña de Cierre -->
   <input type="radio" name="my_tabs_3" class="tab text-red-500 font-bold" aria-label="Cierre" />
   <div class="tab-content bg-base-100 border-base-300 p-6">
     <div class="flex flex-wrap justify-between items-center mb-4 gap-4">
@@ -633,7 +587,6 @@
           </div>
           <div class="collapse-content">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-              <!-- Elemento Origen -->
               <div class="bg-base-200 p-3 rounded-lg">
                 <h5 class="font-semibold text-primary mb-2 text-xs">
                   Elemento(s) Origen
@@ -685,7 +638,6 @@
                 }
               </div>
 
-              <!-- Elemento de Cierre -->
               <div class="bg-base-200 p-3 rounded-lg">
                 <h5 class="font-semibold text-primary mb-2 text-xs">
                   Elemento(s) de Cierre
@@ -712,7 +664,6 @@
                         <span class="font-medium">Modelo:</span>
                         <span class="capitalize">{{ element.model || 'No especificado' }}</span>
                       </div>
-                      <!-- ✅ ESTAS SON LAS LÍNEAS CRÍTICAS -->
                       <div class="flex justify-between">
                         <span class="font-medium">Proveedor:</span>
                         <span class="capitalize">{{ element.provider.provider_name || 'No especificado' }}</span>
@@ -721,7 +672,6 @@
                         <span class="font-medium">Central:</span>
                         <span class="capitalize">{{ element.central?.central_name || 'No especificada' }}</span>
                       </div>
-                      <!-- FIN LÍNEAS CRÍTICAS -->
                       @if (element.management_ip) {
                       <div class="flex justify-between">
                         <span class="font-medium">IP Gestión:</span>
@@ -738,7 +688,6 @@
                 </div>
                 }
               </div>
-
             </div>
           </div>
         </div>
@@ -938,7 +887,6 @@
           </div>
 
           <div class="form-control">
-
             @if (selectedClosureElementType() === 'network') {
             <div class="mb-4 p-4 bg-base-200 rounded-lg border-l-4 border-warning">
               <label class="label py-1">
@@ -982,33 +930,6 @@
               </span>
             </label>
 
-            <!-- Botones de selección de tipo -->
-            <!-- se agregan ambos 'fibra' y 'network' para deshabilitar el botón -->
-            <!-- en [disabled]="selectedClosureElementType() === 'fiber' || 'network'"> -->
-            <!-- <div class="flex gap-2 mb-3">
-              <button type="button" class="btn btn-sm flex-1"
-                [class.btn-primary]="selectedClosureElementType() === 'network'"
-                [class.btn-outline]="selectedClosureElementType() !== 'network'"
-                [class.btn-disabled]="selectedClosureElementType() === 'fiber'" (click)="openNetworkElementModal()"
-                [disabled]="selectedClosureElementType() === 'fiber' || 'network'">
-                Elemento(s) de Red
-                @if (selectedClosureElementType() === 'fiber') {
-                <span class="badge badge-xs badge-error ml-1">❌</span>
-                }
-              </button>
-              <button type="button" class="btn btn-sm flex-1"
-                [class.btn-primary]="selectedClosureElementType() === 'fiber'"
-                [class.btn-outline]="selectedClosureElementType() !== 'fiber'"
-                [class.btn-disabled]="selectedClosureElementType() === 'network'" (click)="openFiberElementModal()"
-                [disabled]="selectedClosureElementType() === 'network' || 'fiber'">
-                Tramo de Fibra
-                @if (selectedClosureElementType() === 'network') {
-                <span class="badge badge-xs badge-error ml-1">❌</span>
-                }
-              </button>
-            </div> -->
-
-            <!-- Información del elemento seleccionado -->
             @if (selectedClosureElementType() === 'network' && selectedClosureNetworkElementsClosure().length > 0) {
             <div class="mt-2 space-y-2">
               <div class="flex justify-between items-center">
@@ -1057,14 +978,10 @@
                   }
                   <div><strong>Longitud:</strong> {{ selectedClosureFiberElement()!.length_km || 'N/A' }} km</div>
                 </div>
-                <!-- <button type="button" class="btn btn-ghost btn-xs ml-2" (click)="clearClosureFiberElement()">
-                  Cambiar
-                </button> -->
               </div>
             </div>
             }
 
-            <!-- Validación -->
             @if ((closureForm.get('networkElementClosureIds')?.invalid || closureForm.get('fiberLengthId')?.invalid) &&
             (closureForm.get('networkElementClosureIds')?.touched || closureForm.get('fiberLengthId')?.touched)) {
             <label class="label">
@@ -1072,15 +989,11 @@
             </label>
             }
           </div>
-
         </div>
 
         <div class="bg-base-100 p-4 rounded-lg">
           <h4 class="font-semibold text-primary mb-3">⏰ Horas del Cierre</h4>
-          <!-- <p class="text-sm text-warning italic">Fecha/Hora de referencia para el cierre (HCT): {{
-            ticketResource.value().date_hct | date : "d/MM/yyyy, hh:mm a" }}</p> -->
           <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <!-- Hora llegada sitio (HLLS) -->
             <div class="form-control">
               <label class="label py-1">
                 <span class="label-text font-medium">Hora llegada sitio (HLLS) *</span>
@@ -1100,7 +1013,6 @@
               }
             </div>
 
-            <!-- Hora inicio reparación (HIR) -->
             <div class="form-control">
               <label class="label py-1">
                 <span class="label-text font-medium">Hora inicio reparación (HIR) *</span>
@@ -1120,7 +1032,6 @@
               }
             </div>
 
-            <!-- Hora restablec. servicio (HRS) -->
             <div class="form-control">
               <label class="label py-1">
                 <span class="label-text font-medium">Hora restablec. servicio (HRS) *</span>
@@ -1140,7 +1051,6 @@
               }
             </div>
 
-            <!-- Hora fin falla (HFF) -->
             <div class="form-control">
               <label class="label py-1">
                 <span class="label-text font-medium">Hora fin falla (HFF) *</span>
@@ -1256,7 +1166,6 @@
     }
   </div>
 
-  <!-- <div class="flex justify-end"> -->
   <button class="btn btn-ghost text-secondary font-bold" (click)="generateTicketHistoryPdf()"
     [disabled]="isGeneratingPdf()">
     @if (isGeneratingPdf()) {
@@ -1266,12 +1175,9 @@
     Ver Historial del Ticket (PDF)
     }
   </button>
-  <!-- </div> -->
-
 </div>
 }
 
-<!-- Alert para validaciones de fecha/hora en cierre -->
 @if (showDateTimeAlert()) {
 <div class="fixed inset-0 flex items-end justify-center z-50 pointer-events-none">
   <div class="w-full max-w-md mb-8 mx-4">
@@ -1296,50 +1202,11 @@
   </button>
 </div>
 
-<!-- <div class="flex justify-end">
-  <button class="btn btn-secondary my-3" (click)="goBack()">
-    <img class="" src="assets/icons/{{ 'material-symbols--keyboard-return' }}.svg">
-    Regresar
-  </button>
-</div> -->
-
-<!-- Modal para nuevo seguimiento -->
 @if (showModal()) {
 <div class="modal modal-open">
   <div class="modal-box max-w-5xl max-h-[95vh] overflow-y-auto">
     <h3 class="font-bold text-2xl text-primary mb-6 text-center">Seguimiento</h3>
     <form [formGroup]="progressForm" (ngSubmit)="onSubmit()" class="space-y-6">
-
-      <!-- <div class="collapse collapse-arrow bg-base-200 border-base-300 border rounded-box">
-        <input type="checkbox" class="peer" />
-        <div class="collapse-title font-medium">
-          <span class="flex items-center">
-            Agregar nueva descripción al avance
-          </span>
-        </div>
-        <div class="collapse-content">
-          <div class="grid grid-cols-1 md:grid-cols-1 gap-4">
-            <div class="form-control">
-              <label class="label">
-                <span class="label-text font-medium mb-2">Descripción *</span>
-              </label>
-              <textarea placeholder="Describa en detalle la descripción de la nueva documentación."
-                class="textarea textarea-bordered textarea-primary w-full" formControlName="progress"
-                [class.textarea-error]="progressForm.get('progress')?.invalid && progressForm.get('progress')?.touched">
-              </textarea>
-              @if (progressForm.get('progress')?.invalid && progressForm.get('progress')?.touched) {
-              <label class="label">
-                <span class="label-text-alt text-error">
-                  @if (progressForm.get('progress')?.errors?.['required']) { La descripcion es requerida }
-                  @if (progressForm.get('progress')?.errors?.['minlength']) { Mínimo 5 caracteres }
-                </span>
-              </label>
-              }
-            </div>
-          </div>
-        </div>
-      </div> -->
-
       <div class="bg-base-200 p-5 rounded-xl">
         <div class="form-control">
           <label class="label">
@@ -1422,15 +1289,6 @@
                 placeholder="Seleccione un elemento" readonly>
               }
             </div>
-
-            <!-- <div class="form-control">
-              <label class="label">
-                <span class="label-text font-medium mb-1">Elemento Seleccionado</span>
-              </label>
-              <input type="text" class="input input-bordered input-primary"
-                [value]="selectedElement()?.acronym || selectedElement()?.section_name || 'Ninguno'"
-                placeholder="Seleccione un elemento" readonly>
-            </div> -->
           </div>
 
           @if (selectedElementType() === 'network') {
@@ -1449,22 +1307,6 @@
               </div>
             </div>
 
-            <!-- Elementos seleccionados actualmente -->
-            <!-- @if (selectedNetworkElements().length > 0) {
-            <div class="bg-base-300 p-3 rounded-lg">
-              <p class="font-semibold text-sm mb-2">Elementos seleccionados:</p>
-              <div class="flex flex-wrap gap-2">
-                @for (element of selectedNetworkElements(); track element.id; let i = $index) {
-                <div class="bg-primary text-primary-content px-2 py-1 rounded text-xs flex items-center gap-1">
-                  <span>{{ element.acronym }}</span>
-                  <button type="button" class="btn btn-xs btn-ghost btn-circle" (click)="removeNetworkElement(element)">
-                    ✕
-                  </button>
-                </div>
-                }
-              </div>
-            </div>
-            } -->
             <div class="form-control">
               <label class="label">
                 <span class="label-text font-medium mb-1">Elemento Seleccionado</span>
@@ -1602,7 +1444,6 @@
             </div>
           </div>
           }
-
         </div>
       </div>
 
@@ -1636,7 +1477,6 @@
             </select>
           </div>
 
-          <!-- Reemplazar el select actual de plataforma en el modal de nueva documentación -->
           <div class="form-control">
             <label class="label">
               <span class="label-text font-medium mb-2">Plataforma *</span>
@@ -1656,7 +1496,6 @@
               }
             </select>
 
-            <!-- Mensaje informativo cuando no hay plataformas para el grupo seleccionado -->
             @if (progressForm.get('groupId')?.value &&
             progressForm.get('groupId')?.value !== 0 &&
             filteredPlatforms().length === 0) {
@@ -1699,7 +1538,6 @@
               }
             </select>
 
-            <!-- Mensaje informativo cuando no hay fallas para el grupo seleccionado -->
             @if (progressForm.get('groupId')?.value &&
             progressForm.get('groupId')?.value !== 0 &&
             filteredFailures().length === 0) {
@@ -1721,7 +1559,6 @@
 
       <div class="bg-base-200 p-5 rounded-xl">
         <div class="grid grid-cols-1">
-          <!-- Responsable área resolutoria con modal -->
           <div class="form-control">
             <label class="label">
               <span class="label-text font-medium mb-2">
@@ -1825,7 +1662,6 @@
 </div>
 }
 
-<!-- Modal para selección de elementos de red en cierre -->
 @if (showNetworkElementModal()) {
 <div class="modal modal-open">
   <div class="modal-box max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -1893,14 +1729,11 @@
 </div>
 }
 
-
-<!-- Modal para selección de tramos de fibra en cierre -->
 @if (showFiberElementModal()) {
 <div class="modal modal-open">
   <div class="modal-box max-w-4xl max-h-[90vh] overflow-y-auto">
     <h3 class="font-bold text-2xl text-primary mb-6 text-center">Seleccionar Tramo de Fibra para Cierre</h3>
 
-    <!-- Búsqueda -->
     <div class="form-control mb-4">
       <label class="label">
         <span class="label-text font-medium">Buscar tramo de fibra</span>
@@ -1909,7 +1742,6 @@
         [value]="searchFiberClosureQuery()" (input)="onFiberClosureSearchChange($event)">
     </div>
 
-    <!-- Tabla de resultados -->
     <div class="overflow-x-auto max-h-96 overflow-y-auto">
       <table class="table table-zebra table-sm">
         <thead class="sticky top-0 bg-base-200">
@@ -1932,7 +1764,6 @@
             <td class="font-mono uppercase">{{ fiber.section_name }}</td>
             <td class="uppercase">{{ fiber.stateA.state || 'N/A' }}</td>
             <td class="uppercase">{{ fiber.stateB.state || 'N/A' }}</td>
-            <!-- <td class="font-mono">{{ fiber.length_km || 'N/A' }} km</td> -->
           </tr>
           }
           @if (closureFiberSearchResults.length === 0 && fiberSearchQuery()) {
@@ -1953,21 +1784,12 @@
 </div>
 }
 
-<!-- <div class="bg-warning text-warning-content p-2 rounded text-xs mt-2">
-  Debug: Network Elements: {{ selectedNetworkElements().length }},
-  Fiber: {{ selectedFiberElement() ? 'Yes' : 'No' }},
-  Type: {{ selectedElementType() }}
-</div> -->
-
-<!-- Modal para selección de responsables -->
 @if (showPersonalsModal()) {
 <div class="modal modal-open">
   <div class="modal-box max-w-5xl max-h-[90vh] overflow-y-auto">
     <h3 class="font-bold text-lg mb-4">Seleccionar Responsable</h3>
 
-    <!-- Búsqueda -->
     <div class="form-control mb-4">
-      <!-- Búsqueda general -->
       <div class="flex justify-between items-center gap-2 mb-3">
         <div>
           @if (personalSearchMode() === 'filtered') {
@@ -1992,7 +1814,6 @@
         </div>
       </div>
 
-      <!-- Filtros avanzados -->
       <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
         <div>
           <label class="label label-text py-1">Estado</label>
@@ -2010,7 +1831,6 @@
           </select>
         </div>
 
-        <!-- Filtro por grupo -->
         <div>
           <label class="label label-text py-1">Grupo</label>
           <select class="select select-bordered select-sm w-full"
@@ -2027,7 +1847,6 @@
           </select>
         </div>
 
-        <!-- Filtro por nombre -->
         <div>
           <label class="label label-text py-1">Nombre</label>
           <input type="text" placeholder="Nombre..." class="input input-bordered input-sm w-full" [value]="nameSearch()"
@@ -2036,7 +1855,6 @@
             " />
         </div>
 
-        <!-- Filtro por apellido -->
         <div>
           <label class="label label-text py-1">Apellido</label>
           <input type="text" placeholder="Apellido..." class="input input-bordered input-sm w-full"
@@ -2047,7 +1865,6 @@
       </div>
     </div>
 
-    <!-- Mensaje cuando no hay resultados -->
     @if (allPersonals().length === 0 && personalsSearch()) {
     <div class="alert alert-warning mb-4">
       <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
@@ -2058,7 +1875,6 @@
     </div>
     }
 
-    <!-- Tabla de responsables -->
     <div class="overflow-x-auto">
       <table class="table table-zebra table-sm">
         <thead>
@@ -2120,16 +1936,13 @@
       </table>
     </div>
 
-    <!-- Paginación solo para modo "all" -->
     @if (personalSearchMode() === 'all' && personalTotalPages() > 1) {
     <div class="join flex justify-center mt-4">
-      <!-- Botón anterior -->
       <button type="button" class="join-item btn btn-sm" [class.btn-disabled]="personalCurrentPage() === 1"
         (click)="goToPersonalPage(personalCurrentPage() - 1)">
         «
       </button>
 
-      <!-- Botones de páginas -->
       @for (page of getPersonalPaginationRange(); track $index) { @if (page
       === '...') {
       <button type="button" class="join-item btn btn-sm btn-disabled">
@@ -2142,7 +1955,6 @@
       </button>
       } }
 
-      <!-- Botón siguiente -->
       <button type="button" class="join-item btn btn-sm"
         [class.btn-disabled]="personalCurrentPage() === personalTotalPages()"
         (click)="goToPersonalPage(personalCurrentPage() + 1)">
@@ -2151,7 +1963,6 @@
     </div>
     }
 
-    <!-- Responsable seleccionado -->
     @if (selectedPersonal()) {
     <div class="mt-4 p-3 bg-base-200 rounded-lg">
       <h4 class="font-semibold mb-2">Responsable seleccionado:</h4>
