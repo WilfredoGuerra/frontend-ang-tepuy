@@ -150,6 +150,8 @@ export class TicketPageComponent {
   allNetworkElements = signal<any[]>([]);
   allFiberLengths = signal<FiberLength[]>([]);
   allUsers = signal<any[]>([]);
+  filteredPlatforms = signal<any[]>([]);
+  filteredFailures = signal<any[]>([]);
 
   selectedNetworkElements = signal<any[]>([]);
   selectedFiberElement = signal<any>(null);
@@ -298,6 +300,10 @@ export class TicketPageComponent {
       this.onDateHffChange();
     });
 
+    this.progressForm.get('groupId')?.valueChanges.subscribe((groupId) => {
+      this.onGroupChangeInProgressForm(groupId);
+    });
+
     this.closureForm.get('incidentId')?.valueChanges.subscribe((incidentId) => {
       const incidentDetailControl = this.closureForm.get('incidentDetailId');
 
@@ -322,6 +328,72 @@ export class TicketPageComponent {
     if (this.alertTimeout) {
       clearTimeout(this.alertTimeout);
     }
+  }
+
+  // onGroupChangeInProgressForm(groupId: number | null): void {
+  //   if (!groupId || groupId === 0) {
+  //     // Si no hay grupo seleccionado, mostrar todas las plataformas
+  //     const allPlatforms = this.platformsResource.value() || [];
+  //     this.filteredPlatforms.set(allPlatforms);
+  //     return;
+  //   }
+
+  //   // Filtrar plataformas para el grupo seleccionado
+  //   this.filterPlatformsByGroup(groupId);
+  // }
+
+  onGroupChangeInProgressForm(groupId: number | null): void {
+    if (!groupId || groupId === 0) {
+      // Si no hay grupo seleccionado, mostrar todas las plataformas y fallas
+      const allPlatforms = this.platformsResource.value() || [];
+      this.filteredPlatforms.set(allPlatforms);
+
+      const allFailures = this.failuresResource.value() || [];
+      this.filteredFailures.set(allFailures);
+
+      // ✅ NUEVO: Resetear los selects de plataforma y falla
+      this.progressForm.patchValue({
+        platformId: null,
+        failureId: null,
+      });
+      return;
+    }
+
+    // Filtrar plataformas para el grupo seleccionado
+    this.filterPlatformsByGroup(groupId);
+
+    // Filtrar fallas por grupo
+    this.loadFailuresByGroup(groupId);
+
+    // ✅ NUEVO: Resetear los selects de plataforma y falla cuando se cambia de grupo
+    this.progressForm.patchValue({
+      platformId: null,
+      failureId: null,
+    });
+  }
+
+  private loadFailuresByGroup(groupId: number): void {
+    this.groupsService.getFailuresByGroup(groupId).subscribe({
+      next: (failures) => {
+        this.filteredFailures.set(failures || []);
+
+        // Resetear la falla seleccionada si no está en las nuevas opciones
+        const currentFailureId = this.progressForm.get('failureId')?.value;
+        if (currentFailureId && currentFailureId !== 0) {
+          const currentFailureValid = failures?.some(
+            (failure: any) => failure.id === currentFailureId
+          );
+          if (!currentFailureValid) {
+            this.progressForm.patchValue({ failureId: null });
+          }
+        }
+      },
+      error: (error) => {
+        console.error('Error loading failures for group:', error);
+        this.filteredFailures.set([]);
+        this.progressForm.patchValue({ failureId: null });
+      },
+    });
   }
 
   private showDateTimeError(message: string): void {
@@ -678,47 +750,65 @@ export class TicketPageComponent {
   }
 
   // Métodos de formulario de seguimiento
-openModal() {
-  this.showModal.set(true);
-  this.loadAllData();
+  // openModal() {
+  //   this.showModal.set(true);
+  //   this.loadAllData();
 
-  setTimeout(() => {
-    this.prefillFormWithTicketData();
+  //   setTimeout(() => {
+  //     this.prefillFormWithTicketData();
 
-    // Solo precargar elementos si NO es la primera documentación
-    if (this.hasProgressTickets) {
-      this.prefillElementsFromLastProgress(); // Nuevo método mejorado
-      // this.debugProgressElements();
+  //     // Solo precargar elementos si NO es la primera documentación
+  //     if (this.hasProgressTickets) {
+  //       this.prefillElementsFromLastProgress(); // Nuevo método mejorado
+  //       // this.debugProgressElements();
+  //     } else {
+  //       this.prefillElementsFromTicket(); // Método original para primera documentación
+  //     }
+  //   }, 100);
+  // }
+
+  openModal() {
+    this.showModal.set(true);
+    this.loadAllData();
+
+    setTimeout(() => {
+      this.prefillFormWithTicketData();
+
+      // Solo precargar elementos si NO es la primera documentación
+      if (this.hasProgressTickets) {
+        this.prefillElementsFromLastProgress();
+      } else {
+        this.prefillElementsFromTicket();
+      }
+
+      // ✅ NUEVO: Asegurar que las plataformas se filtren inicialmente
+      const groupId = this.progressForm.get('groupId')?.value;
+      this.filterPlatformsByGroup(groupId || null);
+    }, 100);
+  }
+
+  private prefillElementsFromLastProgress() {
+    const lastProgressElements = this.getLastProgressNetworkElements();
+    const lastFiberElement = this.getLastProgressFiberElement();
+
+    if (lastProgressElements.length > 0) {
+      this.selectedNetworkElements.set([...lastProgressElements]);
+      this.selectedElementType.set('network');
+      console.log(
+        'From last progress - network elements:',
+        this.selectedNetworkElements().length,
+        this.selectedNetworkElements()
+      );
+    } else if (lastFiberElement) {
+      this.selectedFiberElement.set(lastFiberElement);
+      this.selectedElementType.set('fiber');
     } else {
-      this.prefillElementsFromTicket(); // Método original para primera documentación
+      // Si la última documentación no tiene elementos, cargar del ticket
+      this.prefillElementsFromTicket();
     }
-  }, 100);
-}
 
-private prefillElementsFromLastProgress() {
-  const lastProgressElements = this.getLastProgressNetworkElements();
-  const lastFiberElement = this.getLastProgressFiberElement();
-
-  if (lastProgressElements.length > 0) {
-    this.selectedNetworkElements.set([...lastProgressElements]);
-    this.selectedElementType.set('network');
-    console.log(
-      'From last progress - network elements:',
-      this.selectedNetworkElements().length,
-      this.selectedNetworkElements()
-    );
+    this.updateFormWithSelectedElements();
   }
-  else if (lastFiberElement) {
-    this.selectedFiberElement.set(lastFiberElement);
-    this.selectedElementType.set('fiber');
-  }
-  else {
-    // Si la última documentación no tiene elementos, cargar del ticket
-    this.prefillElementsFromTicket();
-  }
-
-  this.updateFormWithSelectedElements();
-}
 
   private prefillElementsFromTicket() {
     const ticket = this.ticketResource.value();
@@ -763,30 +853,28 @@ private prefillElementsFromLastProgress() {
     this.updateFormWithSelectedElements();
   }
 
-private getLastProgressFiberElement(): any {
-  if (!this.hasProgressTickets) return null;
+  private getLastProgressFiberElement(): any {
+    if (!this.hasProgressTickets) return null;
 
-  // Buscar en todas las documentaciones (de más reciente a más antigua)
-  for (let i = 0; i < this.progressTickets.length; i++) {
-    const progress = this.progressTickets[i];
+    // Buscar en todas las documentaciones (de más reciente a más antigua)
+    for (let i = 0; i < this.progressTickets.length; i++) {
+      const progress = this.progressTickets[i];
 
-    if (progress.fiberLengthId && progress.fiberLength) {
-      return progress.fiberLength;
+      if (progress.fiberLengthId && progress.fiberLength) {
+        return progress.fiberLength;
+      }
+
+      // Si tiene fiberLengthId pero no tiene la relación cargada
+      if (progress.fiberLengthId && !progress.fiberLength) {
+        const fiber = this.fiberLengthsResource
+          .value()
+          ?.fiberLengths?.find((f) => f.id === progress.fiberLengthId);
+        if (fiber) return fiber;
+      }
     }
 
-    // Si tiene fiberLengthId pero no tiene la relación cargada
-    if (progress.fiberLengthId && !progress.fiberLength) {
-      const fiber = this.fiberLengthsResource
-        .value()
-        ?.fiberLengths?.find((f) => f.id === progress.fiberLengthId);
-      if (fiber) return fiber;
-    }
+    return null;
   }
-
-  return null;
-}
-
-
 
   // private prefillElementsFromTicket() {
   //   const ticket = this.ticketResource.value();
@@ -824,15 +912,46 @@ private getLastProgressFiberElement(): any {
     console.log('Form updated:', { networkIds, fiberId }); // Para debug
   }
 
+  // closeModal() {
+  //   this.showModal.set(false);
+  //   this.selectedFiles.set([]);
+  //   this.selectedNetworkElements.set([]);
+  //   this.selectedFiberElement.set(null);
+  //   // this.selectedElement.set(null);
+  //   this.selectedElementType.set('network');
+  //   this.searchFiberModalQuery.set(''); // Limpiar búsqueda del modal
+  //   this.searchNetworkQuery.set('');
+  //   this.progressForm.reset({
+  //     ticketId: this.ticketId,
+  //     statusId: null,
+  //     groupId: null,
+  //     severityId: null,
+  //     platformId: null,
+  //     originId: null,
+  //     failureId: null,
+  //     impact: '',
+  //     assignedUserId: null,
+  //     personalRegionId: null,
+  //     elementNetworkId: [],
+  //     fiberLengthId: null,
+  //     progress: '',
+  //     observations: '',
+  //   });
+  // }
+
   closeModal() {
     this.showModal.set(false);
     this.selectedFiles.set([]);
     this.selectedNetworkElements.set([]);
     this.selectedFiberElement.set(null);
-    // this.selectedElement.set(null);
     this.selectedElementType.set('network');
-    this.searchFiberModalQuery.set(''); // Limpiar búsqueda del modal
+    this.searchFiberModalQuery.set('');
     this.searchNetworkQuery.set('');
+
+    // Resetear plataformas y fallas filtradas
+    this.filteredPlatforms.set([]);
+    this.filteredFailures.set([]);
+
     this.progressForm.reset({
       ticketId: this.ticketId,
       statusId: null,
@@ -842,7 +961,7 @@ private getLastProgressFiberElement(): any {
       originId: null,
       failureId: null,
       impact: '',
-      assignedUserId: null,
+      assignedUserId: null, // ✅ Mantener aunque no se muestre en el UI
       personalRegionId: null,
       elementNetworkId: [],
       fiberLengthId: null,
@@ -1227,10 +1346,29 @@ private getLastProgressFiberElement(): any {
     });
   }
 
+  // private prefillFormWithTicketData() {
+  //   if (this.ticketResource.hasValue()) {
+  //     const ticket = this.ticketResource.value();
+
+  //     this.progressForm.patchValue({
+  //       statusId: ticket.statusId || null,
+  //       groupId: ticket.groupId || null,
+  //       severityId: ticket.severityId || null,
+  //       platformId: ticket.platformId || null,
+  //       originId: ticket.originId || null,
+  //       failureId: ticket.failureId || null,
+  //       impact: ticket.impact,
+  //       personalRegionId: ticket.personalRegionId || null,
+  //       assignedUserId: null,
+  //     });
+  //   }
+  // }
+
   private prefillFormWithTicketData() {
     if (this.ticketResource.hasValue()) {
       const ticket = this.ticketResource.value();
 
+      // Primero cargar el grupo
       this.progressForm.patchValue({
         statusId: ticket.statusId || null,
         groupId: ticket.groupId || null,
@@ -1242,7 +1380,30 @@ private getLastProgressFiberElement(): any {
         personalRegionId: ticket.personalRegionId || null,
         assignedUserId: null,
       });
+
+      // Luego filtrar las plataformas basado en el grupo
+      this.filterPlatformsByGroup(ticket.groupId || null);
     }
+  }
+
+  private filterPlatformsByGroup(groupId: number | null): void {
+    if (!groupId || groupId === 0) {
+      // Si no hay grupo seleccionado, mostrar todas las plataformas
+      const allPlatforms = this.platformsResource.value() || [];
+      this.filteredPlatforms.set(allPlatforms);
+      return;
+    }
+
+    // Filtrar plataformas que pertenecen al grupo seleccionado
+    const allPlatforms = this.platformsResource.value() || [];
+    const platformsForGroup = allPlatforms.filter((platform) =>
+      platform.groups?.some((group: any) => group.id === groupId)
+    );
+
+    this.filteredPlatforms.set(platformsForGroup);
+
+    // ✅ NOTA: Ya no necesitamos verificar si la plataforma actual es válida
+    // porque siempre la resetearemos al cambiar de grupo
   }
 
   private prefillClosureForm() {
@@ -1805,81 +1966,78 @@ private getLastProgressFiberElement(): any {
     return [];
   }
 
-private prefillClosureElements() {
-  if (this.ticketResource.hasValue()) {
-    const ticket = this.ticketResource.value();
+  private prefillClosureElements() {
+    if (this.ticketResource.hasValue()) {
+      const ticket = this.ticketResource.value();
 
-    // Obtener elementos de la última documentación
-    const lastProgressElements = this.getLastProgressNetworkElements();
-    const lastProgressFiberElement = this.getLastProgressFiberElement();
+      // Obtener elementos de la última documentación
+      const lastProgressElements = this.getLastProgressNetworkElements();
+      const lastProgressFiberElement = this.getLastProgressFiberElement();
 
-    if (lastProgressElements.length > 0) {
-      // Tiene elementos de red - establecer tipo y elementos
-      this.selectedClosureElementType.set('network');
-      this.selectedClosureNetworkElements.set([...lastProgressElements]);
-      this.selectedClosureNetworkElementsClosure.set([
-        ...lastProgressElements,
-      ]);
-
-      // Actualizar formulario con arrays
-      this.closureForm.patchValue({
-        networkElementIds: lastProgressElements.map((el) => el.id),
-        networkElementClosureIds: lastProgressElements.map((el) => el.id),
-        fiberLengthId: null,
-      });
-    }
-    else if (lastProgressFiberElement) {
-      // ✅ CORREGIDO: Usar el tramo de fibra de la última documentación
-      const completeFiber =
-        this.fiberLengthsResource
-          .value()
-          ?.fiberLengths?.find((f) => f.id === lastProgressFiberElement.id) ||
-        lastProgressFiberElement;
-
-      this.selectedClosureElementType.set('fiber');
-      this.selectedClosureFiberElement.set(completeFiber);
-      this.closureForm.patchValue({
-        fiberLengthId: completeFiber.id,
-        networkElementIds: null,
-        networkElementClosureIds: null,
-      });
-    }
-    else {
-      // No tiene elementos en documentaciones - usar elementos del ticket inicial si existen
-      if (ticket.network_elements?.length) {
+      if (lastProgressElements.length > 0) {
+        // Tiene elementos de red - establecer tipo y elementos
         this.selectedClosureElementType.set('network');
-        this.selectedClosureNetworkElements.set([...ticket.network_elements]);
+        this.selectedClosureNetworkElements.set([...lastProgressElements]);
         this.selectedClosureNetworkElementsClosure.set([
-          ...ticket.network_elements,
+          ...lastProgressElements,
         ]);
 
+        // Actualizar formulario con arrays
         this.closureForm.patchValue({
-          networkElementIds: ticket.network_elements.map((el) => el.id),
-          networkElementClosureIds: ticket.network_elements.map(
-            (el) => el.id
-          ),
+          networkElementIds: lastProgressElements.map((el) => el.id),
+          networkElementClosureIds: lastProgressElements.map((el) => el.id),
           fiberLengthId: null,
         });
-      }
-      else if (ticket.fiberLengthId && ticket.fiber_length) {
-        // ✅ FALLBACK: Solo si no hay documentaciones, usar el del ticket
+      } else if (lastProgressFiberElement) {
+        // ✅ CORREGIDO: Usar el tramo de fibra de la última documentación
         const completeFiber =
           this.fiberLengthsResource
             .value()
-            ?.fiberLengths?.find((f) => f.id === ticket.fiberLengthId) ||
-          ticket.fiber_length;
+            ?.fiberLengths?.find((f) => f.id === lastProgressFiberElement.id) ||
+          lastProgressFiberElement;
 
         this.selectedClosureElementType.set('fiber');
         this.selectedClosureFiberElement.set(completeFiber);
         this.closureForm.patchValue({
-          fiberLengthId: ticket.fiberLengthId,
+          fiberLengthId: completeFiber.id,
           networkElementIds: null,
           networkElementClosureIds: null,
         });
+      } else {
+        // No tiene elementos en documentaciones - usar elementos del ticket inicial si existen
+        if (ticket.network_elements?.length) {
+          this.selectedClosureElementType.set('network');
+          this.selectedClosureNetworkElements.set([...ticket.network_elements]);
+          this.selectedClosureNetworkElementsClosure.set([
+            ...ticket.network_elements,
+          ]);
+
+          this.closureForm.patchValue({
+            networkElementIds: ticket.network_elements.map((el) => el.id),
+            networkElementClosureIds: ticket.network_elements.map(
+              (el) => el.id
+            ),
+            fiberLengthId: null,
+          });
+        } else if (ticket.fiberLengthId && ticket.fiber_length) {
+          // ✅ FALLBACK: Solo si no hay documentaciones, usar el del ticket
+          const completeFiber =
+            this.fiberLengthsResource
+              .value()
+              ?.fiberLengths?.find((f) => f.id === ticket.fiberLengthId) ||
+            ticket.fiber_length;
+
+          this.selectedClosureElementType.set('fiber');
+          this.selectedClosureFiberElement.set(completeFiber);
+          this.closureForm.patchValue({
+            fiberLengthId: ticket.fiberLengthId,
+            networkElementIds: null,
+            networkElementClosureIds: null,
+          });
+        }
       }
     }
   }
-}
 
   addClosureNetworkElement(element: any) {
     if (!this.isClosureNetworkElementSelected(element)) {
@@ -2019,26 +2177,26 @@ private prefillClosureElements() {
   //   });
   // }
 
-//   debugProgressElements() {
-//   console.log('=== DEBUG Progress Elements ===');
-//   console.log('Has progress tickets:', this.hasProgressTickets);
-//   console.log('Progress tickets count:', this.progressTicketsCount);
+  //   debugProgressElements() {
+  //   console.log('=== DEBUG Progress Elements ===');
+  //   console.log('Has progress tickets:', this.hasProgressTickets);
+  //   console.log('Progress tickets count:', this.progressTicketsCount);
 
-//   if (this.hasProgressTickets) {
-//     this.progressTickets.forEach((progress, index) => {
-//       console.log(`Progress ${index} (ID: ${progress.id}):`, {
-//         network_elements: progress.network_elements,
-//         network_elements_count: progress.network_elements?.length,
-//         fiber_length: progress.fiberLength,
-//         fiber_length_id: progress.fiberLengthId
-//       });
-//     });
-//   }
+  //   if (this.hasProgressTickets) {
+  //     this.progressTickets.forEach((progress, index) => {
+  //       console.log(`Progress ${index} (ID: ${progress.id}):`, {
+  //         network_elements: progress.network_elements,
+  //         network_elements_count: progress.network_elements?.length,
+  //         fiber_length: progress.fiberLength,
+  //         fiber_length_id: progress.fiberLengthId
+  //       });
+  //     });
+  //   }
 
-//   console.log('Last progress network elements:', this.getLastProgressNetworkElements());
-//   console.log('Last progress fiber element:', this.getLastProgressFiberElement());
-//   console.log('Currently selected network elements:', this.selectedNetworkElements());
-//   console.log('Currently selected fiber element:', this.selectedFiberElement());
-//   console.log('=== END DEBUG ===');
-// }
+  //   console.log('Last progress network elements:', this.getLastProgressNetworkElements());
+  //   console.log('Last progress fiber element:', this.getLastProgressFiberElement());
+  //   console.log('Currently selected network elements:', this.selectedNetworkElements());
+  //   console.log('Currently selected fiber element:', this.selectedFiberElement());
+  //   console.log('=== END DEBUG ===');
+  // }
 }

@@ -1257,14 +1257,15 @@
   </div>
 
   <!-- <div class="flex justify-end"> -->
-    <button class="btn btn-ghost text-secondary font-bold" (click)="generateTicketHistoryPdf()" [disabled]="isGeneratingPdf()">
-      @if (isGeneratingPdf()) {
-      <span class="loading loading-spinner loading-sm"></span>
-      Generando PDF...
-      } @else {
-      Ver Historial del Ticket (PDF)
-      }
-    </button>
+  <button class="btn btn-ghost text-secondary font-bold" (click)="generateTicketHistoryPdf()"
+    [disabled]="isGeneratingPdf()">
+    @if (isGeneratingPdf()) {
+    <span class="loading loading-spinner loading-sm"></span>
+    Generando PDF...
+    } @else {
+    Ver Historial del Ticket (PDF)
+    }
+  </button>
   <!-- </div> -->
 
 </div>
@@ -1635,18 +1636,34 @@
             </select>
           </div>
 
+          <!-- Reemplazar el select actual de plataforma en el modal de nueva documentación -->
           <div class="form-control">
             <label class="label">
               <span class="label-text font-medium mb-2">Plataforma *</span>
             </label>
             <select class="select select-bordered select-primary" formControlName="platformId">
-              <option [ngValue]="null" disabled selected>Seleccione plataforma</option>
-              @for (platform of platformsResource.value(); track platform.id) {
+              <option [ngValue]="null" disabled selected>
+                @if (filteredPlatforms().length === 0 && progressForm.get('groupId')?.value) {
+                No hay plataformas para este grupo
+                } @else {
+                Seleccione una plataforma para el grupo
+                }
+              </option>
+              @for (platform of filteredPlatforms(); track platform.id) {
               <option [ngValue]="platform.id">
                 {{ platform.platform }}
               </option>
               }
             </select>
+
+            <!-- Mensaje informativo cuando no hay plataformas para el grupo seleccionado -->
+            @if (progressForm.get('groupId')?.value &&
+            progressForm.get('groupId')?.value !== 0 &&
+            filteredPlatforms().length === 0) {
+            <label class="label">
+              <span class="text-warning text-xs italic">No hay plataformas disponibles para el grupo seleccionado</span>
+            </label>
+            }
           </div>
 
           <div class="form-control">
@@ -1668,13 +1685,28 @@
               <span class="label-text font-medium mb-2">Tipo de Falla *</span>
             </label>
             <select class="select select-bordered select-primary" formControlName="failureId">
-              <option [ngValue]="null" disabled selected>Tipo de falla</option>
-              @for (failure of failuresResource.value(); track failure.id) {
+              <option [ngValue]="null" disabled selected>
+                @if (filteredFailures().length === 0 && progressForm.get('groupId')?.value) {
+                No hay fallas para este grupo
+                } @else {
+                Seleccione una falla para el grupo
+                }
+              </option>
+              @for (failure of filteredFailures(); track failure.id) {
               <option [ngValue]="failure.id">
                 {{ failure.failure }}
               </option>
               }
             </select>
+
+            <!-- Mensaje informativo cuando no hay fallas para el grupo seleccionado -->
+            @if (progressForm.get('groupId')?.value &&
+            progressForm.get('groupId')?.value !== 0 &&
+            filteredFailures().length === 0) {
+            <label class="label">
+              <span class="text-warning text-xs italic">No hay fallas disponibles para el grupo seleccionado</span>
+            </label>
+            }
           </div>
 
           <div class="form-control">
@@ -1688,13 +1720,16 @@
       </div>
 
       <div class="bg-base-200 p-5 rounded-xl">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1">
+          <!-- Solo Región Personal ocupando todo el ancho -->
           <div class="form-control">
             <label class="label">
-              <span class="label-text font-medium mr-2 mb-2">Región Personal <span
-                  class="text-gray-500 text-sm">(Opcional)</span></span>
+              <span class="label-text font-medium mr-2 mb-2">
+                Región Personal
+                <span class="text-gray-500 text-sm">(Opcional)</span>
+              </span>
             </label>
-            <select class="select select-bordered select-primary" formControlName="personalRegionId">
+            <select class="select select-bordered select-primary w-full" formControlName="personalRegionId">
               <option [ngValue]="null" selected>Sin región específica</option>
               @for (region of personalsRegionResource.value()?.personalsRegions; track region.id) {
               <option [ngValue]="region.id">
@@ -1702,25 +1737,8 @@
               </option>
               }
             </select>
-          </div>
-
-          <div class="form-control">
-            <label class="label">
-              <span class="label-text font-medium mb-2">Usuario Asignado (Opcional)</span>
-            </label>
-
-            <!-- Select simplificado sin el input de búsqueda que no se usa -->
-            <select class="select select-bordered select-primary" formControlName="assignedUserId">
-              <option [ngValue]="null" selected>Sin usuario asignado</option>
-              @for (user of allUsers(); track user.id) {
-              <option [ngValue]="user.id">
-                {{ user.fullName }} - {{ user.email }}
-              </option>
-              }
-            </select>
-
             <div class="text-xs text-gray-500 mt-1">
-              Deje en "Sin usuario asignado" si no requiere asignar un usuario específico
+              Seleccione un personal de área resolutoria si aplica para este seguimiento
             </div>
           </div>
         </div>

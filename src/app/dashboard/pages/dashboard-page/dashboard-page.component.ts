@@ -73,22 +73,22 @@ export default class DashboardComponent implements OnInit, OnDestroy {
   };
 
   // Colores para severidad (rojo, naranja, amarillo, azul, gris)
-  private severityColors = [
-    'rgba(239, 68, 68, 0.9)', // Rojo - Alta
-    'rgba(249, 115, 22, 0.9)', // Naranja - Media
-    'rgba(234, 179, 8, 0.9)', // Amarillo - Baja
-    'rgba(59, 130, 246, 0.9)', // Azul - Informativa
-    'rgba(156, 163, 175, 0.9)', // Gris - Sin severidad
-  ];
+private severityColors = [
+  'rgba(239, 68, 68, 0.9)',    // Rojo - Alta
+  'rgba(249, 115, 22, 0.9)',   // Naranja - Media
+  'rgba(234, 179, 8, 0.9)',    // Amarillo - Baja
+  'rgba(59, 130, 246, 0.9)',   // Azul - Informativa
+  'rgba(156, 163, 175, 0.9)',  // Gris - Sin severidad
+];
 
   // Colores para estados
-  private statusColors = [
-    'rgba(34, 197, 94, 0.9)', // Verde - Resuelto
-    'rgba(59, 130, 246, 0.9)', // Azul - En proceso
-    'rgba(239, 68, 68, 0.9)', // Rojo - Cancelado
-    'rgba(249, 115, 22, 0.9)', // Naranja - Pendiente
-    'rgba(156, 163, 175, 0.9)', // Gris - Otros
-  ];
+private statusColors = [
+  'rgba(255, 159, 64, 0.8)',    // Naranja
+  'rgba(201, 203, 207, 0.8)',   // Gris
+  'rgba(0, 162, 235, 0.8)',     // Azul
+  'rgba(153, 102, 0, 0.8)',     // Marrón
+  'rgba(255, 128, 0, 0.8)',     // Naranja oscuro (5to elemento)
+];
 
   constructor(private dashboardService: DashboardService) {}
 
@@ -217,36 +217,36 @@ export default class DashboardComponent implements OnInit, OnDestroy {
     }
   }
 
-  createCharts(): void {
-    this.createBarChart('groupChart', 'Tickets por Grupo', this.ticketsByGroup);
-    this.createBarChart(
-      'platformChart',
-      'Tickets por Plataforma',
-      this.ticketsByPlatform
-    );
-    this.createDoughnutChart(
-      'severityChart',
-      'Tickets por Severidad',
-      this.ticketsBySeverity,
-      this.severityColors
-    );
-    this.createPieChart(
-      'statusChart',
-      'Tickets por Estado',
-      this.ticketsByStatus,
-      this.statusColors
-    );
-    this.createHorizontalBarChart(
-      'originChart',
-      'Tickets por Origen',
-      this.ticketsByOrigin
-    );
-    this.createHorizontalBarChart(
-      'failureChart',
-      'Tickets por Tipo de Falla',
-      this.ticketsByFailure
-    );
-  }
+createCharts(): void {
+  this.createBarChart('groupChart', 'Tickets por Grupo', this.ticketsByGroup);
+  this.createBarChart(
+    'platformChart',
+    'Tickets por Plataforma',
+    this.ticketsByPlatform
+  );
+  this.createDoughnutChart(
+    'severityChart',
+    'Tickets por Severidad',
+    this.ticketsBySeverity,
+    this.severityColors
+  );
+  this.createPieChart(
+    'statusChart',
+    'Tickets por Estado',
+    this.ticketsByStatus
+    // Removido: this.statusColors ← Elimina esta línea
+  );
+  this.createHorizontalBarChart(
+    'originChart',
+    'Tickets por Origen',
+    this.ticketsByOrigin
+  );
+  this.createHorizontalBarChart(
+    'failureChart',
+    'Tickets por Tipo de Falla',
+    this.ticketsByFailure
+  );
+}
 
   createFiberCutChart(): void {
     this.createDoughnutChart(
@@ -430,77 +430,86 @@ export default class DashboardComponent implements OnInit, OnDestroy {
     });
   }
 
-  createPieChart(
-    canvasId: string,
-    title: string,
-    data: { [key: string]: number },
-    colors?: string[]
-  ): void {
-    const canvas = document.getElementById(canvasId) as HTMLCanvasElement;
-    if (!canvas) return;
+createPieChart(canvasId: string, title: string, data: { [key: string]: number }): void {
+  const canvas = document.getElementById(canvasId) as HTMLCanvasElement;
+  if (!canvas) return;
 
-    if (this.charts[canvasId]) {
-      this.charts[canvasId].destroy();
-    }
+  if (this.charts[canvasId]) {
+    this.charts[canvasId].destroy();
+  }
 
-    const labels = this.getKeys(data);
-    const values = labels.map((label) => data[label] || 0);
+  const labels = this.getKeys(data);
+  const values = labels.map(label => data[label] || 0);
 
-    if (labels.length === 0) {
-      this.createEmptyChart(canvasId, title);
-      return;
-    }
+  if (labels.length === 0) {
+    this.createEmptyChart(canvasId, title);
+    return;
+  }
 
-    const chartData: ChartData<'pie'> = {
-      labels: labels,
-      datasets: [
-        {
-          data: values,
-          backgroundColor:
-            colors ||
-            labels.map(
-              (_, i) =>
-                this.chartColors.primary[i % this.chartColors.primary.length]
-            ),
-          borderColor: '#fff',
-          borderWidth: 2,
-          hoverBorderWidth: 3,
-        },
-      ],
-    };
+  // Colores semánticos para el gráfico de estatus
+  let backgroundColor: string[];
+  if (canvasId === 'statusChart') {
+    backgroundColor = labels.map(label => {
+      const labelLower = label.toLowerCase();
+      if (labelLower.includes('resuelto')) return 'rgba(34, 197, 94, 0.8)'; // Verde
+      if (labelLower.includes('proceso')) return 'rgba(234, 179, 8, 0.8)';  // Amarillo
+      if (labelLower.includes('cancelado')) return 'rgba(239, 68, 68, 0.8)'; // Rojo
+      if (labelLower.includes('pendiente')) return 'rgba(249, 115, 22, 0.8)'; // Naranja
+      return 'rgba(156, 163, 175, 0.8)'; // Gris
+    });
+  } else if (canvasId === 'severityChart') {
+    backgroundColor = labels.map(label => {
+      const labelLower = label.toLowerCase();
+      if (labelLower.includes('alta')) return 'rgba(239, 68, 68, 0.8)'; // Rojo
+      if (labelLower.includes('media')) return 'rgba(249, 115, 22, 0.8)'; // Naranja
+      if (labelLower.includes('baja')) return 'rgba(59, 130, 246, 0.8)'; // Azul
+      return 'rgba(156, 163, 175, 0.8)'; // Gris
+    });
+  } else {
+    backgroundColor = labels.map((_, i) => this.chartColors.primary[i % this.chartColors.primary.length]);
+  }
 
-    const options: ChartOptions<'pie'> = {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          display: false,
-        },
-        tooltip: {
-          callbacks: {
-            label: (context) => {
-              const label = context.label || '';
-              const value = context.parsed;
-              const total =
-                context.dataset.data?.reduce(
-                  (a: number, b: number) => a + b,
-                  0
-                ) || 1;
-              const percentage = ((value / total) * 100).toFixed(1);
-              return `${label}: ${value} (${percentage}%)`;
-            },
+  const chartData: ChartData<'pie'> = {
+    labels: labels,
+    datasets: [
+      {
+        data: values,
+        backgroundColor: backgroundColor,
+        borderColor: '#fff',
+        borderWidth: 2,
+        hoverBorderWidth: 3,
+      },
+    ],
+  };
+
+  const options: ChartOptions<'pie'> = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false
+      },
+      tooltip: {
+        callbacks: {
+          label: (context) => {
+            const label = context.label || '';
+            const value = context.parsed;
+            const total = context.dataset.data?.reduce((a: number, b: number) => a + b, 0) || 1;
+            const percentage = ((value / total) * 100).toFixed(1);
+            return `${label}: ${value} (${percentage}%)`;
           },
         },
       },
-      layout: { padding: 20 },
-    };
+    },
+    layout: { padding: 20 },
+  };
 
-    this.charts[canvasId] = new Chart(canvas, {
-      type: 'pie',
-      data: chartData,
-      options: options,
-    });
-  }
+  this.charts[canvasId] = new Chart(canvas, {
+    type: 'pie',
+    data: chartData,
+    options: options,
+  });
+}
 
   createDoughnutChart(
     canvasId: string,
@@ -602,19 +611,43 @@ export default class DashboardComponent implements OnInit, OnDestroy {
     return this.chartColors.primary[index % this.chartColors.primary.length];
   }
 
-  getSeverityColor(key: string): string {
-    const index = this.getKeys(this.ticketsBySeverity).indexOf(key);
-    return index >= 0
-      ? this.severityColors[index % this.severityColors.length]
-      : '#9CA3AF';
+getSeverityColor(key: string): string {
+  const labelLower = key.toLowerCase();
+  const severityKeys = this.getKeys(this.ticketsBySeverity);
+  const index = severityKeys.indexOf(key);
+
+  // Si encontramos el índice exacto, usar el color del array
+  if (index >= 0 && index < this.severityColors.length) {
+    return this.severityColors[index];
   }
 
-  getStatusColor(key: string): string {
-    const index = this.getKeys(this.ticketsByStatus).indexOf(key);
-    return index >= 0
-      ? this.statusColors[index % this.statusColors.length]
-      : '#9CA3AF';
-  }
+  // Fallback a colores semánticos
+  if (labelLower.includes('alta')) return 'rgba(239, 68, 68, 0.9)';
+  if (labelLower.includes('media')) return 'rgba(249, 115, 22, 0.9)';
+  if (labelLower.includes('baja')) return 'rgba(234, 179, 8, 0.9)';
+  if (labelLower.includes('informativa')) return 'rgba(59, 130, 246, 0.9)';
+
+  // Color por defecto
+  return '#9CA3AF';
+}
+
+getStatusColor(key: string): string {
+  const labelLower = key.toLowerCase();
+
+  if (labelLower.includes('resuelto')) return 'rgba(34, 197, 94, 0.9)';
+  if (labelLower.includes('proceso')) return 'rgba(234, 179, 8, 0.9)';
+  if (labelLower.includes('cancelado')) return 'rgba(239, 68, 68, 0.9)';
+
+  const statusKeys = this.getKeys(this.ticketsByStatus);
+  const index = statusKeys.indexOf(key);
+
+  // Si no encontramos la key, usar color por defecto
+  if (index === -1) return '#9CA3AF';
+
+  // Usar el módulo para asegurar que no excedamos el array
+  const safeIndex = index % this.statusColors.length;
+  return this.statusColors[safeIndex];
+}
 
   ngOnDestroy(): void {
     Object.values(this.charts).forEach((chart) => {
@@ -637,5 +670,53 @@ export default class DashboardComponent implements OnInit, OnDestroy {
     const topEntries = entries.slice(0, limit);
     // Convertir de nuevo a objeto
     return Object.fromEntries(topEntries);
+  }
+
+  getStatusClass(status: string): string {
+    const statusLower = status.toLowerCase();
+
+    if (statusLower.includes('resuelto')) {
+      return 'bg-success/10 border-success/20'; // Verde
+    }
+    if (statusLower.includes('proceso')) {
+      return 'bg-warning/10 border-warning/20'; // Amarillo
+    }
+    if (statusLower.includes('cancelado')) {
+      return 'bg-error/10 border-error/20'; // Rojo
+    }
+    return 'bg-base-200 border-base-300'; // Gris neutro
+  }
+
+  getStatusTextColor(status: string): string {
+    const statusLower = status.toLowerCase();
+
+    if (statusLower.includes('resuelto')) {
+      return 'text-success';
+    }
+    if (statusLower.includes('proceso')) {
+      return 'text-warning';
+    }
+    if (statusLower.includes('cancelado')) {
+      return 'text-error';
+    }
+    return 'text-base-content';
+  }
+
+  getSeverityClass(severity: string): string {
+    const severityLower = severity.toLowerCase();
+
+    if (severityLower.includes('alta')) {
+      return 'bg-error/10 text-error border-error/20';
+    }
+    if (severityLower.includes('media')) {
+      return 'bg-warning/10 text-warning border-warning/20';
+    }
+    if (severityLower.includes('baja')) {
+      return 'bg-info/10 text-info border-info/20'; // Azul para baja
+    }
+    if (severityLower.includes('informativa')) {
+      return 'bg-base-200 text-base-content border-base-300'; // Gris
+    }
+    return 'bg-base-200 text-base-content border-base-300';
   }
 }

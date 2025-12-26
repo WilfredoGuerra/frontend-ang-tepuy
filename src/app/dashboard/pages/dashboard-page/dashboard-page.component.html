@@ -131,15 +131,10 @@
         <div class="h-80">
           <canvas id="severityChart"></canvas>
         </div>
-        <!-- Leyenda de severidad con colores temáticos -->
+        <!-- Leyenda de severidad -->
         <div class="mt-4 flex flex-wrap gap-2 justify-center">
           <div *ngFor="let severity of getKeys(ticketsBySeverity)" class="flex items-center px-3 py-1 rounded-full"
-            [ngClass]="{
-                 'bg-red-100 text-red-800 border border-red-200': severity.toLowerCase().includes('alta'),
-                 'bg-orange-100 text-orange-800 border border-orange-200': severity.toLowerCase().includes('media'),
-                 'bg-yellow-100 text-yellow-800 border border-yellow-200': severity.toLowerCase().includes('baja'),
-                 '': !severity.toLowerCase().includes('alta') && !severity.toLowerCase().includes('media') && !severity.toLowerCase().includes('baja')
-               }">
+            [ngClass]="getSeverityClass(severity)">
             <div class="w-3 h-3 rounded-full mr-2" [style.background-color]="getSeverityColor(severity)"></div>
             <span class="text-sm font-medium">{{severity}}</span>
             <span class="ml-2 font-bold">{{ticketsBySeverity[severity] || 0}}</span>
@@ -157,25 +152,15 @@
         <div class="h-80">
           <canvas id="statusChart"></canvas>
         </div>
-        <!-- Leyenda de estatus con iconos -->
+        <!-- Leyenda de estatus -->
         <div class="mt-4 grid grid-cols-2 gap-2">
           <div *ngFor="let status of getKeys(ticketsByStatus)" class="flex items-center justify-between p-2 rounded"
-            [ngClass]="{
-                 '': status.toLowerCase().includes('resuelto'),
-                 '': status.toLowerCase().includes('proceso'),
-                 '': status.toLowerCase().includes('cancelado'),
-                 'bg-gray-50 border border-gray-200': !status.toLowerCase().includes('resuelto') && !status.toLowerCase().includes('proceso') && !status.toLowerCase().includes('cancelado')
-               }">
+            [ngClass]="getStatusClass(status)">
             <div class="flex items-center">
               <div class="w-3 h-3 rounded-full mr-2" [style.background-color]="getStatusColor(status)"></div>
               <span class="text-sm font-medium capitalize">{{status}}</span>
             </div>
-            <span class="font-bold" [ngClass]="{
-                    'text-green-600': status.toLowerCase().includes('resuelto'),
-                    'text-blue-600': status.toLowerCase().includes('proceso'),
-                    'text-red-600': status.toLowerCase().includes('cancelado'),
-                    'text-gray-600': !status.toLowerCase().includes('resuelto') && !status.toLowerCase().includes('proceso') && !status.toLowerCase().includes('cancelado')
-                  }">
+            <span class="font-bold" [ngClass]="getStatusTextColor(status)">
               {{ticketsByStatus[status] || 0}}
             </span>
           </div>
