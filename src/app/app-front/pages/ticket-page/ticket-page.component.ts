@@ -34,6 +34,9 @@ import { IncidentsService } from '@features/incidents/services/incidents.service
 import { IncidentsDetailsService } from '@features/incidents-details/services/incidents-details.service';
 import { TicketImagePipe } from '@app-front/pipes/ticket-image.pipe';
 import { environment } from 'src/environments/environment';
+import { StatesService } from '@features/states/services/states.service';
+import { GroupsEscalatoryService } from '@features/group-escalatory/services/groups-escalatory.service';
+import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
 
 const baseUrl = environment.baseUrl;
 
@@ -123,6 +126,8 @@ export class TicketPageComponent {
   private closuresService = inject(ClosuresService);
   private incidentsService = inject(IncidentsService);
   private incidentDetailsService = inject(IncidentsDetailsService);
+  private statesService = inject(StatesService);
+  private groupsEscalatoryService = inject(GroupsEscalatoryService);
 
   // IDs y estados
   ticketId = +this.activatedRoute.snapshot.params['id'];
@@ -163,6 +168,25 @@ export class TicketPageComponent {
   selectedClosureNetworkElementsClosure = signal<any[]>([]); // Para Elemento de Cierre (editable)
 
   isGeneratingPdf = signal(false);
+
+  // Señales para el modal de selección de responsables
+  showPersonalsModal = signal(false);
+  selectedPersonal = signal<any>(null);
+  personalsSearch = signal('');
+  private personalSearchSubject = new Subject<string>();
+  personalCurrentPage = signal(1);
+  personalItemsPerPage = 10;
+  personalTotalPages = signal(0);
+  allPersonals = signal<any[]>([]);
+  personalSearchMode = signal<'all' | 'filtered'>('all');
+  selectedStateId = signal<number | null>(null);
+  selectedGroupId = signal<number | null>(null);
+  nameSearch = signal('');
+  surnameSearch = signal('');
+
+  // Listas para filtros
+  statesList: any[] = [];
+  groupsList: any[] = [];
 
   imageUrl = computed(() => {
     return `${baseUrl}/files/ticket/${
@@ -321,6 +345,9 @@ export class TicketPageComponent {
     if (!initialIncidentId) {
       incidentDetailControl?.disable();
     }
+
+    this.setupPersonalSearchDebouncing();
+    this.loadFilterOptions();
   }
 
   ngOnDestroy() {
@@ -393,6 +420,35 @@ export class TicketPageComponent {
         this.filteredFailures.set([]);
         this.progressForm.patchValue({ failureId: null });
       },
+    });
+  }
+
+  private setupPersonalSearchDebouncing(): void {
+    this.personalSearchSubject
+      .pipe(debounceTime(300), distinctUntilChanged())
+      .subscribe((searchTerm) => {
+        this.personalsSearch.set(searchTerm);
+        this.personalCurrentPage.set(1);
+
+        if (searchTerm.length === 0) {
+          this.personalSearchMode.set('all');
+          this.loadPersonals();
+        } else {
+          this.personalSearchMode.set('filtered');
+          this.searchPersonals();
+        }
+      });
+  }
+
+  private loadFilterOptions(): void {
+    this.statesService.getStates().subscribe({
+      next: (states) => (this.statesList = states),
+      error: (err) => console.error('Error loading states', err),
+    });
+
+    this.groupsEscalatoryService.getGroupsEscalatory().subscribe({
+      next: (groups) => (this.groupsList = groups),
+      error: (err) => console.error('Error loading groups', err),
     });
   }
 
@@ -948,9 +1004,15 @@ export class TicketPageComponent {
     this.searchFiberModalQuery.set('');
     this.searchNetworkQuery.set('');
 
+    // ✅ NUEVO: Limpiar selección de responsable
+    this.selectedPersonal.set(null);
+
     // Resetear plataformas y fallas filtradas
     this.filteredPlatforms.set([]);
     this.filteredFailures.set([]);
+
+    // Cerrar modal de responsables si está abierto
+    this.closePersonalsModal();
 
     this.progressForm.reset({
       ticketId: this.ticketId,
@@ -961,7 +1023,7 @@ export class TicketPageComponent {
       originId: null,
       failureId: null,
       impact: '',
-      assignedUserId: null, // ✅ Mantener aunque no se muestre en el UI
+      assignedUserId: null,
       personalRegionId: null,
       elementNetworkId: [],
       fiberLengthId: null,
@@ -1368,7 +1430,7 @@ export class TicketPageComponent {
     if (this.ticketResource.hasValue()) {
       const ticket = this.ticketResource.value();
 
-      // Primero cargar el grupo
+      // Precargar datos básicos
       this.progressForm.patchValue({
         statusId: ticket.statusId || null,
         groupId: ticket.groupId || null,
@@ -1381,8 +1443,26 @@ export class TicketPageComponent {
         assignedUserId: null,
       });
 
+      // ✅ NUEVO: Precargar el responsable seleccionado si existe
+      if (ticket.personalRegionId && ticket.personal_region) {
+        // Buscar el personal en la lista de responsables
+        const allPersonals =
+          this.personalsRegionResource.value()?.personalsRegions || [];
+        const foundPersonal = allPersonals.find(
+          (p) => p.id === ticket.personalRegionId
+        );
+        if (foundPersonal) {
+          this.selectedPersonal.set(foundPersonal);
+        }
+      }
+
       // Luego filtrar las plataformas basado en el grupo
       this.filterPlatformsByGroup(ticket.groupId || null);
+
+      // Filtrar fallas por grupo si existe
+      if (ticket.groupId) {
+        this.loadFailuresByGroup(ticket.groupId);
+      }
     }
   }
 
@@ -2199,4 +2279,185 @@ export class TicketPageComponent {
   //   console.log('Currently selected fiber element:', this.selectedFiberElement());
   //   console.log('=== END DEBUG ===');
   // }
+
+  // Métodos para el modal de responsables
+  openPersonalsModal(): void {
+    this.showPersonalsModal.set(true);
+    this.loadPersonals();
+  }
+
+  closePersonalsModal(): void {
+    this.showPersonalsModal.set(false);
+    this.clearFilters();
+  }
+
+  loadPersonals(): void {
+    const offset = (this.personalCurrentPage() - 1) * this.personalItemsPerPage;
+
+    this.personalsRegionService
+      .getPersonalRegion({
+        limit: this.personalItemsPerPage,
+        offset: offset,
+      })
+      .subscribe({
+        next: (response: any) => {
+          this.allPersonals.set(response.personalsRegions || []);
+          this.personalTotalPages.set(
+            Math.ceil(response.count / this.personalItemsPerPage)
+          );
+        },
+        error: (err) => {
+          console.error('Error loading personals', err);
+          this.allPersonals.set([]);
+        },
+      });
+  }
+
+  searchPersonals(): void {
+    const searchTerm = this.personalsSearch();
+    const stateId = this.selectedStateId();
+    const groupId = this.selectedGroupId();
+    const name = this.nameSearch();
+    const surname = this.surnameSearch();
+
+    const stateIdParam = stateId !== null ? stateId : undefined;
+    const groupIdParam = groupId !== null ? groupId : undefined;
+    const nameParam = name !== '' ? name : undefined;
+    const surnameParam = surname !== '' ? surname : undefined;
+
+    if (!searchTerm && !stateId && !groupId && !name && !surname) {
+      this.personalSearchMode.set('all');
+      this.loadPersonals();
+      return;
+    }
+
+    this.personalsRegionService
+      .getPersonalRegionByAdvanced(
+        searchTerm !== '' ? searchTerm : undefined,
+        stateIdParam,
+        groupIdParam,
+        nameParam,
+        surnameParam
+      )
+      .subscribe({
+        next: (personals: any[]) => {
+          this.allPersonals.set(personals);
+          this.personalTotalPages.set(1);
+        },
+        error: (err) => {
+          console.error('Error searching personals', err);
+          this.allPersonals.set([]);
+          this.personalTotalPages.set(1);
+        },
+      });
+  }
+
+  clearFilters(): void {
+    this.selectedStateId.set(null);
+    this.selectedGroupId.set(null);
+    this.nameSearch.set('');
+    this.surnameSearch.set('');
+    this.personalsSearch.set('');
+    this.personalSearchMode.set('all');
+    this.loadPersonals();
+  }
+
+  onPersonalSearchChange(event: Event): void {
+    const value = (event.target as HTMLInputElement).value;
+    this.personalsSearch.set(value);
+    this.onFilterChange();
+  }
+
+  onFilterChange(): void {
+    this.personalCurrentPage.set(1);
+    this.personalSearchMode.set('filtered');
+    this.searchPersonals();
+  }
+
+  selectPersonal(personal: any): void {
+    this.selectedPersonal.set(personal);
+  }
+
+  isPersonalSelected(personal: any): boolean {
+    return this.selectedPersonal()?.id === personal.id;
+  }
+
+  savePersonalSelection(): void {
+    const selectedPersonal = this.selectedPersonal();
+    if (selectedPersonal) {
+      this.progressForm.patchValue({
+        personalRegionId: selectedPersonal.id,
+      });
+    }
+    this.closePersonalsModal();
+  }
+
+  getSelectedPersonalText(): string {
+    const selected = this.selectedPersonal();
+    if (!selected) {
+      return 'Seleccione un responsable';
+    }
+
+    const groups =
+      selected.groups_escalatory
+        ?.map((g: any) => g.group_escalatory)
+        .join(', ') || 'Sin grupo';
+    const states =
+      selected.states?.map((s: any) => s.state).join(', ') || 'Sin estado';
+    const position = selected.position?.[0]?.position || 'Sin cargo';
+
+    return `${selected.names} ${selected.surnames} - ${groups} - ${states} - ${position}`;
+  }
+
+  getPersonalPaginationRange(): (number | string)[] {
+    const current = this.personalCurrentPage();
+    const total = this.personalTotalPages();
+    const delta = 2;
+    const range = [];
+
+    if (total <= 7) {
+      for (let i = 1; i <= total; i++) {
+        range.push(i);
+      }
+      return range;
+    }
+
+    for (
+      let i = Math.max(2, current - delta);
+      i <= Math.min(total - 1, current + delta);
+      i++
+    ) {
+      range.push(i);
+    }
+
+    if (current - delta > 2) {
+      range.unshift('...');
+    }
+    if (current + delta < total - 1) {
+      range.push('...');
+    }
+
+    range.unshift(1);
+    range.push(total);
+
+    return range;
+  }
+
+  goToPersonalPage(page: number | string): void {
+    if (
+      this.personalSearchMode() === 'all' &&
+      typeof page === 'number' &&
+      page >= 1 &&
+      page <= this.personalTotalPages()
+    ) {
+      this.changePersonalPage(page);
+    }
+  }
+
+  changePersonalPage(page: number): void {
+    if (page >= 1 && page <= this.personalTotalPages()) {
+      this.personalCurrentPage.set(page);
+      this.loadPersonals();
+    }
+  }
 }

@@ -1721,24 +1721,27 @@
 
       <div class="bg-base-200 p-5 rounded-xl">
         <div class="grid grid-cols-1">
-          <!-- Solo Región Personal ocupando todo el ancho -->
+          <!-- Responsable área resolutoria con modal -->
           <div class="form-control">
             <label class="label">
-              <span class="label-text font-medium mr-2 mb-2">
+              <span class="label-text font-medium mb-2">
                 Región Personal
                 <span class="text-gray-500 text-sm">(Opcional)</span>
               </span>
             </label>
-            <select class="select select-bordered select-primary w-full" formControlName="personalRegionId">
-              <option [ngValue]="null" selected>Sin región específica</option>
-              @for (region of personalsRegionResource.value()?.personalsRegions; track region.id) {
-              <option [ngValue]="region.id">
-                {{ region.names }} {{ region.surnames }} - {{ region.states[0].state }}
-              </option>
-              }
-            </select>
+            <div class="relative">
+              <input type="text" class="input input-bordered w-full pr-10 cursor-pointer first-letter:capitalize"
+                [value]="getSelectedPersonalText()" readonly (click)="openPersonalsModal()" />
+              <button type="button" class="absolute inset-y-0 right-0 flex items-center pr-3"
+                (click)="openPersonalsModal()">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                  stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+              </button>
+            </div>
             <div class="text-xs text-gray-500 mt-1">
-              Seleccione un personal de área resolutoria si aplica para este seguimiento
+              Haga clic para seleccionar un personal de área resolutoria
             </div>
           </div>
         </div>
@@ -1955,3 +1958,213 @@
   Fiber: {{ selectedFiberElement() ? 'Yes' : 'No' }},
   Type: {{ selectedElementType() }}
 </div> -->
+
+<!-- Modal para selección de responsables -->
+@if (showPersonalsModal()) {
+<div class="modal modal-open">
+  <div class="modal-box max-w-5xl max-h-[90vh] overflow-y-auto">
+    <h3 class="font-bold text-lg mb-4">Seleccionar Responsable</h3>
+
+    <!-- Búsqueda -->
+    <div class="form-control mb-4">
+      <!-- Búsqueda general -->
+      <div class="flex justify-between items-center gap-2 mb-3">
+        <div>
+          @if (personalSearchMode() === 'filtered') {
+          <span class="badge badge-info">Búsqueda activa</span>
+          }
+          <button type="button" class="btn btn-ghost btn-sm" (click)="clearFilters()">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            Limpiar
+          </button>
+        </div>
+        <div class="modal-action mt-0">
+          <button type="button" class="btn btn-ghost" (click)="closePersonalsModal()">
+            Cancelar
+          </button>
+          <button type="button" class="btn btn-primary" (click)="savePersonalSelection()"
+            [disabled]="!selectedPersonal()">
+            Guardar
+          </button>
+        </div>
+      </div>
+
+      <!-- Filtros avanzados -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <div>
+          <label class="label label-text py-1">Estado</label>
+          <select class="select select-bordered select-sm w-full"
+            [value]="selectedStateId() === null ? '' : selectedStateId()" (change)="
+              selectedStateId.set(
+                $any($event.target).value ? +$any($event.target).value : null
+              );
+              onFilterChange()
+            ">
+            <option value="">Todos los estados</option>
+            @for (state of statesList; track state.id) {
+            <option [value]="state.id">{{ state.state }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Filtro por grupo -->
+        <div>
+          <label class="label label-text py-1">Grupo</label>
+          <select class="select select-bordered select-sm w-full"
+            [value]="selectedGroupId() === null ? '' : selectedGroupId()" (change)="
+              selectedGroupId.set(
+                $any($event.target).value ? +$any($event.target).value : null
+              );
+              onFilterChange()
+            ">
+            <option value="">Todos los grupos</option>
+            @for (group of groupsList; track group.id) {
+            <option [value]="group.id">{{ group.group_escalatory }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Filtro por nombre -->
+        <div>
+          <label class="label label-text py-1">Nombre</label>
+          <input type="text" placeholder="Nombre..." class="input input-bordered input-sm w-full" [value]="nameSearch()"
+            (input)="
+              nameSearch.set($any($event.target).value); onFilterChange()
+            " />
+        </div>
+
+        <!-- Filtro por apellido -->
+        <div>
+          <label class="label label-text py-1">Apellido</label>
+          <input type="text" placeholder="Apellido..." class="input input-bordered input-sm w-full"
+            [value]="surnameSearch()" (input)="
+              surnameSearch.set($any($event.target).value); onFilterChange()
+            " />
+        </div>
+      </div>
+    </div>
+
+    <!-- Mensaje cuando no hay resultados -->
+    @if (allPersonals().length === 0 && personalsSearch()) {
+    <div class="alert alert-warning mb-4">
+      <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      </svg>
+      <span>No se encontraron responsables con "{{ personalsSearch() }}"</span>
+    </div>
+    }
+
+    <!-- Tabla de responsables -->
+    <div class="overflow-x-auto">
+      <table class="table table-zebra table-sm">
+        <thead>
+          <tr>
+            <th class="w-12">Sel.</th>
+            <th>Nombres</th>
+            <th>Apellidos</th>
+            <th>Grupo</th>
+            <th>Estado(s)</th>
+            <th>Cargo</th>
+            <th>Teléfono</th>
+            <th>Email</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (allPersonals() && allPersonals().length > 0) { @for (personal
+          of allPersonals(); track personal.id) {
+          <tr class="cursor-pointer hover:bg-base-200" (click)="selectPersonal(personal)">
+            <td>
+              <input type="radio" name="personal" class="radio radio-primary radio-sm"
+                [checked]="isPersonalSelected(personal)" (change)="selectPersonal(personal)" />
+            </td>
+            <td>{{ personal.names }}</td>
+            <td>{{ personal.surnames }}</td>
+            <td>
+              @for (group of personal.groups_escalatory; track $index) {
+              <span class="badge badge-outline badge-sm mr-1">{{
+                group.group_escalatory
+                }}</span>
+              }
+            </td>
+            <td>
+              @for (state of personal.states; track $index) {
+              <span class="badge badge-info badge-sm mr-1">{{
+                state.state
+                }}</span>
+              }
+            </td>
+            <td>
+              @for (pos of personal.position; track $index) {
+              <span class="badge badge-secondary badge-sm">{{
+                pos.position
+                }}</span>
+              }
+            </td>
+            <td>
+              {{ personal.mobile_phone || personal.office_phone || "N/A" }}
+            </td>
+            <td>{{ personal.email || "N/A" }}</td>
+          </tr>
+          } } @else {
+          <tr>
+            <td colspan="8" class="text-center py-4">
+              No se encontraron responsables
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Paginación solo para modo "all" -->
+    @if (personalSearchMode() === 'all' && personalTotalPages() > 1) {
+    <div class="join flex justify-center mt-4">
+      <!-- Botón anterior -->
+      <button type="button" class="join-item btn btn-sm" [class.btn-disabled]="personalCurrentPage() === 1"
+        (click)="goToPersonalPage(personalCurrentPage() - 1)">
+        «
+      </button>
+
+      <!-- Botones de páginas -->
+      @for (page of getPersonalPaginationRange(); track $index) { @if (page
+      === '...') {
+      <button type="button" class="join-item btn btn-sm btn-disabled">
+        ...
+      </button>
+      } @else {
+      <button type="button" class="join-item btn btn-sm" [class.btn-primary]="personalCurrentPage() === page"
+        (click)="goToPersonalPage(page)">
+        {{ page }}
+      </button>
+      } }
+
+      <!-- Botón siguiente -->
+      <button type="button" class="join-item btn btn-sm"
+        [class.btn-disabled]="personalCurrentPage() === personalTotalPages()"
+        (click)="goToPersonalPage(personalCurrentPage() + 1)">
+        »
+      </button>
+    </div>
+    }
+
+    <!-- Responsable seleccionado -->
+    @if (selectedPersonal()) {
+    <div class="mt-4 p-3 bg-base-200 rounded-lg">
+      <h4 class="font-semibold mb-2">Responsable seleccionado:</h4>
+      <div class="flex flex-wrap gap-2">
+        <span class="badge badge-primary badge-lg gap-2">
+          {{ selectedPersonal()?.names }} {{ selectedPersonal()?.surnames }}
+          <button type="button" class="btn btn-xs btn-circle btn-ghost" (click)="selectedPersonal.set(null)">
+            ✕
+          </button>
+        </span>
+      </div>
+    </div>
+    }
+  </div>
+</div>
+}
