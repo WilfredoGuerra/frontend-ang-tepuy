@@ -31,13 +31,15 @@
                 <div class="flex space-x-2">
                   <span class="uppercase font-bold">
                     @if ( ticketResource.value().statusId === 1 ) {
-                    <span class="badge bg-warning/20 text-warning badge-md p-4">{{ ticketResource.value().status }}</span>
+                    <span class="badge bg-warning/20 text-warning badge-md p-4">{{ ticketResource.value().status
+                      }}</span>
                     }
                     @else if (ticketResource.value().statusId === 2) {
                     <span class="badge bg-error/20 text-error badge-md p-4">{{ ticketResource.value().status }}</span>
                     }
                     @else {
-                    <span class="badge bg-success/20 text-success badge-md p-4">{{ ticketResource.value().status }}</span>
+                    <span class="badge bg-success/20 text-success badge-md p-4">{{ ticketResource.value().status
+                      }}</span>
                     }
                   </span>
                 </div>
@@ -94,7 +96,8 @@
                 <p class="first-letter:capitalize">
                   <span class="uppercase">
                     @if ( ticketResource.value().statusId === 1 ) {
-                    <span class="badge bg-warning/20 text-warning badge-md pb-1">{{ ticketResource.value().status }}</span>
+                    <span class="badge bg-warning/20 text-warning badge-md pb-1">{{ ticketResource.value().status
+                      }}</span>
                     }
                     @else if (ticketResource.value().statusId === 2) {
                     <span class="badge bg-red-600 badge-sm font-bold">{{ ticketResource.value().status }}</span>
@@ -992,6 +995,31 @@
         </div>
 
         <div class="bg-base-100 p-4 rounded-lg">
+
+          <div class="m-1 p-3 bg-base-200 rounded-lg">
+            <p class="font-semibold text-warning text-sm mb-2">Horas inicio ticket (referencial):</p>
+            <div class="flex flex-wrap items-center gap-1">
+              <span class="badge bg-base-300 border-none text-gray-700">
+                Creación: {{ formatVenezuelaTime(ticketResource.value().createdDate, 'dd/MM/yyyy, h:mm a') }}
+              </span>
+              <span class="text-gray-400 mx-1 text-xs">|</span>
+
+              <span class="badge bg-base-300 border-none text-gray-700">
+                HIF: {{ ticketResource.value().date_hif | date : "d/MM/yyyy, hh:mm a" }}
+              </span>
+              <span class="text-gray-400 mx-1 text-xs">|</span>
+
+              <span class="badge bg-base-300 border-none text-gray-700">
+                HDC: {{ ticketResource.value().date_hdc | date : "d/MM/yyyy, hh:mm a" }}
+              </span>
+              <span class="text-gray-400 mx-1 text-xs">|</span>
+
+              <span class="badge bg-base-300 border-none text-gray-700">
+                HCT: {{ ticketResource.value().date_hct | date : "d/MM/yyyy, hh:mm a" }}
+              </span>
+            </div>
+          </div>
+
           <h4 class="font-semibold text-primary mb-3">⏰ Horas del Cierre</h4>
           <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div class="form-control">
@@ -1070,6 +1098,7 @@
               }
             </div>
           </div>
+
         </div>
 
         <div class="bg-base-100 p-4 rounded-lg">
